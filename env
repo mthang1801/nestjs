@@ -1,7 +1,0 @@
-PORT=3000
-
-#database info
-DB_HOST=23232.23.2.23.23
-DB_USERNAME=ssds
-DB_PASSWORD=sdsd
-DB_NAME=3434
