@@ -1,17 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  RequestTimeoutException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { AuthCredentialsDto } from '../auth/dto/auth-credential.dto';
 import { UserDocument, User } from './users.schemas';
 import { Model } from 'mongoose';
-import { IUser, IUserInfo } from './interfaces/users.interfaces';
+import {
+  IUser,
+  IUserInfo,
+  IUserRestorePwd,
+} from './interfaces/users.interfaces';
 import { v4 as uuidv4 } from 'uuid';
+import { MailService } from '../mail/mail.service';
 
-import { MailerService } from '@nestjs-modules/mailer';
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private readonly mailerService: MailerService,
+    private readonly mailService: MailService,
   ) {}
 
   async createUser(authCredentialsDto: AuthCredentialsDto): Promise<IUser> {
@@ -24,32 +33,67 @@ export class UsersService {
     return this.userModel.findOne({ username });
   }
 
-  async resetPassword(email: string, phone: string): Promise<void> {
-    console.log(email, phone);
-    const user = await this.userModel.findOne({ email, phone });
-    if (!user) {
+  async resetPassword(originUrl: string, data: string): Promise<any> {
+    const findUsers = await this.userModel.find({
+      $or: [{ email: data }, { phone: data }],
+    });
+
+    if (!findUsers.length) {
       throw new NotFoundException();
     }
-    const session = await this.userModel.startSession();
-    session.startTransaction();
-    user.verifyToken = uuidv4();
-    user.verifyTokenExpAt = new Date(Date.now() + 3600 * 2 * 1000);
-    await user.save();
-    const result = await this.mailerService.sendMail({
-      to: `${user.email}`, // List of receivers email address
-      from: 'admin@ddevcom.com', // Senders email address
-      subject: 'Xác nhận yêu cầu khôi phục mật khẩu',
-      template: 'reset-password.mailer', // The `.pug` or `.hbs` extension is appended automatically.
-      context: {
-        // Data to be sent to template engine.
-        code: 'cf1a3f828287',
-        username: 'john doe',
-      },
-    });
-    await session.endSession();
+    const user = findUsers[0];
+    try {
+      const session = await this.userModel.startSession();
+      session.startTransaction();
+      user.verifyToken = uuidv4();
+      user.verifyTokenExpAt = new Date(Date.now() + 3600 * 2 * 1000);
+
+      await user.save();
+      await this.mailService.sendUserConfirmation(
+        originUrl,
+        user,
+        user.verifyToken,
+      );
+      await session.endSession();
+      return { message: 'success' };
+    } catch (error) {
+      return { message: error.message };
+    }
   }
 
   async getMyInfo(_id: string): Promise<IUserInfo> {
     return this.userModel.findById(_id);
+  }
+
+  async restorePassword(_id: string, token: string): Promise<IUserRestorePwd> {
+    const checkUser = await this.userModel.findOne({ _id, verifyToken: token });
+
+    if (!checkUser) {
+      throw new NotFoundException();
+    }
+    if (new Date(checkUser.verifyTokenExpAt) < new Date()) {
+      throw new RequestTimeoutException();
+    }
+    return checkUser;
+  }
+
+  async updatePassword(
+    _id: string,
+    token: string,
+    newPassword: string,
+  ): Promise<any> {
+    try {
+      const user = await this.userModel.findOne({ _id, verifyToken: token });
+      if (!user) {
+        throw new NotFoundException();
+      }
+      user.password = newPassword;
+      user.verifyToken = '';
+      user.verifyTokenExpAt = null;
+      await user.save();
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
   }
 }

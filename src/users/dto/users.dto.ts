@@ -1,5 +1,5 @@
 export class UserInfoUpdateDto {
-  username: string;
+  displayName: string;
   country: string;
   city: string;
   district: string;

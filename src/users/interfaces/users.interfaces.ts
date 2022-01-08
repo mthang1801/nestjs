@@ -1,5 +1,5 @@
 export interface IUser {
-  name: string;
+  displayName: string;
   email: string;
   password: string;
   phone: string;
@@ -12,4 +12,14 @@ export interface IUserInfo extends IUser {
   country: string;
   district: string;
   address: string;
+}
+
+export interface IUserConfirm {
+  _id: string;
+  displayName: string;
+  email: string;
+}
+
+export interface IUserRestorePwd extends IUser {
+  verifyTokenExpAt: Date;
 }

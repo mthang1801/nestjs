@@ -4,18 +4,24 @@ import * as mongoose from 'mongoose';
 @Schema()
 export class User {
   @Prop({ required: true })
-  name: string;
+  displayName: string;
   @Prop({ required: true, unique: true })
   email: string;
   @Prop({ required: true })
   password: string;
   @Prop({ required: true })
   phone: string;
+  @Prop({ default: '' })
   verifyToken: string;
+  @Prop({ default: null })
   verifyTokenExpAt: Date;
+  @Prop({ default: '' })
   city: string;
+  @Prop({ default: '' })
   country: string;
+  @Prop({ default: '' })
   district: string;
+  @Prop({ default: '' })
   address: string;
   @Prop({ default: new Date() })
   createdAt: Date;

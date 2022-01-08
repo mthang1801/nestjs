@@ -9,7 +9,7 @@ import {
 export class AuthCredentialsDto {
   @IsString()
   @MinLength(6)
-  name: string;
+  displayName: string;
   @IsEmail()
   email: string;
   @IsString()

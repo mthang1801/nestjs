@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersController } from './users.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from '../auth/strategies/jwt.strategy';
+import { MailModule } from '../mail/mail.module';
 import * as bcrypt from 'bcrypt';
 
 @Module({
@@ -13,6 +14,7 @@ import * as bcrypt from 'bcrypt';
       secret: process.env.JWTSECRET,
       signOptions: { expiresIn: '10m' },
     }),
+    MailModule,
     MongooseModule.forFeatureAsync([
       {
         name: User.name,
@@ -20,11 +22,21 @@ import * as bcrypt from 'bcrypt';
           const schema = UserSchema;
           schema.pre('save', async function (next) {
             const user: any = this;
+
             if (user.isModified('password')) {
+              console.log(user);
               user.password = await bcrypt.hash(user.password, 10);
             }
             next();
           });
+          schema.methods = {
+            toJSON() {
+              const user = this;
+              const userObject = user.toObject();
+              delete userObject.password;
+              return userObject;
+            },
+          };
           return schema;
         },
       },
