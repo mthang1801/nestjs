@@ -7,9 +7,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrdersModule } from './orders/orders.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { MailerModule } from '@nestjs-modules/mailer';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { MailModule } from './mail/mail.module';
+import { DatabaseModule } from './database/database.module';
 import * as path from 'path';
 @Module({
   imports: [
@@ -17,13 +16,12 @@ import * as path from 'path';
       isGlobal: true,
       envFilePath: '.env',
     }),
-
-    // TypeOrmModule.forRoot(typeOrmConfig),
     MongooseModule.forRoot(process.env.MONGO_URI),
     OrdersModule,
     AuthModule,
     UsersModule,
     MailModule,
+    DatabaseModule,
   ],
 })
 export class AppModule {}

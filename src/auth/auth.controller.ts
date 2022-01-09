@@ -24,7 +24,9 @@ export class AuthController {
   @Post('register')
   @UsePipes(ValidationPipe)
   async signUp(@Body() authCredentialsDto: AuthCredentialsDto): Promise<any> {
-    return await this.authService.signUp(authCredentialsDto);
+    const token = await this.authService.signUp(authCredentialsDto);
+    console.log(1, token);
+    return token;
   }
   @UseGuards(LocalAuthGuard)
   @Post('login')

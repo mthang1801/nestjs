@@ -6,6 +6,7 @@ import { UsersController } from './users.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from '../auth/strategies/jwt.strategy';
 import { MailModule } from '../mail/mail.module';
+import { DatabaseModule } from '../database/database.module';
 import * as bcrypt from 'bcrypt';
 
 @Module({
@@ -14,6 +15,7 @@ import * as bcrypt from 'bcrypt';
       secret: process.env.JWTSECRET,
       signOptions: { expiresIn: '10m' },
     }),
+    DatabaseModule,
     MailModule,
     MongooseModule.forFeatureAsync([
       {
@@ -24,7 +26,6 @@ import * as bcrypt from 'bcrypt';
             const user: any = this;
 
             if (user.isModified('password')) {
-              console.log(user);
               user.password = await bcrypt.hash(user.password, 10);
             }
             next();
