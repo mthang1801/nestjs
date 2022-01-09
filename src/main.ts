@@ -13,12 +13,17 @@ async function bootstrap() {
     AppModule,
     new ExpressAdapter(),
   );
+
   app.useGlobalPipes(new ValidationPipe());
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('hbs');
   hbs.registerPartials(join(__dirname, '..', '/views/partials'));
-  await app.listen(3000, async () =>
+
+  app.enableShutdownHooks();
+
+  const PORT = process.env.PORT || 5000;
+  await app.listen(PORT, async () =>
     console.log(`Application is running on: ${await app.getUrl()}`),
   );
 }

@@ -14,6 +14,7 @@ export class AuthService {
 
   generateToken(user: any) {
     const payload = { sub: user._id.toString() };
+
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -21,7 +22,6 @@ export class AuthService {
 
   async signUp(authCredentialsDto: AuthCredentialsDto): Promise<any> {
     const user = await this.userService.createUser(authCredentialsDto);
-
     return this.generateToken(user);
   }
   async validateUser(username: string, password: string): Promise<any> {

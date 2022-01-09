@@ -15,12 +15,13 @@ import {
 } from './interfaces/users.interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
-
+import { DatabaseService } from '../database/database.service';
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly mailService: MailService,
+    private readonly databaseService: DatabaseService,
   ) {}
 
   async createUser(authCredentialsDto: AuthCredentialsDto): Promise<IUser> {
@@ -62,6 +63,7 @@ export class UsersService {
   }
 
   async getMyInfo(_id: string): Promise<IUserInfo> {
+    await this.databaseService.executeQuery('SELECT * from user');
     return this.userModel.findById(_id);
   }
 
