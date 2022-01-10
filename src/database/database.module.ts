@@ -4,6 +4,8 @@ import { DatabaseService } from './database.service';
 import { DatabasePoolFactory } from './database.provider';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'mysql2/promise';
+import { DatabaseCollection } from './database.collection';
+import { DatabaseRepository } from './database.repository';
 @Module({
   providers: [
     {
@@ -11,8 +13,9 @@ import { Pool } from 'mysql2/promise';
       useFactory: DatabasePoolFactory,
     },
     DatabaseService,
+    DatabaseRepository,
   ],
-  exports: [DatabaseService],
+  exports: [DatabaseService, DatabaseRepository],
 })
 export class DatabaseModule implements OnApplicationShutdown {
   private readonly logger = new Logger(DatabaseModule.name);

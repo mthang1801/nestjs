@@ -8,9 +8,11 @@ $(document).ready(function () {
     $('#success').html('');
     if (!newPassword || !confirmPassword) {
       $('#error').html('Bạn phải nhập đầy đủ trước khi cập nhật');
+      return;
     }
     if (newPassword !== confirmPassword) {
       $('#error').html('Mật khẩu nhập lại không khớp');
+      return;
     }
     let params = new URL(document.location).searchParams;
     let _id = params.get('_id');
@@ -33,6 +35,11 @@ function updatePassword(_id, token, password) {
     }),
   })
     .then((res) => {
+      if (res.status === 400) {
+        $('#error').html('Cập nhật thất bại, mật khẩu không phù hợp');
+        $('#success').html('');
+        return;
+      }
       $('#success').html('Cập nhật mật khẩu thành công');
       $('#submit').remove();
       $('#form-inputs').remove();
@@ -40,8 +47,5 @@ function updatePassword(_id, token, password) {
     })
     .catch((err) => {
       console.log(err);
-
-      $('#error').html('Cập nhật thất bại, mật khẩu không phù hợp');
-      $('#success').html('');
     });
 }

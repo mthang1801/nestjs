@@ -15,7 +15,7 @@ export interface IUserInfo extends IUser {
 }
 
 export interface IUserConfirm {
-  _id: string;
+  id: string;
   displayName: string;
   email: string;
 }

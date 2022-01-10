@@ -9,6 +9,7 @@ import {
   UseGuards,
   UsePipes,
   ValidationPipe,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -25,7 +26,6 @@ export class AuthController {
   @UsePipes(ValidationPipe)
   async signUp(@Body() authCredentialsDto: AuthCredentialsDto): Promise<any> {
     const token = await this.authService.signUp(authCredentialsDto);
-    console.log(1, token);
     return token;
   }
   @UseGuards(LocalAuthGuard)
@@ -42,9 +42,17 @@ export class AuthController {
   }
   @Get('restore-password')
   async restorePassword(@Req() req, @Res() res): Promise<any> {
-    const { token, _id } = req.query;
-    const user = await this.authService.restorePassword(_id, token);
-    res.render('restore-password');
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { token, _id } = req.query;
+        const user = await this.authService.restorePassword(_id, token);
+        return res.status(200).render('restore-password');
+      } catch (error) {
+        return res
+          .status(400)
+          .render('restore-password', { message: error.message });
+      }
+    });
   }
 
   @Post('update-password')

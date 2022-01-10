@@ -7,14 +7,16 @@ export class DatabaseService {
 
   async executeQuery(queryText: string, values: any[] = []): Promise<void> {
     this.logger.debug(`Executing query: ${queryText} (${values})`);
-    this.pool
-      .query(queryText, values)
-      .then((result: any) => {
-        this.logger.debug(
-          `Executed query, result size ${result?.rows?.length}`,
-        );
-        console.log(result);
-      })
-      .catch((err) => console.log(err));
+    return new Promise(async (resolve, reject) => {
+      this.pool
+        .query(queryText, values)
+        .then((result: any) => {
+          this.logger.debug(
+            `Executed query, result size ${result?.rows?.length}`,
+          );
+          resolve(result);
+        })
+        .catch((err) => reject(err));
+    });
   }
 }

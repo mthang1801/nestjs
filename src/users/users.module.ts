@@ -7,6 +7,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from '../auth/strategies/jwt.strategy';
 import { MailModule } from '../mail/mail.module';
 import { DatabaseModule } from '../database/database.module';
+import { DatabaseRepository } from '../database/database.repository';
+import { DatabaseService } from '../database/database.service';
 import * as bcrypt from 'bcrypt';
 
 @Module({
@@ -17,6 +19,7 @@ import * as bcrypt from 'bcrypt';
     }),
     DatabaseModule,
     MailModule,
+
     MongooseModule.forFeatureAsync([
       {
         name: User.name,

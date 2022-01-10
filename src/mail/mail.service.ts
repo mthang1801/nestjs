@@ -11,7 +11,7 @@ export class MailService {
     user: IUserConfirm,
     token: string,
   ) {
-    const url = `${originUrl}/auth/restore-password?token=${token}&_id=${user._id}`;
+    const url = `${originUrl}/auth/restore-password?token=${token}&_id=${user.id}`;
 
     await this.mailerService.sendMail({
       to: user.email,

@@ -13,15 +13,22 @@ export class AuthService {
   ) {}
 
   generateToken(user: any) {
-    const payload = { sub: user._id.toString() };
-
+    const payload = { sub: user.id };
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
   async signUp(authCredentialsDto: AuthCredentialsDto): Promise<any> {
-    const user = await this.userService.createUser(authCredentialsDto);
+    const { displayName, email, password, phone } = authCredentialsDto;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await this.userService.createUser(
+      displayName,
+      email,
+      hashedPassword,
+      phone,
+    );
+
     return this.generateToken(user);
   }
   async validateUser(username: string, password: string): Promise<any> {
@@ -44,6 +51,6 @@ export class AuthService {
   }
   async updatePassword(authRestoreDto: AuthRestoreDto): Promise<any> {
     const { _id, password, token } = authRestoreDto;
-    return await this.userService.updatePassword(_id, token, password);
+    return await this.userService.updatePassword(+_id, token, password);
   }
 }
