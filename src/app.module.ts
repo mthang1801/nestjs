@@ -9,19 +9,21 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MailModule } from './mail/mail.module';
 import { DatabaseModule } from './database/database.module';
-import * as path from 'path';
+import { appConfig, databaseConfig, authConfig } from './config/index.config';
+import { LoggerModule } from './logger/logger.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      load: [appConfig, databaseConfig, authConfig],
     }),
-    MongooseModule.forRoot(process.env.MONGO_URI),
     OrdersModule,
     AuthModule,
     UsersModule,
     MailModule,
     DatabaseModule,
+    LoggerModule,
   ],
 })
 export class AppModule {}

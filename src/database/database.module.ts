@@ -4,8 +4,8 @@ import { DatabaseService } from './database.service';
 import { DatabasePoolFactory } from './database.provider';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'mysql2/promise';
-import { DatabaseCollection } from './database.collection';
-import { DatabaseRepository } from './database.repository';
+import { DatabaseCollection } from '../collections/database.collection';
+import { DatabaseRepository } from '../users/user.repository';
 @Module({
   providers: [
     {

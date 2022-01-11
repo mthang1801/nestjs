@@ -1,7 +1,7 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
-import { DatabaseService } from './database.service';
-import { DatabaseCollection } from './database.collection';
-import { Operator } from './enums/operator.enum';
+import { DatabaseService } from '../database/database.service';
+import { DatabaseCollection } from '../collections/database.collection';
+import { Operator } from '../database/enums/operator.enum';
 @Injectable()
 export class DatabaseRepository {
   constructor(private readonly databaseService: DatabaseService) {}

@@ -16,7 +16,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
 import { Table } from '../database/enums/tables.enum';
-import { DatabaseRepository } from '../database/database.repository';
+import { DatabaseRepository } from './user.repository';
 import { Operator } from '../database/enums/operator.enum';
 import { convertDateToTimeStamp } from '../utils/helper';
 import * as bcrypt from 'bcrypt';
@@ -24,7 +24,6 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly mailService: MailService,
     private readonly baseRepository: DatabaseRepository,
   ) {}

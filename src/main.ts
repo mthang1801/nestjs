@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import {
   ExpressAdapter,
@@ -8,13 +7,18 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { join } from 'path';
 import * as hbs from 'hbs';
+import { ConfigService } from '@nestjs/config';
+import { ValidationConfig } from './config/validation.config';
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(
     AppModule,
     new ExpressAdapter(),
   );
+  const configService = app.get(ConfigService);
+  app.useGlobalPipes(new ValidationPipe(ValidationConfig));
+  app.setGlobalPrefix(configService.get<string>('apiPrefix'));
 
-  app.useGlobalPipes(new ValidationPipe());
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('hbs');
@@ -22,7 +26,8 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
 
-  const PORT = process.env.PORT || 5000;
+  const PORT = configService.get<number>('port');
+
   await app.listen(PORT, async () =>
     console.log(`Application is running on: ${await app.getUrl()}`),
   );
