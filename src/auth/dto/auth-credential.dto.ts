@@ -4,6 +4,7 @@ import {
   Matches,
   MinLength,
   IsPhoneNumber,
+  MaxLength,
 } from 'class-validator';
 
 export class AuthCredentialsDto {
@@ -13,6 +14,7 @@ export class AuthCredentialsDto {
   @IsEmail()
   email: string;
   @IsString()
+  @MaxLength(25, { message: 'Password too long' })
   @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/, {
     message:
       'Minimum eight characters, at least one letter, one number and one special character',

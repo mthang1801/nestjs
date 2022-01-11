@@ -14,17 +14,16 @@ import { convertDateToTimeStamp } from '../utils/helper';
 import * as bcrypt from 'bcrypt';
 import { BaseService } from '../base/base.service';
 import { LoggerService } from '../logger/custom.logger';
-import { ObjType } from './interfaces/userObj.interfaces';
-
+import { ObjectLiteral } from '../common/ObjectLiteral';
 @Injectable()
 export class UsersService extends BaseService<User, UserRepository<User>> {
-  private table = Table.USERS;
   constructor(
     private readonly mailService: MailService,
     repository: UserRepository<User>,
     logger: LoggerService,
   ) {
     super(repository, logger);
+    this.table = Table.USERS;
   }
 
   async createUser(
@@ -44,11 +43,16 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  override async findById(id: number): Promise<User> {
+  async findById(id: number): Promise<User> {
+    console.log(id);
     return this.repository.findById(id, Table.USERS);
   }
 
-  async findOne(dataObj: ObjType): Promise<User | any> {
+  async updateUserInfo(id: number, dataObj: ObjectLiteral): Promise<void> {
+    await this.repository.update([{ id }], [dataObj], this.table);
+  }
+
+  async findOne(dataObj: ObjectLiteral): Promise<User | any> {
     try {
       const user = await this.repository.findOne([dataObj], [], this.table);
       return user;

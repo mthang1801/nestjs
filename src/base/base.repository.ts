@@ -2,13 +2,12 @@ import {
   ConsoleLogger,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { DatabaseCollection } from '../collections/database.collection';
 import { Operator } from '../database/enums/operator.enum';
-type Table = {
-  [key: string]: string;
-};
+import { ObjectLiteral } from '../common/ObjectLiteral';
 @Injectable()
 export class BaseRepositorty<T> {
   constructor(protected readonly databaseService: DatabaseService) {}
@@ -37,20 +36,26 @@ export class BaseRepositorty<T> {
     console.log(id);
     console.log(table);
 
-    const stringQuery = `SELECT * FROM ${table} WHERE id = ?`;
+    const stringQuery = `SELECT * FROM ${table} WHERE ?`;
 
     try {
-      const rows = await this.databaseService.executeQuery(stringQuery, [id]);
-      return rows[0][0];
+      const rows = await this.databaseService.executeQuery(stringQuery, [
+        { id },
+      ]);
+      const result = rows[0];
+      if (!result.length) {
+        throw new NotFoundException();
+      }
+      return result[0];
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
   async findOne(
-    filters: any[],
+    filters: ObjectLiteral[],
     fields: string[],
     table: string,
-    filtersCond = [],
+    filtersCond: string[] = [],
   ): Promise<T> {
     console.log('=============== Find One ================');
     console.log(fields);
@@ -81,24 +86,28 @@ export class BaseRepositorty<T> {
     filters: any[],
     params: any[],
     table: string,
-    filtersCond: any[],
+    filtersCond: any[] = [],
   ) {
     console.log('=============== update ================');
     console.log(filters);
     console.log(params);
     console.log(table);
+
     let sql = `UPDATE ${table} SET `;
     for (let i = 0; i < params.length; i++) {
-      for (let [key, val] of Object.entries(params[i])) {
-        if (i === 0) {
+      Object.entries(params[i]).forEach(([key, val], j) => {
+        if (j === 0) {
           sql +=
             typeof val === 'number' ? `${key} = ${val}` : `${key} = '${val}'`;
         } else {
           sql +=
-            typeof val === 'number' ? `${key} = ${val}` : `, ${key} = '${val}'`;
+            typeof val === 'number'
+              ? `, ${key} = ${val}`
+              : `, ${key} = '${val}'`;
         }
-      }
+      });
     }
+
     for (let i = 0; i < filters.length; i++) {
       for (let [key, val] of Object.entries(filters[i])) {
         if (i === 0) {

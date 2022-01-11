@@ -1,5 +1,11 @@
-import { ObjectLiteral } from './common/ObjectLiteral';
-// import { FindConditions } from './common/FindConditions';
+import { ObjectLiteral } from '../common/ObjectLiteral';
+
 export declare class AbstractRepository<Entity extends ObjectLiteral> {
   findById(id: number, table: string): Promise<Entity>;
+  findOne(
+    filters: ObjectLiteral[],
+    fields: string[],
+    table: string,
+    filterCond: string[],
+  ): Promise<Entity>;
 }

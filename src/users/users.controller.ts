@@ -2,25 +2,31 @@ import {
   Body,
   Controller,
   Get,
-  Patch,
+  Put,
   Post,
   UseGuards,
   Req,
+  Res,
 } from '@nestjs/common';
-import { UserInfoUpdateDto } from './dto/users.dto';
+import { UserInfoUpdateDto } from './dto/update-userinfo.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
+import { ApiResponse } from '@nestjs/swagger';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
   @UseGuards(JwtAuthGuard)
-  @Patch('/me/update-info')
+  @Put('/me/update-info')
   async updateUserInfo(
     @Body() userInfoUpdateDto: UserInfoUpdateDto,
+    @Req() req,
+    @Res() res,
   ): Promise<void> {
-    console.log(userInfoUpdateDto);
+    const { id } = req.user;
+    await this.usersService.updateUserInfo(id, userInfoUpdateDto);
+    return res.send({ statusCode: res.statusCode, message: 'updated' });
   }
   @UseGuards(JwtAuthGuard)
   @Get('/me')
