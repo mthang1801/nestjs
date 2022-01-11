@@ -4,7 +4,7 @@ import {
   NotFoundException,
   RequestTimeoutException,
 } from '@nestjs/common';
-import { IUser } from './interfaces/users.interfaces';
+import { User } from './user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
 import { Table } from '../database/enums/tables.enum';
@@ -14,11 +14,14 @@ import { convertDateToTimeStamp } from '../utils/helper';
 import * as bcrypt from 'bcrypt';
 import { BaseService } from '../base/base.service';
 import { LoggerService } from '../logger/custom.logger';
+import { ObjType } from './interfaces/userObj.interfaces';
+
 @Injectable()
-export class UsersService extends BaseService<IUser, UserRepository<IUser>> {
+export class UsersService extends BaseService<User, UserRepository<User>> {
+  private table = Table.USERS;
   constructor(
     private readonly mailService: MailService,
-    repository: UserRepository<IUser>,
+    repository: UserRepository<User>,
     logger: LoggerService,
   ) {
     super(repository, logger);
@@ -29,23 +32,11 @@ export class UsersService extends BaseService<IUser, UserRepository<IUser>> {
     email: string,
     password: string,
     phone: string,
-  ): Promise<IUser | any> {
+  ): Promise<User | any> {
     try {
       const user = await this.repository.insert(
         { displayName, email, password, phone },
-        Table.USER,
-      );
-      return user;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
-  }
-  async findOne(username: string): Promise<IUser | any> {
-    try {
-      const user = await this.repository.findOne(
-        [{ email: username }],
-        [],
-        Table.USER,
+        this.table,
       );
       return user;
     } catch (error) {
@@ -53,11 +44,24 @@ export class UsersService extends BaseService<IUser, UserRepository<IUser>> {
     }
   }
 
-  async resetPassword(originUrl: string, data: string): Promise<IUser | any> {
+  override async findById(id: number): Promise<User> {
+    return this.repository.findById(id, Table.USERS);
+  }
+
+  async findOne(dataObj: ObjType): Promise<User | any> {
+    try {
+      const user = await this.repository.findOne([dataObj], [], this.table);
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async resetPassword(originUrl: string, data: string): Promise<User | any> {
     const user: any = await this.repository.findOne(
       [{ email: data }, { phone: data }],
       [],
-      Table.USER,
+      this.table,
       [Operator.OR],
     );
     if (!user) {
@@ -77,7 +81,7 @@ export class UsersService extends BaseService<IUser, UserRepository<IUser>> {
             ),
           },
         ],
-        Table.USER,
+        this.table,
         [],
       );
       await this.mailService.sendUserConfirmation(originUrl, user, verifyToken);
@@ -88,9 +92,9 @@ export class UsersService extends BaseService<IUser, UserRepository<IUser>> {
     }
   }
 
-  async getMyInfo(id: string): Promise<IUser | any> {
+  async getMyInfo(id: string): Promise<User | any> {
     try {
-      const user = await this.repository.findOne([{ id }], [], Table.USER);
+      const user = await this.repository.findOne([{ id }], [], this.table);
       const userObject = JSON.parse(JSON.stringify(user));
       delete userObject.password;
       return userObject;
@@ -103,7 +107,7 @@ export class UsersService extends BaseService<IUser, UserRepository<IUser>> {
     const checkUser: any = await this.repository.findOne(
       [{ id, verifyToken: token }],
       [],
-      Table.USER,
+      this.table,
     );
 
     if (!checkUser) {
@@ -130,7 +134,7 @@ export class UsersService extends BaseService<IUser, UserRepository<IUser>> {
           },
         ],
         [],
-        Table.USER,
+        this.table,
       );
       if (!user) {
         throw new NotFoundException();
@@ -144,7 +148,7 @@ export class UsersService extends BaseService<IUser, UserRepository<IUser>> {
             updatedAt: convertDateToTimeStamp(new Date()),
           },
         ],
-        Table.USER,
+        this.table,
         [],
       );
     } catch (error) {
