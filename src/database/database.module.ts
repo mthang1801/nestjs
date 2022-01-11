@@ -2,20 +2,23 @@ import { Module, OnApplicationShutdown, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DatabaseService } from './database.service';
 import { DatabasePoolFactory } from './database.provider';
-import { ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { Pool } from 'mysql2/promise';
-import { DatabaseCollection } from '../collections/database.collection';
-import { DatabaseRepository } from '../users/user.repository';
+import { UserRepository } from '../users/user.repository';
+import { ConfigService } from '@nestjs/config';
+
 @Module({
   providers: [
     {
       provide: 'DATABASE_POOL',
-      useFactory: DatabasePoolFactory,
+      useFactory: async (configService: ConfigService) =>
+        DatabasePoolFactory(configService),
+      inject: [ConfigService],
     },
     DatabaseService,
-    DatabaseRepository,
+    UserRepository,
   ],
-  exports: [DatabaseService, DatabaseRepository],
+  exports: [DatabaseService, UserRepository],
 })
 export class DatabaseModule implements OnApplicationShutdown {
   private readonly logger = new Logger(DatabaseModule.name);

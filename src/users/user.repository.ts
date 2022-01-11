@@ -1,9 +1,14 @@
-import { ConsoleLogger, Injectable } from '@nestjs/common';
+import {
+  ConsoleLogger,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { DatabaseCollection } from '../collections/database.collection';
 import { Operator } from '../database/enums/operator.enum';
+
 @Injectable()
-export class DatabaseRepository {
+export class UserRepository<IUser> {
   constructor(private readonly databaseService: DatabaseService) {}
   async insert(params, table) {
     console.log('=============== create ================');
@@ -31,7 +36,7 @@ export class DatabaseRepository {
     fields: string[],
     table: string,
     filtersCond = [],
-  ) {
+  ): Promise<IUser> {
     console.log('=============== Find One ================');
     console.log(fields);
     console.log(table);
@@ -48,15 +53,13 @@ export class DatabaseRepository {
         }
       }
     }
-    return new Promise(async (resolve, reject) => {
-      try {
-        const rows = await this.databaseService.executeQuery(collection.sql());
 
-        resolve(rows[0][0]);
-      } catch (error) {
-        reject(error);
-      }
-    });
+    try {
+      const rows = await this.databaseService.executeQuery(collection.sql());
+      return rows[0][0];
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   async update(
