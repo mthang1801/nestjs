@@ -9,6 +9,8 @@ import { DatabaseModule } from './database/database.module';
 import { appConfig, databaseConfig, authConfig } from './config/index.config';
 import { LoggerModule } from './logger/logger.module';
 import { UserHttpModule } from './users/user-http-module';
+import { ProductsModule } from './products/products.module';
+import { CategoriesModule } from './categories/categories.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,6 +24,8 @@ import { UserHttpModule } from './users/user-http-module';
     MailModule,
     DatabaseModule,
     LoggerModule,
+    ProductsModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}

@@ -1,3 +1,5 @@
 export enum Table {
-  USER = 'user',
+  USERS = 'users',
+  PRODUCTS = 'products',
+  CATEGORIES = 'categories',
 }

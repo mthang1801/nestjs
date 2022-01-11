@@ -1,41 +1,14 @@
-import {
-  BaseEntity,
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  Unique,
-  UpdateDateColumn,
-} from 'typeorm';
-import { Exclude, Expose } from 'class-transformer';
-
-@Entity({ name: 'users' })
-export class User extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Unique(['email'])
-  @Column()
-  email: string;
-
-  @Column()
+export interface User {
   displayName: string;
-
-  @Exclude()
-  @Column()
+  email: string;
   password: string;
-
-  @Column({ default: `now()`, nullable: true })
-  createdAt: string;
-
-  @UpdateDateColumn({
-    default: `now()`,
-    nullable: true,
-  })
-  updatedAt: string;
-
-  constructor(partial: Partial<User>) {
-    super();
-    Object.assign(this, partial);
-  }
+  phone: string;
+  city: string;
+  country: string;
+  district: string;
+  address: string;
+  verifyToken: string;
+  verifyTokenExpAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }

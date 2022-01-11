@@ -32,7 +32,7 @@ export class AuthService {
     return this.generateToken(user);
   }
   async validateUser(username: string, password: string): Promise<any> {
-    const user = await this.userService.findOne(username);
+    const user = await this.userService.findOne({ email: username });
     if (!user) {
       throw new NotFoundException();
     }

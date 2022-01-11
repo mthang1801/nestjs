@@ -1,7 +1,11 @@
-import { Repository } from './base.repository';
+import { AbstractRepository } from './abstract-repository';
 import { IBaseService } from './interfaces/base.interface';
 import { LoggerService } from '../logger/custom.logger';
-export class BaseService<T, R extends Repository<T>>
+
+export interface ObjType {
+  [name: string]: string;
+}
+export abstract class BaseService<T, R extends AbstractRepository<T>>
   implements IBaseService<T>
 {
   protected readonly logger: LoggerService;
@@ -11,12 +15,7 @@ export class BaseService<T, R extends Repository<T>>
     this.logger = logger;
   }
 
-  findById(
-    filters: any[],
-    fields: string[],
-    table: string,
-    filtersCond: any[],
-  ): Promise<T | any> {
-    return this.repository.findOne(filters, fields, table, filtersCond);
+  findById(id: number, table: string): Promise<T> {
+    return this.repository.findById(id, table);
   }
 }
