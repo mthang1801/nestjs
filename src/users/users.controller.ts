@@ -10,7 +10,9 @@ import {
 import { UserInfoUpdateDto } from './dto/users.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
-import { IUserInfo } from './interfaces/users.interfaces';
+import { IUser } from './interfaces/users.interfaces';
+import { User } from './user.entity';
+
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -23,7 +25,7 @@ export class UsersController {
   }
   @UseGuards(JwtAuthGuard)
   @Get('/me')
-  async getMyInfo(@Req() req): Promise<IUserInfo> {
+  async getMyInfo(@Req() req): Promise<IUser> {
     return this.usersService.getMyInfo(req.user._id);
   }
 }

@@ -4,38 +4,34 @@ import {
   NotFoundException,
   RequestTimeoutException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { AuthCredentialsDto } from '../auth/dto/auth-credential.dto';
-import { UserDocument, User } from './users.schemas';
-import { Model } from 'mongoose';
-import {
-  IUser,
-  IUserInfo,
-  IUserRestorePwd,
-} from './interfaces/users.interfaces';
+import { IUser } from './interfaces/users.interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
 import { Table } from '../database/enums/tables.enum';
-import { DatabaseRepository } from './user.repository';
+import { UserRepository } from './user.repository';
 import { Operator } from '../database/enums/operator.enum';
 import { convertDateToTimeStamp } from '../utils/helper';
 import * as bcrypt from 'bcrypt';
-
+import { BaseService } from '../base/base.service';
+import { LoggerService } from '../logger/custom.logger';
 @Injectable()
-export class UsersService {
+export class UsersService extends BaseService<IUser, UserRepository<IUser>> {
   constructor(
     private readonly mailService: MailService,
-    private readonly baseRepository: DatabaseRepository,
-  ) {}
+    repository: UserRepository<IUser>,
+    logger: LoggerService,
+  ) {
+    super(repository, logger);
+  }
 
   async createUser(
     displayName: string,
     email: string,
     password: string,
     phone: string,
-  ): Promise<any> {
+  ): Promise<IUser | any> {
     try {
-      const user = await this.baseRepository.insert(
+      const user = await this.repository.insert(
         { displayName, email, password, phone },
         Table.USER,
       );
@@ -44,9 +40,9 @@ export class UsersService {
       throw new InternalServerErrorException(error.message);
     }
   }
-  async findOne(username: string): Promise<any> {
+  async findOne(username: string): Promise<IUser | any> {
     try {
-      const user = await this.baseRepository.findOne(
+      const user = await this.repository.findOne(
         [{ email: username }],
         [],
         Table.USER,
@@ -57,8 +53,8 @@ export class UsersService {
     }
   }
 
-  async resetPassword(originUrl: string, data: string): Promise<any> {
-    const user: any = await this.baseRepository.findOne(
+  async resetPassword(originUrl: string, data: string): Promise<IUser | any> {
+    const user: any = await this.repository.findOne(
       [{ email: data }, { phone: data }],
       [],
       Table.USER,
@@ -71,7 +67,7 @@ export class UsersService {
     try {
       const verifyToken = uuidv4();
 
-      await this.baseRepository.update(
+      await this.repository.update(
         [{ id: user.id }],
         [
           { verifyToken },
@@ -92,9 +88,9 @@ export class UsersService {
     }
   }
 
-  async getMyInfo(id: string): Promise<any> {
+  async getMyInfo(id: string): Promise<IUser | any> {
     try {
-      const user = await this.baseRepository.findOne([{ id }], [], Table.USER);
+      const user = await this.repository.findOne([{ id }], [], Table.USER);
       const userObject = JSON.parse(JSON.stringify(user));
       delete userObject.password;
       return userObject;
@@ -104,7 +100,7 @@ export class UsersService {
   }
 
   async restorePassword(id: string, token: string): Promise<any> {
-    const checkUser: any = await this.baseRepository.findOne(
+    const checkUser: any = await this.repository.findOne(
       [{ id, verifyToken: token }],
       [],
       Table.USER,
@@ -126,7 +122,7 @@ export class UsersService {
     newPassword: string,
   ): Promise<any> {
     try {
-      const user: any = await this.baseRepository.findOne(
+      const user: any = await this.repository.findOne(
         [
           {
             id: +_id,
@@ -140,7 +136,7 @@ export class UsersService {
         throw new NotFoundException();
       }
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await this.baseRepository.update(
+      await this.repository.update(
         [{ id: user.id }],
         [
           {
