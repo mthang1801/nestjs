@@ -1,6 +1,7 @@
 create database if not exists ddvecom;
 
 use ddvecom;
+
 create table user(
 	id int(12) auto_increment primary key, 
     displayName varchar(50) not null, 
@@ -18,28 +19,28 @@ create table user(
 );
 
 create table categories(
-	categoryID int(12) auto_increment primary key, 
-    categoryName varchar(50)
-);
-	
-create table products(
-	productID int(12) auto_increment primary key,
-    productName varchar(100) not null, 
-    productPrice float not null check(productPrice > 0), 
-    productWeight float check(productWeight > 0), 
-    productCartDesc varchar(250) , 
-    productShortDesc varchar(1000), 
-    productLongDesc text, 
-    productThumb varchar(100), 
-    productImage varchar(100), 
-    productCategoryID int(12), 
-    productNumber int check(productNumber > 0),  
-    productOrigin varchar(100),
-    productCreatedAt timestamp default current_timestamp(),
-    productUpdatedAt timestamp default current_timestamp()
+	id int(12) auto_increment primary key, 
+    categoryName varchar(50) unique
 );
 
-ALTER TABLE products ADD FOREIGN KEY (productCategoryID) references categories(categoryID);
+
+create table products(
+	id int(12) auto_increment primary key, 
+    productName varchar(100) not null, -- Title cho sản phẩm    	
+    productShortDesc varchar(512), -- Mô tả ngắn gọn thông tin sản Phẩm, phục vụ cho SEO 
+    productLongDesc text,  -- Mô tả chi tiết thông tin sản phẩm        
+    productThumb varchar(100), -- Thumbnail cho sản phẩm        
+    productCategoryID int(12),  -- FK Liên kết đến category
+    productOrigin varchar(100), -- Nguồn gốc, xuất xứ của SP
+	productQuarranty varchar(20),
+    productCreatedAt timestamp default current_timestamp(),
+    productUpdatedAt timestamp default current_timestamp()
+);	
+
+ALTER TABLE products ADD CONSTRAINT fk_products_categories FOREIGN KEY (productCategoryID) references categories(id);
+ALTER TABLE products ADD CONSTRAINT chk_min_max_price CHECK (productMinPrice <= productMaxPrice);
+
+
 
 
 

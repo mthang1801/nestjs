@@ -14,19 +14,18 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
     this.repository = repository;
     this.logger = logger;
   }
+  deleteById(id: number): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
 
   findById(id: number): Promise<T> {
     this.logger.warn(
-      'Đừng thay đổi field id thành tên khác, nó sẽ không hoạt động!!',
+      'Đừng thay đổi field id thành tên khác, (tạm thời chưa update)',
     );
     return this.repository.findById(id, this.table);
   }
 
   findOne(dataObj: ObjectLiteral): Promise<T> {
     return this.repository.findOne([dataObj], [], this.table, []);
-  }
-
-  deleteById(id: number): Promise<any> {
-    return this.repository.deleteById(id, this.table);
   }
 }
