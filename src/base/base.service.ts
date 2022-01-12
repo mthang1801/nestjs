@@ -15,11 +15,18 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
     this.logger = logger;
   }
 
-  findById(id: number, table: string): Promise<T> {
-    return this.repository.findById(id, table);
+  findById(id: number): Promise<T> {
+    this.logger.warn(
+      'Đừng thay đổi field id thành tên khác, nó sẽ không hoạt động!!',
+    );
+    return this.repository.findById(id, this.table);
   }
 
   findOne(dataObj: ObjectLiteral): Promise<T> {
     return this.repository.findOne([dataObj], [], this.table, []);
+  }
+
+  deleteById(id: number): Promise<any> {
+    return this.repository.deleteById(id, this.table);
   }
 }

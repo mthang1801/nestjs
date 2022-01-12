@@ -8,4 +8,5 @@ export declare class AbstractRepository<Entity extends ObjectLiteral> {
     table: string,
     filterCond: string[],
   ): Promise<Entity>;
+  deleteById(id: number, table: string): Promise<boolean | any>;
 }

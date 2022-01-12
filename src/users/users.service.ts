@@ -44,8 +44,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
   }
 
   async findById(id: number): Promise<User> {
-    console.log(id);
-    return this.repository.findById(id, Table.USERS);
+    return this.repository.findById(id, this.table);
   }
 
   async updateUserInfo(id: number, dataObj: ObjectLiteral): Promise<void> {

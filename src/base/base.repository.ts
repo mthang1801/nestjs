@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConsoleLogger,
   Injectable,
   InternalServerErrorException,
@@ -11,25 +12,24 @@ import { ObjectLiteral } from '../common/ObjectLiteral';
 @Injectable()
 export class BaseRepositorty<T> {
   constructor(protected readonly databaseService: DatabaseService) {}
-  async insert(params, table) {
+  async insert(params: any, table: string): Promise<T | any> {
     console.log('=============== create ================');
     console.log(params);
     console.log(table);
 
     let sql = `INSERT INTO ${table} SET ?`;
-    return new Promise(async (resolve, reject) => {
-      try {
-        await this.databaseService.executeQuery(sql, params);
-        const user = await this.findOne(
-          [{ email: params.email }, { phone: params.phone }],
-          [],
-          table,
-        );
-        resolve(user);
-      } catch (error) {
-        reject(error);
+
+    try {
+      await this.databaseService.executeQuery(sql, params);
+      let filters = [];
+      for (let [key, val] of Object.entries(params)) {
+        filters.push({ [key]: val });
       }
-    });
+
+      return await this.findOne([...filters], [], table);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
   async findById(id: number, table: string): Promise<T> {
     console.log('=============== Find By Id ================');
@@ -48,7 +48,7 @@ export class BaseRepositorty<T> {
       }
       return result[0];
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw new BadRequestException(error);
     }
   }
   async findOne(
@@ -58,6 +58,7 @@ export class BaseRepositorty<T> {
     filtersCond: string[] = [],
   ): Promise<T> {
     console.log('=============== Find One ================');
+    console.log(filters);
     console.log(fields);
     console.log(table);
 
@@ -78,7 +79,7 @@ export class BaseRepositorty<T> {
       const rows = await this.databaseService.executeQuery(collection.sql());
       return rows[0][0];
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw new BadRequestException();
     }
   }
 
@@ -87,7 +88,7 @@ export class BaseRepositorty<T> {
     params: any[],
     table: string,
     filtersCond: any[] = [],
-  ) {
+  ): Promise<boolean | any> {
     console.log('=============== update ================');
     console.log(filters);
     console.log(params);
@@ -123,13 +124,31 @@ export class BaseRepositorty<T> {
         }
       }
     }
-    return new Promise(async (resolve, reject) => {
-      try {
-        await this.databaseService.executeQuery(sql);
-        resolve(true);
-      } catch (error) {
-        reject(error);
+
+    try {
+      await this.databaseService.executeQuery(sql);
+      return true;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async deleteById(id: number, table: string): Promise<boolean | any> {
+    console.log('=============== delete ================');
+    console.log(id);
+    const queryString = `DELETE FROM ${table} WHERE ?`;
+    try {
+      const res = await this.databaseService.executeQuery(queryString, [
+        { id },
+      ]);
+      if (res[0].affectedRows === 0) {
+        throw new NotFoundException({
+          message: `Not found category with id = ${id} to delete`,
+        });
       }
-    });
+      return true;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 }

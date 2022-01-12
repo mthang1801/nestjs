@@ -7,6 +7,7 @@ import {
   UseGuards,
   Req,
   Res,
+  Response,
 } from '@nestjs/common';
 import { UserInfoUpdateDto } from './dto/update-userinfo.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -31,7 +32,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('/me')
   async getMyInfo(@Req() req): Promise<User> {
-    return this.usersService.getMyInfo(req.user._id);
+    return this.usersService.getMyInfo(req.user.id);
   }
 
   @Get('/:id')

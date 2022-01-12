@@ -5,12 +5,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from '../auth/strategies/jwt.strategy';
 import { MailModule } from '../mail/mail.module';
 import { DatabaseModule } from '../database/database.module';
-import { LoggerService } from '../logger/custom.logger';
+import { LoggerModule } from '../logger/logger.module';
 import * as bcrypt from 'bcrypt';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
-    LoggerService,
+    LoggerModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -23,7 +23,7 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
     MailModule,
   ],
   exports: [UsersService],
-  providers: [UsersService, JwtStrategy, LoggerService],
+  providers: [UsersService, JwtStrategy],
   controllers: [UsersController],
 })
 export class UsersModule {}

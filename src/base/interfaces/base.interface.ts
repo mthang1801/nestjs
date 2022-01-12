@@ -4,4 +4,5 @@ import { ObjectLiteral } from '../common/ObjectLiteral';
 export interface IBaseService<T> {
   findById(id: number, table: string): Promise<T>;
   findOne(dataObj: ObjectLiteral[]): Promise<T>;
+  deleteById(id: number): Promise<boolean | any>;
 }
