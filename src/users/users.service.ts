@@ -31,7 +31,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     email: string,
     password: string,
     phone: string,
-  ): Promise<User | any> {
+  ): Promise<User> {
     try {
       const user = await this.repository.insert(
         { displayName, email, password, phone },
@@ -44,14 +44,17 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
   }
 
   async findById(id: number): Promise<User> {
-    return this.repository.findById(id, this.table);
+    const user = await this.repository.findById(id, this.table);
+    const userObject = JSON.parse(JSON.stringify(user));
+    delete userObject.password;
+    return userObject;
   }
 
   async updateUserInfo(id: number, dataObj: ObjectLiteral): Promise<void> {
     await this.repository.update([{ id }], [dataObj], this.table);
   }
 
-  async findOne(dataObj: ObjectLiteral): Promise<User | any> {
+  async findOne(dataObj: ObjectLiteral): Promise<User> {
     try {
       const user = await this.repository.findOne([dataObj], [], this.table);
       return user;
@@ -60,7 +63,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async resetPassword(originUrl: string, data: string): Promise<User | any> {
+  async resetPassword(originUrl: string, data: string): Promise<boolean> {
     const user: any = await this.repository.findOne(
       [{ email: data }, { phone: data }],
       [],
@@ -88,14 +91,13 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
         [],
       );
       await this.mailService.sendUserConfirmation(originUrl, user, verifyToken);
-
-      return { message: 'success' };
+      return true;
     } catch (error) {
-      return { message: error.message };
+      throw new InternalServerErrorException({ message: error.message });
     }
   }
 
-  async getMyInfo(id: string): Promise<User | any> {
+  async getMyInfo(id: string): Promise<User> {
     try {
       const user = await this.repository.findOne([{ id }], [], this.table);
       const userObject = JSON.parse(JSON.stringify(user));
@@ -127,7 +129,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     _id: number,
     token: string,
     newPassword: string,
-  ): Promise<any> {
+  ): Promise<boolean> {
     try {
       const user: any = await this.repository.findOne(
         [
@@ -154,6 +156,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
         this.table,
         [],
       );
+      return true;
     } catch (error) {
       throw new InternalServerErrorException();
     }
