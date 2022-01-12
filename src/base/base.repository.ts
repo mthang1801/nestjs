@@ -12,7 +12,7 @@ import { ObjectLiteral } from '../common/ObjectLiteral';
 @Injectable()
 export class BaseRepositorty<T> {
   constructor(protected readonly databaseService: DatabaseService) {}
-  async insert(params: any, table: string): Promise<T | any> {
+  async insert(params: any, table: string): Promise<T> {
     console.log('=============== create ================');
     console.log(params);
     console.log(table);
@@ -88,7 +88,7 @@ export class BaseRepositorty<T> {
     params: any[],
     table: string,
     filtersCond: any[] = [],
-  ): Promise<boolean | any> {
+  ): Promise<boolean> {
     console.log('=============== update ================');
     console.log(filters);
     console.log(params);
@@ -97,7 +97,7 @@ export class BaseRepositorty<T> {
     let sql = `UPDATE ${table} SET `;
     for (let i = 0; i < params.length; i++) {
       Object.entries(params[i]).forEach(([key, val], j) => {
-        if (j === 0) {
+        if (j === 0 && i === 0) {
           sql +=
             typeof val === 'number' ? `${key} = ${val}` : `${key} = '${val}'`;
         } else {
@@ -108,7 +108,6 @@ export class BaseRepositorty<T> {
         }
       });
     }
-
     for (let i = 0; i < filters.length; i++) {
       for (let [key, val] of Object.entries(filters[i])) {
         if (i === 0) {
@@ -133,7 +132,7 @@ export class BaseRepositorty<T> {
     }
   }
 
-  async deleteById(id: number, table: string): Promise<boolean | any> {
+  async deleteById(id: number, table: string): Promise<boolean> {
     console.log('=============== delete ================');
     console.log(id);
     const queryString = `DELETE FROM ${table} WHERE ?`;

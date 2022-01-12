@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuthCredentialsDto } from './dto/auth-credential.dto';
 import { AuthRestoreDto } from '../auth/dto/auth-restore.dto';
 import { IUser } from '../users/interfaces/users.interfaces';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '../users/user.entity';
 import * as bcrypt from 'bcrypt';
 @Injectable()
 export class AuthService {
@@ -12,14 +17,16 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  generateToken(user: any) {
+  generateToken(user: any): { access_token: string } {
     const payload = { sub: user.id };
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
-  async signUp(authCredentialsDto: AuthCredentialsDto): Promise<any> {
+  async signUp(
+    authCredentialsDto: AuthCredentialsDto,
+  ): Promise<{ access_token: string }> {
     const { displayName, email, password, phone } = authCredentialsDto;
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await this.userService.createUser(
@@ -31,26 +38,33 @@ export class AuthService {
 
     return this.generateToken(user);
   }
-  async validateUser(username: string, password: string): Promise<any> {
+  async validateUser(username: string, password: string): Promise<User> {
     const user = await this.userService.findOne({ email: username });
     if (!user) {
       throw new NotFoundException();
     }
+    const checkPwd = await bcrypt.compare(password, user.password);
+    if (!checkPwd) {
+      throw new BadRequestException({
+        message: 'Tài khoản hoặc mật khẩu không đúng.',
+      });
+    }
     return user;
   }
-  login(user: any) {
+  login(user: any): { access_token: string } {
     return this.generateToken(user);
   }
-  async resetPassword(url: string, data: string): Promise<any> {
-    const res = await this.userService.resetPassword(url, data);
-    return res;
+  async resetPassword(url: string, data: string): Promise<boolean> {
+    await this.userService.resetPassword(url, data);
+    return true;
   }
-  async restorePassword(_id: string, token: string): Promise<IUser> {
+  async restorePassword(_id: string, token: string): Promise<User> {
     const user = await this.userService.restorePassword(_id, token);
     return user;
   }
-  async updatePassword(authRestoreDto: AuthRestoreDto): Promise<any> {
+  async updatePassword(authRestoreDto: AuthRestoreDto): Promise<boolean> {
     const { _id, password, token } = authRestoreDto;
-    return await this.userService.updatePassword(+_id, token, password);
+    await this.userService.updatePassword(+_id, token, password);
+    return true;
   }
 }
