@@ -1,4 +1,7 @@
 import DATE_FORMATER from 'date-format';
 
 export const convertDateToTimeStamp = (DateTime) =>
-  new Date(DateTime).toISOString().slice(0, 19).replace('T', ' ');
+  new Date(new Date(DateTime).getTime() + 7 * 3600 * 1000)
+    .toISOString()
+    .slice(0, 19)
+    .replace('T', ' ');

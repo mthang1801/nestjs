@@ -1,15 +1,23 @@
 export class User {
   id: number;
-  displayName: string;
+  facebook_access_id: number;
+  google_access_id: number;
   email: string;
+  displayName: string;
   password: string;
+  firstName: string;
+  lastName: string;
+  avatar: string;
+  // Contact Information
   phone: string;
   city: string;
   country: string;
   district: string;
   address: string;
+  // Token to verification
   verifyToken: string;
-  verifyTokenExpAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  provider: string;
+  verifyTokenExpAt: Date | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }

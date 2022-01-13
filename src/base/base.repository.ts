@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { DatabaseCollection } from '../collections/database.collection';
+import { DatabaseCollection } from '../database/database.collection';
 import { Operator } from '../database/enums/operator.enum';
 import { ObjectLiteral } from '../common/ObjectLiteral';
 @Injectable()
@@ -16,7 +16,11 @@ export class BaseRepositorty<T> {
     console.log('=============== create ================');
     console.log(params);
     console.log(table);
-
+    if (Array.isArray(params) || typeof params !== 'object') {
+      throw new BadRequestException({
+        message: 'Tham số truyền vào phải là Object',
+      });
+    }
     let sql = `INSERT INTO ${table} SET ?`;
 
     try {
@@ -26,7 +30,7 @@ export class BaseRepositorty<T> {
         filters.push({ [key]: val });
       }
 
-      return await this.findOne([...filters], [], table);
+      return await this.findOne([...filters], table);
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -53,8 +57,8 @@ export class BaseRepositorty<T> {
   }
   async findOne(
     filters: ObjectLiteral[],
-    fields: string[],
     table: string,
+    fields: string[] = [],
     filtersCond: string[] = [],
   ): Promise<T> {
     console.log('=============== Find One ================');
@@ -83,10 +87,18 @@ export class BaseRepositorty<T> {
     }
   }
 
+  /**
+   *
+   * @param filters bộ lọc truy vấn các ràng buộc trong thuộc tính của field
+   * @param table tên bảng
+   * @param params tham số cần update
+   * @param filtersCond toán tử liên kết giữa các filter với nhau
+   * @returns
+   */
   async update(
     filters: any[],
-    params: any[],
     table: string,
+    params: any[],
     filtersCond: any[] = [],
   ): Promise<boolean> {
     console.log('=============== update ================');

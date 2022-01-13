@@ -9,10 +9,11 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
 {
   protected readonly logger: LoggerService;
   protected readonly repository: R;
-  protected table = Table.USERS;
+  protected table: string;
   constructor(repository: R, logger: LoggerService) {
     this.repository = repository;
     this.logger = logger;
+    this.table = '';
   }
   deleteById(id: number): Promise<any> {
     throw new Error('Method not implemented.');
@@ -26,6 +27,6 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
   }
 
   findOne(dataObj: ObjectLiteral): Promise<T> {
-    return this.repository.findOne([dataObj], [], this.table, []);
+    return this.repository.findOne([dataObj], this.table, [], []);
   }
 }

@@ -11,14 +11,12 @@ import {
   InternalServerErrorException,
   BadRequestException,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
-
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credential.dto';
 import { AuthRestoreDto } from './dto/auth-restore.dto';
-import { IUser } from '../users/interfaces/users.interfaces';
 
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -30,11 +28,28 @@ export class AuthController {
   ): Promise<{ access_token: string }> {
     return await this.authService.signUp(authCredentialsDto);
   }
-  @UseGuards(LocalAuthGuard)
+
   @Post('login')
+  @UseGuards(LocalAuthGuard)
   async login(@Req() req): Promise<{ access_token: string }> {
     return this.authService.login(req.user);
   }
+
+  @Get('/google/login')
+  @UseGuards(GoogleAuthGuard)
+  async loginWithGoogle(@Res() res): Promise<void> {}
+
+  @Get()
+  renderAuthPage(@Res() res) {
+    res.render('authentication');
+  }
+
+  @Get('/google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuthRedirect(@Req() req): Promise<{ access_token: string }> {
+    return this.authService.loginWithGoogle(req.user);
+  }
+
   @Post('reset-password')
   async resetPassword(@Req() req, @Res() res): Promise<void> {
     const fullUrl = req.protocol + '://' + req.get('host');

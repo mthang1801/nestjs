@@ -17,7 +17,7 @@ export class CategoriesService extends BaseService<
     super(repository, logger);
     this.table = Table.CATEGORIES;
   }
-  async createCategory(categoryName: string): Promise<Category | any> {
+  async createCategory(categoryName: string): Promise<Category> {
     return this.repository.insert({ categoryName }, this.table);
   }
 
@@ -29,11 +29,9 @@ export class CategoriesService extends BaseService<
     id: number,
     categoryName: string,
   ): Promise<Category | any> {
-    const res = await this.repository.update(
-      [{ id }],
-      [{ categoryName }],
-      this.table,
-    );
+    const res = await this.repository.update([{ id }], this.table, [
+      { categoryName },
+    ]);
     return res;
   }
 }

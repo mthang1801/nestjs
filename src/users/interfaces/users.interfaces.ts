@@ -22,3 +22,26 @@ export interface IUserConfirm {
 export interface IUserRestorePwd extends IUser {
   verifyTokenExpAt: Date;
 }
+
+export interface UserAuthGoogle {
+  id: string;
+  displayName: string;
+  familyName: string;
+  givenName: string;
+  email: string;
+  avatar: string;
+  phone: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface NewUserAuthGoogle {
+  email: string;
+  googleId: string;
+  displayName: string;
+  firstName: string;
+  lastName: string;
+  avatar: string;
+  password: string;
+  phone: string;
+}
