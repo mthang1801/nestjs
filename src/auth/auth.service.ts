@@ -10,7 +10,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/user.entity';
 import * as bcrypt from 'bcrypt';
-import { UserAuthGoogle } from '../users/interfaces/users.interfaces';
+import { UserAuthSocialMedia } from '../users/interfaces/users.interfaces';
 @Injectable()
 export class AuthService {
   constructor(
@@ -55,12 +55,21 @@ export class AuthService {
   login(user: any): { access_token: string } {
     return this.generateToken(user);
   }
+
   async loginWithGoogle(
-    user: UserAuthGoogle,
+    user: UserAuthSocialMedia,
   ): Promise<{ access_token: string }> {
     const userRes = await this.userService.loginWithGoogle(user);
     return this.generateToken(userRes);
   }
+
+  async loginWithFacebook(
+    user: UserAuthSocialMedia,
+  ): Promise<{ access_token: string }> {
+    const userRes = await this.userService.loginWithFacebook(user);
+    return this.generateToken(userRes);
+  }
+
   async resetPassword(url: string, data: string): Promise<boolean> {
     await this.userService.resetPassword(url, data);
     return true;

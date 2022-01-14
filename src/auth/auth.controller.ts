@@ -17,6 +17,7 @@ import { AuthRestoreDto } from './dto/auth-restore.dto';
 
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { FacebookAuthGuard } from './guards/facebook-auth.guards';
 
 @Controller('auth')
 export class AuthController {
@@ -35,19 +36,34 @@ export class AuthController {
     return this.authService.login(req.user);
   }
 
-  @Get('/google/login')
-  @UseGuards(GoogleAuthGuard)
-  async loginWithGoogle(@Res() res): Promise<void> {}
-
   @Get()
   renderAuthPage(@Res() res) {
     res.render('authentication');
   }
 
-  @Get('/google/callback')
+  @Get('google/login')
+  @UseGuards(GoogleAuthGuard)
+  async loginWithGoogle(@Res() res): Promise<void> {}
+
+  @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Req() req): Promise<{ access_token: string }> {
     return this.authService.loginWithGoogle(req.user);
+  }
+
+  @Get('facebook/login')
+  @UseGuards(FacebookAuthGuard)
+  async loginWithFacebook(@Res() res): Promise<void> {}
+
+  @Get('facebook/callback')
+  @UseGuards(FacebookAuthGuard)
+  async facebookAuthRedirect(
+    @Req() req,
+    @Res() res,
+  ): Promise<{ access_token: string }> {
+    const tokenRes = await this.authService.loginWithFacebook(req.user);
+    res.send(tokenRes);
+    return tokenRes;
   }
 
   @Post('reset-password')
