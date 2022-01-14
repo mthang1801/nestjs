@@ -23,7 +23,7 @@ export interface IUserRestorePwd extends IUser {
   verifyTokenExpAt: Date;
 }
 
-export interface UserAuthGoogle {
+export interface UserAuthSocialMedia {
   id: string;
   displayName: string;
   familyName: string;
@@ -35,7 +35,7 @@ export interface UserAuthGoogle {
   refreshToken: string;
 }
 
-export interface NewUserAuthGoogle {
+export interface NewUserAuthSocialMedia {
   email: string;
   googleId: string;
   displayName: string;

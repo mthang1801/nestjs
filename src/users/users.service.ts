@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -17,8 +18,8 @@ import { LoggerService } from '../logger/custom.logger';
 import { ObjectLiteral } from '../common/ObjectLiteral';
 import { AuthProvider } from '../auth/interfaces/provider.interface';
 import {
-  UserAuthGoogle,
-  NewUserAuthGoogle,
+  UserAuthSocialMedia,
+  NewUserAuthSocialMedia,
 } from './interfaces/users.interfaces';
 @Injectable()
 export class UsersService extends BaseService<User, UserRepository<User>> {
@@ -48,7 +49,16 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async loginWithGoogle(user: UserAuthGoogle): Promise<User> {
+  async loginThroughSocialMedia(
+    user: UserAuthSocialMedia,
+    provider: AuthProvider,
+  ): Promise<User> {
+    if (!user.accessToken && !user.refreshToken) {
+      throw new InternalServerErrorException({
+        message: 'Not found access token or refresh token',
+      });
+    }
+
     // 1. Tạo một google_access để lưu giữ refresh token và access_token,
     // 2. Đối với table User
     // TH1 : Nếu người dùng chưa có tài khoản -> tạo mới tài khoản ->
@@ -60,53 +70,101 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     // TH2 : Nếu người dùng đã có tài khoản SYSTEM ->
     //    i. Gán id của google_access ở B1 vào google_access_id của User sắp khởi tạo
     //    ii. Đối với những fields profile nào người dùng để trống, đưa profile của google vào, ngược lại bỏ qua
+    // **Lưu ý: ** Mỗi người dùng ngoài SYSTEM chỉ có thể đăng nhập bằng 1 provider
 
     let userExist: User = await this.findOne({ email: user.email });
-    const googleAccess = {
+    const keysAccess = {
       accessToken: user.accessToken,
-      refreshToken: user.refreshToken,
+      refreshToken: user.refreshToken || 'empty',
     };
-    const googleAccessRes = await this.repository.insert(
-      googleAccess,
-      Table.GOOGLE_ACCESS,
-    );
-    if (!user.accessToken || !user.refreshToken) {
-      throw new InternalServerErrorException({
-        message: 'Not found access token or refresh token',
-      });
-    }
+
+    const tableProviderAccess =
+      provider === AuthProvider.GOOGLE
+        ? Table.GOOGLE_ACCESS
+        : Table.FACEBOOK_ACCESS;
+
+    // Nhận diện google_access_id hoặc facebook_access_id
+    const userProviderField =
+      provider === AuthProvider.GOOGLE
+        ? 'google_access_id'
+        : 'facebook_access_id';
+
     if (!userExist) {
+      // Tạo access provider trước khi tạo user
+      const accessProviderRes = await this.repository.insert(
+        keysAccess,
+        tableProviderAccess,
+      );
+
       const newUser = {
-        google_access_id: googleAccessRes.id,
+        [userProviderField]: accessProviderRes.id,
         displayName: user.displayName,
         firstName: user.givenName,
         lastName: user.familyName,
         avatar: user.avatar,
         email: user.email,
-        provider: AuthProvider.GOOGLE,
+        provider,
         password: uuidv4(),
         phone: '0',
       };
       const newUserRes = await this.repository.insert(newUser, this.table);
       return newUserRes;
     }
+    // Kiểm tra người dùng đã đăng nhập tới provider khác hay chưa
+    if (
+      userExist.provider.toLowerCase() !== AuthProvider.SYSTEM.toLowerCase() &&
+      userExist.provider.toLowerCase() !== provider.toLowerCase()
+    ) {
+      throw new BadRequestException({
+        message:
+          'Người dùng đã kết nối đến provider khác, không thể kết nối thêm, vui lòng điều hướng người dùng đến provider SYSTEM hoặc provider đã đăng nhập trước đó',
+      });
+    }
 
-    const updatedUser = {
-      google_access_id: googleAccessRes.id,
-      displayName: userExist.displayName || user.displayName,
-      firstName: userExist.firstName || user.givenName,
-      lastName: userExist.lastName || user.familyName,
-      avatar: userExist.avatar || user.avatar,
-      provider: AuthProvider.GOOGLE,
-      password: userExist.password || uuidv4(),
-      phone: userExist.phone || '0',
-      updatedAt: convertDateToTimeStamp(new Date()),
-    };
-
+    // Nếu User đã tồn tại, tài khoản đó có thể đã có ProviderId nhưng cũng có thể chỉ là SYSTEM
+    // Nếu chỉ là tài khoản SYSTEM, cần cấp thêm Provider cho tài khoản đó
+    let updatedUser: any = {};
+    let accessProviderRes: any;
+    if (!userExist[userProviderField]) {
+      accessProviderRes = await this.repository.insert(
+        keysAccess,
+        tableProviderAccess,
+      );
+    } else {
+      const updatedRes = await this.repository.update(
+        [{ id: userExist[userProviderField] }],
+        tableProviderAccess,
+        [keysAccess],
+      );
+      if (!updatedRes) {
+        throw new InternalServerErrorException({
+          message: 'Cập nhật token không thành công.',
+        });
+      }
+    }
+    updatedUser[userProviderField] =
+      accessProviderRes?.id || userExist[userProviderField];
+    updatedUser['displayName'] = userExist.displayName || user.displayName;
+    updatedUser['firstName'] = userExist.firstName || user.givenName;
+    updatedUser['lastName'] = userExist.lastName || user.familyName;
+    updatedUser['avatar'] = userExist.avatar || user.avatar;
+    updatedUser['provider'] = provider;
+    updatedUser['updatedAt'] = convertDateToTimeStamp(new Date());
+    // Update lại access provider trước khi update user
     await this.repository.update([{ id: userExist.id }], this.table, [
       updatedUser,
     ]);
-    return userExist;
+    const updatedUserResult = {
+      ...userExist,
+      ...updatedUser,
+    };
+    return updatedUserResult;
+  }
+  async loginWithGoogle(user: UserAuthSocialMedia): Promise<User> {
+    return this.loginThroughSocialMedia(user, AuthProvider.GOOGLE);
+  }
+  async loginWithFacebook(user: UserAuthSocialMedia): Promise<User> {
+    return this.loginThroughSocialMedia(user, AuthProvider.FACEBOOK);
   }
 
   async findById(id: number): Promise<User> {

@@ -12,7 +12,7 @@ import { ObjectLiteral } from '../common/ObjectLiteral';
 @Injectable()
 export class BaseRepositorty<T> {
   constructor(protected readonly databaseService: DatabaseService) {}
-  async insert(params: any, table: string): Promise<T> {
+  async insert(params: any, table: string): Promise<any> {
     console.log('=============== create ================');
     console.log(params);
     console.log(table);
@@ -60,7 +60,7 @@ export class BaseRepositorty<T> {
     table: string,
     fields: string[] = [],
     filtersCond: string[] = [],
-  ): Promise<T> {
+  ): Promise<any> {
     console.log('=============== Find One ================');
     console.log(filters);
     console.log(fields);
