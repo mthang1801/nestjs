@@ -20,7 +20,7 @@ export class DatabaseCollection {
 
   constructor(table) {
     this.table = table;
-    this.stringSelect = '';
+    this.stringSelect = 'SELECT t.* ';
     this.alias = 't';
     this.arrayTable = [];
     this.stringJoin = '';
@@ -85,18 +85,22 @@ export class DatabaseCollection {
   }
 
   checkAndReplaceTypeOfJoin(typeOfJoin) {
+    let typeJoin = '';
+    console.log(89, typeOfJoin);
     switch (typeOfJoin.toLowerCase()) {
       case 'leftJoin':
-        return 'LEFT JOIN';
+        typeJoin = 'LEFT JOIN';
       case 'rightJoin':
-        return 'RIGHT JOIN';
+        typeJoin = 'RIGHT JOIN';
       case 'innerJoin':
-        return 'INNER JOIN';
+        typeJoin = 'INNER JOIN';
       case 'crossJoin':
-        return 'CROSS JOIN';
+        typeJoin = 'CROSS JOIN';
       default:
-        return 'JOIN';
+        typeJoin = 'JOIN';
     }
+    console.log(typeJoin);
+    return typeJoin;
   }
 
   /**
@@ -136,10 +140,10 @@ export class DatabaseCollection {
       const tableNames = Object.keys(listJoins);
       for (let table of tableNames) {
         const { fieldJoin, rootJoin } = objFields[typeOfJoin][table];
-        const typeJoin = this.checkAndReplaceTypeOfJoin(typeOfJoin);
+
         const result = this.checkTableJoin(rootJoin, table, fieldJoin);
 
-        this.addJoin(table, result.fieldJoin, result.rootJoin, typeJoin);
+        this.addJoin(table, result.fieldJoin, result.rootJoin, typeOfJoin);
       }
     }
   }
@@ -398,6 +402,7 @@ export class DatabaseCollection {
   sql(is_limit = true): string {
     let sql_string = '';
     this.stringCondition = this.genCondition();
+
     sql_string =
       this.stringSelect +
       ` FROM ${this.table} ${this.alias} ` +

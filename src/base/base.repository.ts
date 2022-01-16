@@ -7,21 +7,26 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { DatabaseCollection } from '../database/database.collection';
-import { Operator } from '../database/enums/operator.enum';
+import { Operator, Table } from '../database/enums/index';
 import { ObjectLiteral } from '../common/ObjectLiteral';
+
 @Injectable()
 export class BaseRepositorty<T> {
-  constructor(protected readonly databaseService: DatabaseService) {}
-  async insert(params: any, table: string): Promise<any> {
+  constructor(
+    protected readonly databaseService: DatabaseService,
+    protected table: Table,
+  ) {
+    this.table = table;
+  }
+  async create(params: any): Promise<any> {
     console.log('=============== create ================');
     console.log(params);
-    console.log(table);
     if (Array.isArray(params) || typeof params !== 'object') {
       throw new BadRequestException({
         message: 'Tham số truyền vào phải là Object',
       });
     }
-    let sql = `INSERT INTO ${table} SET ?`;
+    let sql = `INSERT INTO ${this.table} SET ?`;
 
     try {
       await this.databaseService.executeQuery(sql, params);
@@ -30,17 +35,16 @@ export class BaseRepositorty<T> {
         filters.push({ [key]: val });
       }
 
-      return await this.findOne([...filters], table);
+      return await this.findOne({ where: params });
     } catch (error) {
       throw new BadRequestException(error);
     }
   }
-  async findById(id: number, table: string): Promise<T> {
+  async findById(id: number): Promise<T> {
     console.log('=============== Find By Id ================');
     console.log(id);
-    console.log(table);
-
-    const stringQuery = `SELECT * FROM ${table} WHERE ?`;
+    console.log(this.table);
+    const stringQuery = `SELECT * FROM ${this.table} WHERE ?`;
 
     try {
       const rows = await this.databaseService.executeQuery(stringQuery, [
@@ -55,35 +59,52 @@ export class BaseRepositorty<T> {
       throw new BadRequestException(error);
     }
   }
-  async findOne(
-    filters: ObjectLiteral[],
-    table: string,
-    fields: string[] = [],
-    filtersCond: string[] = [],
-  ): Promise<any> {
+  async findOne(options: any): Promise<any> {
     console.log('=============== Find One ================');
-    console.log(filters);
-    console.log(fields);
-    console.log(table);
+    console.log(64, options);
+    try {
+      const results = await this.find(options);
+      console.log(results);
+      return results[0];
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 
-    const collection = new DatabaseCollection(table);
-    collection.addSelect(fields);
+  async find(options: any): Promise<any[]> {
+    console.log('=============== Find ================');
+    console.log(options);
+    const optionKeys = Object.keys(options);
+    const orderCmds = [
+      'select',
+      'from',
+      'join',
+      'where',
+      'skip',
+      'limit',
+      'orderBy',
+    ];
 
-    for (let i = 0; i < filters.length; i++) {
-      for (let [key, val] of Object.entries(filters[i])) {
-        if (!filtersCond.length || filtersCond[i] === Operator.AND) {
-          collection.andWhere(key, '=', val);
-        } else {
-          collection.orWhere(key, '=', val);
+    const collection = new DatabaseCollection(this.table);
+    for (let cmd of orderCmds) {
+      if (optionKeys.includes(cmd)) {
+        if (cmd === 'skip') {
+          collection['setSkip'](options[cmd]);
+          continue;
         }
+        if (cmd === 'limit') {
+          collection['setLimit'](options[cmd]);
+          continue;
+        }
+        collection[cmd](options[cmd]);
       }
     }
 
     try {
-      const rows = await this.databaseService.executeQuery(collection.sql());
-      return rows[0][0];
+      const results = await this.databaseService.executeQuery(collection.sql());
+      return results[0];
     } catch (error) {
-      throw new BadRequestException();
+      throw new InternalServerErrorException(error);
     }
   }
 

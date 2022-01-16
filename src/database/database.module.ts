@@ -17,6 +17,7 @@ import { ConfigService } from '@nestjs/config';
     },
     DatabaseService,
     UserRepository,
+    String,
   ],
   exports: [DatabaseService, UserRepository],
 })

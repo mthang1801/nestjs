@@ -8,10 +8,15 @@ import {
 import { User } from './user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
-import { Table } from '../../../database/enums/tables.enum';
 import { UserRepository } from './user.repository';
-import { Operator } from '../../../database/enums/operator.enum';
+import {
+  Operator,
+  Table,
+  SortBy,
+  JoinTable,
+} from '../../../database/enums/index';
 import { convertDateToTimeStamp } from '../../../utils/helper';
+import { Like } from '../../../database/find-options/operators';
 import * as bcrypt from 'bcrypt';
 import { BaseService } from '../../../base/base.service';
 import { LoggerService } from '../../../logger/custom.logger';
@@ -27,8 +32,9 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     private readonly mailService: MailService,
     repository: UserRepository<User>,
     logger: LoggerService,
+    table: Table,
   ) {
-    super(repository, logger);
+    super(repository, logger, table);
     this.table = Table.USERS;
   }
 
@@ -39,10 +45,12 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     phone: string,
   ): Promise<User> {
     try {
-      const user = await this.repository.insert(
-        { displayName, email, password, phone },
-        this.table,
-      );
+      const user = await this.repository.create({
+        displayName,
+        email,
+        password,
+        phone,
+      });
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -91,10 +99,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
 
     if (!userExist) {
       // Tạo access provider trước khi tạo user
-      const accessProviderRes = await this.repository.insert(
-        keysAccess,
-        tableProviderAccess,
-      );
+      const accessProviderRes = await this.repository.create(keysAccess);
 
       const newUser = {
         [userProviderField]: accessProviderRes.id,
@@ -107,7 +112,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
         password: uuidv4(),
         phone: '0',
       };
-      const newUserRes = await this.repository.insert(newUser, this.table);
+      const newUserRes = await this.repository.create(newUser);
       return newUserRes;
     }
     // Kiểm tra người dùng đã đăng nhập tới provider khác hay chưa
@@ -126,10 +131,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     let updatedUser: any = {};
     let accessProviderRes: any;
     if (!userExist[userProviderField]) {
-      accessProviderRes = await this.repository.insert(
-        keysAccess,
-        tableProviderAccess,
-      );
+      accessProviderRes = await this.repository.create(keysAccess);
     } else {
       const updatedRes = await this.repository.update(
         [{ id: userExist[userProviderField] }],
@@ -168,7 +170,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
   }
 
   async findById(id: number): Promise<User> {
-    const user = await this.repository.findById(id, this.table);
+    const user = await this.repository.findById(id);
     const userObject = JSON.parse(JSON.stringify(user));
     delete userObject.password;
     return userObject;
@@ -180,7 +182,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
 
   async findOne(dataObj: ObjectLiteral): Promise<User> {
     try {
-      const user = await this.repository.findOne([dataObj], this.table);
+      const user = await this.repository.findOne({ where: dataObj });
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -188,12 +190,9 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
   }
 
   async resetPassword(originUrl: string, data: string): Promise<boolean> {
-    const user: any = await this.repository.findOne(
-      [{ email: data }, { phone: data }],
-      this.table,
-      [],
-      [Operator.OR],
-    );
+    const user: any = await this.repository.findOne({
+      where: [{ email: data }, { phone: data }],
+    });
     if (!user) {
       throw new NotFoundException();
     }
@@ -218,7 +217,44 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
 
   async getMyInfo(id: string): Promise<User> {
     try {
-      const user = await this.repository.findOne([{ id }], this.table);
+      const user = await this.repository.findOne({ where: { id } });
+      // const test = await this.repository.find({
+      //   select: [],
+      //   join: {
+      //     alias: 'user',
+      //     [JoinTable.leftJoin]: {
+      //       orders: { fieldJoin: 'customer_id', rootJoin: 'id' },
+      //       orderItem: {
+      //         fieldJoin: 'orderItem.orderId',
+      //         rootJoin: 'orders.order_id',
+      //       },
+      //       products: {
+      //         fieldJoin: 'products.product_id',
+      //         rootJoin: 'orderItem.productId',
+      //       },
+      //     },
+      //   },
+      //   // where: [
+      //   //   { firstName: Like('Mai văn'), lastName: 'Quốc' },
+      //   //   { firstName: [Like('Mai'), 'Nguyễn'], lastName: 'Bê' },
+      //   //   { firstName: 'Mai văn', lastName: 'Thắng' },
+      //   // ],
+      //   // where: {
+      //   //   firstName: [Like('Mai'), 'Nguyễn'],
+      //   //   lastName: Like('Thắng'),
+      //   //   country: Like('VietNam'),
+      //   //   email: 'mthang1801@gmail.com',
+      //   // },
+      //   // orderBy: [
+      //   //   { field: 'orderItem.id', sort_by: SortBy.ASC },
+      //   //   { field: 'product.price', sort_by: SortBy.DESC },
+      //   //   { field: 'product.id', sort_by: SortBy.ASC },
+      //   //   { field: 'product.quantity', sort_by: SortBy.DESC },
+      //   // ],
+      //   skip: 0,
+      //   limit: 30,
+      // });
+
       const userObject = JSON.parse(JSON.stringify(user));
       delete userObject.password;
       return userObject;
@@ -228,10 +264,9 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
   }
 
   async restorePassword(id: string, token: string): Promise<any> {
-    const checkUser: any = await this.repository.findOne(
-      [{ id, verifyToken: token }],
-      this.table,
-    );
+    const checkUser: any = await this.repository.findOne({
+      where: { id, verifyToken: token },
+    });
 
     if (!checkUser) {
       throw new NotFoundException();
@@ -249,15 +284,12 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     newPassword: string,
   ): Promise<boolean> {
     try {
-      const user: any = await this.repository.findOne(
-        [
-          {
-            id: +_id,
-            verifyToken: token,
-          },
-        ],
-        this.table,
-      );
+      const user: any = await this.repository.findOne({
+        where: {
+          id: +_id,
+          verifyToken: token,
+        },
+      });
       if (!user) {
         throw new NotFoundException();
       }

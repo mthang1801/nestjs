@@ -9,11 +9,11 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
 {
   protected readonly logger: LoggerService;
   protected readonly repository: R;
-  protected table: string;
-  constructor(repository: R, logger: LoggerService) {
+  protected table: Table;
+  constructor(repository: R, logger: LoggerService, table: Table) {
     this.repository = repository;
     this.logger = logger;
-    this.table = '';
+    this.table = table;
   }
   deleteById(id: number): Promise<any> {
     throw new Error('Method not implemented.');
@@ -23,10 +23,14 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
     this.logger.warn(
       'Đừng thay đổi field id thành tên khác, (tạm thời chưa update)',
     );
-    return this.repository.findById(id, this.table);
+    return this.repository.findById(id);
   }
 
-  findOne(dataObj: ObjectLiteral): Promise<T> {
-    return this.repository.findOne([dataObj], this.table, [], []);
+  findOne(options: ObjectLiteral): Promise<T> {
+    return this.repository.findOne(options);
+  }
+
+  find(options: any): Promise<any[]> {
+    return this.repository.find(options);
   }
 }
