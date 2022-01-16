@@ -1,40 +1,44 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
+import {
+  CustomRepositoryCannotInheritRepositoryError,
+  UsingJoinColumnIsNotAllowedError,
+} from 'typeorm';
 import { Condition } from '../base/interfaces/collection.interfaces';
+import { SortBy } from './enums/index';
 export class DatabaseCollection {
   private table: string;
 
-  private arraySort: any;
   private stringSelect: string;
+  private alias: string;
   private arrayTable: any[];
   private stringJoin: string;
   private arrayCondition: any[];
   private stringCondition: string;
-  private stringFilter: string;
+  private sortString: string;
   private limit: number;
   private offset: number;
 
   constructor(table) {
     this.table = table;
-
-    this.arraySort = [];
     this.stringSelect = '';
+    this.alias = 't';
     this.arrayTable = [];
     this.stringJoin = '';
     this.arrayCondition = [];
     this.stringCondition = ' ';
-    this.stringFilter = ' ';
+    this.sortString = ' ';
     this.limit = 20;
     this.offset = 0;
   }
 
   reset(): void {
-    this.arraySort = [];
-    this.stringSelect = 'SELECT t.* ';
+    this.stringSelect = `SELECT ${this.alias}.* `;
+    this.alias = 't';
     this.arrayTable = [];
     this.stringJoin = '';
     this.arrayCondition = [];
     this.stringCondition = ' ';
-    this.stringFilter = ' ';
+    this.sortString = ' ';
     this.limit = 20;
     this.offset = 0;
   }
@@ -55,8 +59,20 @@ export class DatabaseCollection {
     return this.stringSelect;
   }
 
-  setLimit(limit): void {
-    this.limit = limit;
+  select(arrayFields: string[]): string {
+    if (Array.isArray(arrayFields) && arrayFields.length) {
+      for (let i = 0; i < arrayFields.length; i++) {
+        if (i === 0) {
+          this.stringSelect = `SELECT ${arrayFields[i]}`;
+          continue;
+        }
+        this.stringSelect += `, ${arrayFields[i]}`;
+      }
+    } else {
+      this.stringSelect = `SELECT *`;
+    }
+
+    return this.stringSelect;
   }
 
   setOffset(offset): void {
@@ -68,8 +84,64 @@ export class DatabaseCollection {
     return this.stringJoin;
   }
 
-  join(table, fieldJoin, rootJoin, typeJoin = ''): void {
-    this.stringJoin += ` ${typeJoin} JOIN ${table} ON ${fieldJoin} = ${rootJoin} `;
+  checkAndReplaceTypeOfJoin(typeOfJoin) {
+    switch (typeOfJoin.toLowerCase()) {
+      case 'leftJoin':
+        return 'LEFT JOIN';
+      case 'rightJoin':
+        return 'RIGHT JOIN';
+      case 'innerJoin':
+        return 'INNER JOIN';
+      case 'crossJoin':
+        return 'CROSS JOIN';
+      default:
+        return 'JOIN';
+    }
+  }
+
+  /**
+   *
+   * @param rootJoinedField The field of the root table which is joined from other tables
+   * @param tableJoinedName The name of the current table which join to root table
+   * @param joinedField The field of the current table connecting the root table
+   */
+  checkTableJoin(
+    rootJoinedField: string,
+    tableJoinedName: string,
+    joinedField: string,
+  ) {
+    const splitRootJoinedField = rootJoinedField.split('.');
+    const splitJoinedField = joinedField.split('.');
+    let newJoinedField = joinedField;
+    let newRootJoinedField = rootJoinedField;
+    if (splitRootJoinedField.length < 2) {
+      newRootJoinedField = `${this.alias || this.table}.${rootJoinedField}`;
+    }
+    if (splitJoinedField.length < 2) {
+      newJoinedField = `${tableJoinedName}.${joinedField}`;
+    }
+
+    return { fieldJoin: newJoinedField, rootJoin: newRootJoinedField };
+  }
+
+  join(objFields: any): void {
+    if (objFields.alias) {
+      this.alias = objFields.alias;
+    }
+    const typesOfJoin = Object.keys(objFields).filter((field) =>
+      /join/gi.test(field),
+    );
+    for (let typeOfJoin of typesOfJoin) {
+      const listJoins = objFields[typeOfJoin];
+      const tableNames = Object.keys(listJoins);
+      for (let table of tableNames) {
+        const { fieldJoin, rootJoin } = objFields[typeOfJoin][table];
+        const typeJoin = this.checkAndReplaceTypeOfJoin(typeOfJoin);
+        const result = this.checkTableJoin(rootJoin, table, fieldJoin);
+
+        this.addJoin(table, result.fieldJoin, result.rootJoin, typeJoin);
+      }
+    }
   }
 
   andWhere(field, operation, value): void {
@@ -82,6 +154,25 @@ export class DatabaseCollection {
 
       let condition = {
         connect: 'AND',
+        field: field,
+        operation: operation != '' ? operation : '=',
+        value: value,
+      };
+
+      this.arrayCondition.push(condition);
+    }
+  }
+
+  orWhere(field, operation, value): void {
+    if (field != '') {
+      if (operation == 'LIKE') {
+        value = `'%${value}%'`;
+      } else {
+        value = `'${value}'`;
+      }
+
+      let condition = {
+        connect: 'OR',
         field: field,
         operation: operation != '' ? operation : '=',
         value: value,
@@ -125,7 +216,7 @@ export class DatabaseCollection {
     }
   }
 
-  orWhere(field, operation, value): void {
+  orAndWhere(field, operation, value, pos_cond): void {
     if (field != '') {
       if (operation == 'LIKE') {
         value = `'%${value}%'`;
@@ -133,73 +224,163 @@ export class DatabaseCollection {
         value = `'${value}'`;
       }
 
-      let condition = {
-        connect: 'OR',
-        field: field,
+      let condition: any = {
         operation: operation != '' ? operation : '=',
-        value: value,
       };
+      switch (pos_cond) {
+        case 'first':
+          condition.connect = 'OR';
+          condition.field = '(' + field;
+          condition.value = value;
+          break;
+        case 'middle':
+          condition.connect = 'AND';
+          condition.field = field;
+          condition.value = value;
+          break;
+        case 'last':
+          condition.connect = 'AND';
+          condition.field = field;
+          condition.value = value + ')';
+          break;
+        default:
+      }
 
       this.arrayCondition.push(condition);
     }
   }
-
-  orderBy(): string {
-    let string_filter = '';
-    for (let i = 0; i < this.arraySort.length; i++) {
-      if (i == 0) {
-        string_filter +=
-          ' ORDER BY ' +
-          `${this.arraySort[i].field}` +
-          ` ${this.arraySort[i].sort_by}`;
-      } else {
-        string_filter += `, ${this.arraySort[i].field} ${this.arraySort[i].sort_by}`;
-      }
-    }
-    this.stringFilter = string_filter;
-    return this.stringFilter;
-  }
-
-  addSort(field = '', value = ''): void {
-    if (field != '' && value != '') {
-      let record = {
-        field: field,
-        sort_by: value,
-      };
-
-      this.arraySort.push(record);
-    }
-  }
-
-  where(): string {
-    let stringCondition = '';
-    if (this.arrayCondition.length > 0) {
-      let arrayCheckExist = [];
-      for (let i = 0; i < this.arrayCondition.length; i++) {
-        arrayCheckExist[
-          this.arrayCondition[i].field + '_' + this.arrayCondition[i].value
-        ] = this.arrayCondition[i];
-      }
-
-      let i = 0;
-      for (var data in arrayCheckExist) {
-        if (i == 0) {
-          stringCondition += `WHERE ${arrayCheckExist[data].field} ${arrayCheckExist[data].operation} ${arrayCheckExist[data].value} `;
-        } else {
-          stringCondition += ` ${arrayCheckExist[data].connect} ${arrayCheckExist[data].field} ${arrayCheckExist[data].operation} ${arrayCheckExist[data].value} `;
+  orderBy(sortArray: { field: string; sort_by: SortBy }[]): void {
+    if (sortArray.length) {
+      let sortString = '';
+      for (let i = 0; i < sortArray.length; i++) {
+        const { field, sort_by } = sortArray[i];
+        if (i === 0) {
+          sortString += ` ${field} ${sort_by}`;
+          continue;
         }
-        i++;
+        sortString += `, ${field} ${sort_by}`;
       }
+      this.sortString = sortString;
     }
-    return stringCondition;
+  }
+
+  where(objFields: any): void {
+    if (typeof objFields !== 'object') {
+      throw new BadRequestException({
+        message: 'Truy vấn where không hợp lệ.',
+      });
+    }
+    // Array is considered as OR operator, so we will connect with orAndWhere each other
+    if (Array.isArray(objFields)) {
+      this.orCondition(objFields);
+      return;
+    }
+    // Object us considered as AND operator, so we will connect with andOrWhere each other
+    this.andCondition(objFields);
+  }
+
+  andCondition(objFields: any): void {
+    Object.entries(objFields).forEach(([field, val], i) => {
+      let value = val;
+      let operator = '=';
+      if (typeof val !== 'object') {
+        this.andWhere(field, operator, val);
+      } else if (typeof val === 'object') {
+        if (Array.isArray(val)) {
+          for (let j = 0; j < val.length; j++) {
+            let subValue = val[j];
+            let subOperator = '=';
+            if (typeof subValue !== 'object') {
+              if (j === 0) {
+                this.andOrWhere(field, subOperator, subValue, 'first');
+              } else if (j === val.length - 1) {
+                this.andOrWhere(field, subOperator, subValue, 'last');
+              } else {
+                this.andOrWhere(field, subOperator, subValue, 'middle');
+              }
+            } else if (
+              typeof subValue === 'object' &&
+              !Array.isArray(subValue)
+            ) {
+              subValue = val[j]['value'];
+              subOperator = val[j]['operator'];
+              if (j === 0) {
+                this.andOrWhere(field, subOperator, subValue, 'first');
+              } else if (j === val.length - 1) {
+                this.andOrWhere(field, subOperator, subValue, 'last');
+              } else {
+                this.andOrWhere(field, subOperator, subValue, 'middle');
+              }
+            }
+          }
+        } else {
+          value = val['value'];
+          operator = val['operator'];
+          this.andWhere(field, operator, value);
+        }
+      }
+    });
+  }
+
+  orCondition(arrayFields: any): void {
+    for (let i = 0; i < arrayFields.length; i++) {
+      Object.entries(arrayFields[i]).forEach(([field, val], j) => {
+        let value = val['value'] || val;
+        let operator = val['operator'] || '=';
+
+        if (typeof val !== 'object') {
+          if (j === 0) {
+            this.orAndWhere(field, operator, value, 'first');
+          } else if (j === Object.entries(arrayFields[i]).length - 1) {
+            this.orAndWhere(field, operator, value, 'last');
+          } else {
+            this.orAndWhere(field, operator, value, 'middle');
+          }
+        } else if (typeof val === 'object') {
+          if (Array.isArray(val)) {
+            for (let k = 0; k < value.length; k++) {
+              let subValue = val[j]['value'] || val[j];
+              let subOperator = val[j]['operator'] || '=';
+              if (j === 0 && k === 0) {
+                this.orAndWhere(field, subOperator, subValue, 'first');
+              } else if (
+                j === Object.entries(arrayFields[i]).length - 1 &&
+                k === value.length - 1
+              ) {
+                this.orAndWhere(field, subOperator, subValue, 'last');
+              } else {
+                this.orAndWhere(field, subOperator, subValue, 'middle');
+              }
+            }
+          } else {
+            if (j === 0) {
+              this.orAndWhere(field, operator, value, 'first');
+            } else if (j === Object.entries(arrayFields[i]).length - 1) {
+              this.orAndWhere(field, operator, value, 'last');
+            } else {
+              this.orAndWhere(field, operator, value, 'middle');
+            }
+          }
+        }
+      });
+    }
+  }
+
+  setSkip(offset: number): void {
+    this.offset = offset;
+  }
+
+  setLimit(limit: number): void {
+    this.limit = limit;
   }
 
   sqlCount(): string {
-    const condition = this.where();
+    // const condition = this.where();
+    const condition = '';
     const sql =
       this.arrayCondition.length === 0
-        ? `SELECT count(*) AS total FROM ${this.table} t ${this.stringJoin}`
-        : `SELECT count(*) AS total FROM ${this.table} t ${this.stringJoin} ${condition}`;
+        ? `SEL  ECT count(*) AS total FROM ${this.table} ${this.alias} ${this.stringJoin}`
+        : `SELECT count(*) AS total    ${this.table} ${this.alias} ${this.stringJoin} ${condition}`;
     return sql;
   }
 
@@ -207,23 +388,22 @@ export class DatabaseCollection {
     let sql_string = '';
     sql_string =
       this.stringSelect +
-      ` FROM ${this.table} t ` +
+      ` FROM ${this.table} ${this.alias} ` +
       this.stringJoin +
-      ` WHERE t.id= ${id} LIMIT 1 `;
+      ` WHERE ${this.alias}.id= ${id} LIMIT 1 `;
     this.reset();
     return sql_string;
   }
 
   sql(is_limit = true): string {
     let sql_string = '';
-    this.stringCondition = this.where();
-
+    this.stringCondition = this.genCondition();
     sql_string =
       this.stringSelect +
-      ` FROM ${this.table} t ` +
+      ` FROM ${this.table} ${this.alias} ` +
       this.stringJoin +
       this.stringCondition +
-      this.orderBy();
+      this.sortString;
     if (is_limit == true) {
       sql_string += ` LIMIT ${this.limit} OFFSET ${this.offset}`;
     }
@@ -236,8 +416,8 @@ export class DatabaseCollection {
     const condition = this.genCondition();
     const sql =
       this.arrayCondition.length === 0
-        ? `SELECT count(1) AS total FROM ${this.table} t ${this.stringJoin}`
-        : `SELECT count(1) AS total FROM ${this.table} t ${this.stringJoin} ${condition}`;
+        ? `SELECT count(1) AS total FROM ${this.table} ${this.alias} ${this.stringJoin}`
+        : `SELECT count(1) AS total FROM ${this.table} ${this.alias} ${this.stringJoin} ${condition}`;
     return sql;
   }
 
@@ -245,8 +425,8 @@ export class DatabaseCollection {
     const condition = this.genCondition();
     const sql =
       this.arrayCondition.length === 0
-        ? `SELECT count(Distinct ${col}) AS total FROM ${this.table} t ${this.stringJoin}`
-        : `SELECT count(Distinct ${col}) AS total FROM ${this.table} t ${this.stringJoin} ${condition}`;
+        ? `SELECT count(Distinct ${col}) AS total FROM ${this.table} ${this.alias} ${this.stringJoin}`
+        : `SELECT count(Distinct ${col}) AS total FROM ${this.table} ${this.alias} ${this.stringJoin} ${condition}`;
     return sql;
   }
 

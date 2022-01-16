@@ -8,7 +8,7 @@ import { MailModule } from './app/backend/mail/mail.module';
 import { DatabaseModule } from './database/database.module';
 import { appConfig, databaseConfig, authConfig } from './config/index.config';
 import { LoggerModule } from './logger/logger.module';
-import { ProductsModule } from './app/products/products.module';
+import { ProductsModule } from './app/backend/products/products.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
