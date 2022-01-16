@@ -4,8 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AuthCredentialsDto } from './dto/auth-credential.dto';
-import { AuthRestoreDto } from '../auth/dto/auth-restore.dto';
-import { IUser } from '../users/interfaces/users.interfaces';
+import { AuthRestoreDto } from './dto/auth-restore.dto';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/user.entity';

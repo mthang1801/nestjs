@@ -8,14 +8,14 @@ import {
 import { User } from './user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
-import { Table } from '../database/enums/tables.enum';
+import { Table } from '../../../database/enums/tables.enum';
 import { UserRepository } from './user.repository';
-import { Operator } from '../database/enums/operator.enum';
-import { convertDateToTimeStamp } from '../utils/helper';
+import { Operator } from '../../../database/enums/operator.enum';
+import { convertDateToTimeStamp } from '../../../utils/helper';
 import * as bcrypt from 'bcrypt';
-import { BaseService } from '../base/base.service';
-import { LoggerService } from '../logger/custom.logger';
-import { ObjectLiteral } from '../common/ObjectLiteral';
+import { BaseService } from '../../../base/base.service';
+import { LoggerService } from '../../../logger/custom.logger';
+import { ObjectLiteral } from '../../../common/ObjectLiteral';
 import { AuthProvider } from '../auth/interfaces/provider.interface';
 import {
   UserAuthSocialMedia,

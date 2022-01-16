@@ -18,7 +18,7 @@ import { User } from './user.entity';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
   @UseGuards(JwtAuthGuard)
-  @Put('/me/update-info')
+  @Put()
   async updateUserInfo(
     @Body() userInfoUpdateDto: UserInfoUpdateDto,
     @Req() req,
@@ -30,7 +30,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('/me')
+  @Get()
   async getMyInfo(@Req() req): Promise<User> {
     return this.usersService.getMyInfo(req.user.id);
   }

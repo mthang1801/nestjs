@@ -4,7 +4,7 @@ import { DatabaseService } from './database.service';
 import { DatabasePoolFactory } from './database.provider';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Pool } from 'mysql2/promise';
-import { UserRepository } from '../users/user.repository';
+import { UserRepository } from '../app/backend/users/user.repository';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
