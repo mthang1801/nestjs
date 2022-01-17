@@ -20,7 +20,7 @@ export class BaseRepositorty<T> {
   }
   async create(params: any): Promise<any> {
     console.log('=============== create ================');
-    console.log(params);
+
     if (Array.isArray(params) || typeof params !== 'object') {
       throw new BadRequestException({
         message: 'Tham số truyền vào phải là Object',
@@ -42,8 +42,7 @@ export class BaseRepositorty<T> {
   }
   async findById(id: number): Promise<T> {
     console.log('=============== Find By Id ================');
-    console.log(id);
-    console.log(this.table);
+
     const stringQuery = `SELECT * FROM ${this.table} WHERE ?`;
 
     try {
@@ -61,10 +60,8 @@ export class BaseRepositorty<T> {
   }
   async findOne(options: any): Promise<any> {
     console.log('=============== Find One ================');
-    console.log(64, options);
     try {
-      const results = await this.find(options);
-      console.log(results);
+      const results = await this.find({ ...options, limit: 1 });
       return results[0];
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -111,64 +108,41 @@ export class BaseRepositorty<T> {
   /**
    *
    * @param filters bộ lọc truy vấn các ràng buộc trong thuộc tính của field
-   * @param table tên bảng
    * @param params tham số cần update
-   * @param filtersCond toán tử liên kết giữa các filter với nhau
    * @returns
    */
-  async update(
-    filters: any[],
-    table: string,
-    params: any[],
-    filtersCond: any[] = [],
-  ): Promise<boolean> {
+  async updateOne(filters: any | any[], params: any): Promise<T> {
     console.log('=============== update ================');
-    console.log(filters);
-    console.log(params);
-    console.log(table);
 
-    let sql = `UPDATE ${table} SET `;
-    for (let i = 0; i < params.length; i++) {
-      Object.entries(params[i]).forEach(([key, val], j) => {
-        if (j === 0 && i === 0) {
-          sql +=
-            typeof val === 'number' ? `${key} = ${val}` : `${key} = '${val}'`;
-        } else {
-          sql +=
-            typeof val === 'number'
-              ? `, ${key} = ${val}`
-              : `, ${key} = '${val}'`;
-        }
-      });
-    }
-    for (let i = 0; i < filters.length; i++) {
-      for (let [key, val] of Object.entries(filters[i])) {
-        if (i === 0) {
-          sql +=
-            typeof val === 'number'
-              ? ` WHERE ${key} = ${val} ${filtersCond[i] || ''} `
-              : ` WHERE ${key} = '${val}' ${filtersCond[i] || ''} `;
-        } else {
-          sql +=
-            typeof val === 'number'
-              ? `${key} = ${val} ${filtersCond[i] || ''} `
-              : `${key} = '${val}' ${filtersCond[i] || ''} `;
-        }
+    const findOneByFilters = await this.findOne(filters);
+
+    let sql = `UPDATE ${this.table} SET `;
+    Object.entries(params).forEach(([key, val], i) => {
+      if (i === 0) {
+        sql +=
+          typeof val === 'number' ? `${key} = ${val}` : `${key} = '${val}'`;
       }
-    }
+      sql +=
+        typeof val === 'number' ? `, ${key} = ${val}` : `, ${key} = '${val}'`;
+    });
+
+    sql += ` WHERE id = '${findOneByFilters.id}'`;
 
     try {
-      await this.databaseService.executeQuery(sql);
-      return true;
+      await this.databaseService.executeQuery(sql, [
+        { id: findOneByFilters.id },
+      ]);
+      const updatedOne = await this.findById(findOneByFilters.id);
+      return updatedOne;
     } catch (error) {
       throw new BadRequestException(error);
     }
   }
 
-  async deleteById(id: number, table: string): Promise<boolean> {
-    console.log('=============== delete ================');
-    console.log(id);
-    const queryString = `DELETE FROM ${table} WHERE ?`;
+  async deleteById(id: number): Promise<boolean> {
+    console.log('=============== DELETE BY ID ================');
+
+    const queryString = `DELETE FROM ${this.table} WHERE ?`;
     try {
       const res = await this.databaseService.executeQuery(queryString, [
         { id },
@@ -179,6 +153,16 @@ export class BaseRepositorty<T> {
         });
       }
       return true;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async deleteOne(filters: any | any[]): Promise<any> {
+    console.log('=============== DELETE ONE ================');
+    const findOneByFilters = await this.findOne(filters);
+    try {
+      return this.deleteById(findOneByFilters.id);
     } catch (error) {
       throw new BadRequestException(error);
     }

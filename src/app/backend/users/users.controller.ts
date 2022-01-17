@@ -23,10 +23,14 @@ export class UsersController {
     @Body() userInfoUpdateDto: UserInfoUpdateDto,
     @Req() req,
     @Res() res,
-  ): Promise<void> {
+  ): Promise<any> {
     const { id } = req.user;
-    await this.usersService.updateUserInfo(id, userInfoUpdateDto);
-    return res.send({ statusCode: res.statusCode, message: 'updated' });
+    const result = await this.usersService.updateUserInfo(
+      id,
+      userInfoUpdateDto,
+    );
+    console.log(result);
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)

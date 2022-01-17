@@ -133,16 +133,15 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     if (!userExist[userProviderField]) {
       accessProviderRes = await this.repository.create(keysAccess);
     } else {
-      const updatedRes = await this.repository.update(
-        [{ id: userExist[userProviderField] }],
-        tableProviderAccess,
-        [keysAccess],
-      );
-      if (!updatedRes) {
-        throw new InternalServerErrorException({
-          message: 'Cập nhật token không thành công.',
-        });
-      }
+      // const updatedRes = await this.repository.update(
+      //   { id: userExist[userProviderField] },
+      //   [keysAccess],
+      // );
+      // if (!updatedRes) {
+      //   throw new InternalServerErrorException({
+      //     message: 'Cập nhật token không thành công.',
+      //   });
+      // }
     }
     updatedUser[userProviderField] =
       accessProviderRes?.id || userExist[userProviderField];
@@ -153,9 +152,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     updatedUser['provider'] = provider;
     updatedUser['updatedAt'] = convertDateToTimeStamp(new Date());
     // Update lại access provider trước khi update user
-    await this.repository.update([{ id: userExist.id }], this.table, [
-      updatedUser,
-    ]);
+    await this.repository.updateOne({ id: userExist.id }, [updatedUser]);
     const updatedUserResult = {
       ...userExist,
       ...updatedUser,
@@ -176,8 +173,8 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     return userObject;
   }
 
-  async updateUserInfo(id: number, dataObj: ObjectLiteral): Promise<void> {
-    await this.repository.update([{ id }], this.table, [dataObj]);
+  async updateUserInfo(id: number, dataObj: ObjectLiteral): Promise<any> {
+    return await this.repository.updateOne({ id }, dataObj);
   }
 
   async findOne(dataObj: ObjectLiteral): Promise<User> {
@@ -200,14 +197,15 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     try {
       const verifyToken = uuidv4();
 
-      await this.repository.update([{ id: user.id }], this.table, [
-        { verifyToken },
+      await this.repository.updateOne(
+        { id: user.id },
         {
+          verifyToken,
           verifyTokenExpAt: convertDateToTimeStamp(
             new Date(Date.now() + 2 * 3600 * 1000),
           ),
         },
-      ]);
+      );
       await this.mailService.sendUserConfirmation(originUrl, user, verifyToken);
       return true;
     } catch (error) {
@@ -218,6 +216,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
   async getMyInfo(id: string): Promise<User> {
     try {
       const user = await this.repository.findOne({ where: { id } });
+
       // const test = await this.repository.find({
       //   select: [],
       //   join: {
@@ -294,12 +293,13 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
         throw new NotFoundException();
       }
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await this.repository.update([{ id: user.id }], this.table, [
+      await this.repository.updateOne(
+        { id: user.id },
         {
           password: hashedPassword,
           updatedAt: convertDateToTimeStamp(new Date()),
         },
-      ]);
+      );
       return true;
     } catch (error) {
       throw new InternalServerErrorException();

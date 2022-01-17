@@ -15,8 +15,8 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
     this.logger = logger;
     this.table = table;
   }
-  deleteById(id: number): Promise<any> {
-    throw new Error('Method not implemented.');
+  deleteById(id: number): Promise<boolean> {
+    return this.repository.deleteById(id);
   }
 
   findById(id: number): Promise<T> {

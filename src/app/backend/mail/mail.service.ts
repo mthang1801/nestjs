@@ -1,6 +1,7 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { IUserConfirm } from '../users/interfaces/users.interfaces';
+import { join } from 'path';
 @Injectable()
 export class MailService {
   constructor(private mailerService: MailerService) {}
@@ -11,6 +12,7 @@ export class MailService {
     token: string,
   ) {
     const url = `${originUrl}/auth/restore-password?token=${token}&_id=${user.id}`;
+    console.log(join(__dirname, 'templates'));
     await this.mailerService.sendMail({
       to: user.email,
       // from: '"Support Team" <support@example.com>', // override default from

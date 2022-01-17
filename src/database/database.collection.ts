@@ -333,27 +333,35 @@ export class DatabaseCollection {
         let operator = val['operator'] || '=';
 
         if (typeof val !== 'object') {
-          if (j === 0) {
-            this.orAndWhere(field, operator, value, 'first');
-          } else if (j === Object.entries(arrayFields[i]).length - 1) {
-            this.orAndWhere(field, operator, value, 'last');
+          if (Object.entries(arrayFields[i]).length > 1) {
+            if (j === 0) {
+              this.orAndWhere(field, operator, value, 'first');
+            } else if (j === Object.entries(arrayFields[i]).length - 1) {
+              this.orAndWhere(field, operator, value, 'last');
+            } else {
+              this.orAndWhere(field, operator, value, 'middle');
+            }
           } else {
-            this.orAndWhere(field, operator, value, 'middle');
+            this.orWhere(field, operator, value);
           }
         } else if (typeof val === 'object') {
           if (Array.isArray(val)) {
             for (let k = 0; k < value.length; k++) {
               let subValue = val[j]['value'] || val[j];
               let subOperator = val[j]['operator'] || '=';
-              if (j === 0 && k === 0) {
-                this.orAndWhere(field, subOperator, subValue, 'first');
-              } else if (
-                j === Object.entries(arrayFields[i]).length - 1 &&
-                k === value.length - 1
-              ) {
-                this.orAndWhere(field, subOperator, subValue, 'last');
+              if (Object.entries(arrayFields[i]).length > 1) {
+                if (j === 0 && k === 0) {
+                  this.orAndWhere(field, subOperator, subValue, 'first');
+                } else if (
+                  j === Object.entries(arrayFields[i]).length - 1 &&
+                  k === value.length - 1
+                ) {
+                  this.orAndWhere(field, subOperator, subValue, 'last');
+                } else {
+                  this.orAndWhere(field, subOperator, subValue, 'middle');
+                }
               } else {
-                this.orAndWhere(field, subOperator, subValue, 'middle');
+                this.orWhere(field, subOperator, subValue);
               }
             }
           } else {
