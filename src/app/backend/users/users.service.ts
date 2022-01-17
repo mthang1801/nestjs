@@ -197,7 +197,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     try {
       const verifyToken = uuidv4();
 
-      await this.repository.updateOne(
+      const _user = await this.repository.updateOne(
         { id: user.id },
         {
           verifyToken,
@@ -206,6 +206,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
           ),
         },
       );
+
       await this.mailService.sendUserConfirmation(originUrl, user, verifyToken);
       return true;
     } catch (error) {
@@ -218,7 +219,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
       const user = await this.repository.findOne({ where: { id } });
 
       // const test = await this.repository.find({
-      //   select: [],
+      //   select: ['*'],
       //   join: {
       //     alias: 'user',
       //     [JoinTable.leftJoin]: {
@@ -233,23 +234,24 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
       //       },
       //     },
       //   },
-      //   // where: [
-      //   //   { firstName: Like('Mai văn'), lastName: 'Quốc' },
-      //   //   { firstName: [Like('Mai'), 'Nguyễn'], lastName: 'Bê' },
-      //   //   { firstName: 'Mai văn', lastName: 'Thắng' },
-      //   // ],
+      //   where: [
+      //     { firstName: Like('Mai văn'), lastName: 'Quốc' },
+      //     { firstName: [Like('Mai'), 'Nguyễn'], lastName: 'Bê' },
+      //     { firstName: 'Mai văn', lastName: 'Thắng' },
+      //     { firstName: 'Quang' },
+      //   ],
       //   // where: {
       //   //   firstName: [Like('Mai'), 'Nguyễn'],
       //   //   lastName: Like('Thắng'),
       //   //   country: Like('VietNam'),
       //   //   email: 'mthang1801@gmail.com',
       //   // },
-      //   // orderBy: [
-      //   //   { field: 'orderItem.id', sort_by: SortBy.ASC },
-      //   //   { field: 'product.price', sort_by: SortBy.DESC },
-      //   //   { field: 'product.id', sort_by: SortBy.ASC },
-      //   //   { field: 'product.quantity', sort_by: SortBy.DESC },
-      //   // ],
+      //   orderBy: [
+      //     { field: 'orderItem.id', sort_by: SortBy.ASC },
+      //     { field: 'product.price', sort_by: SortBy.DESC },
+      //     { field: 'product.id', sort_by: SortBy.ASC },
+      //     { field: 'product.quantity', sort_by: SortBy.DESC },
+      //   ],
       //   skip: 0,
       //   limit: 30,
       // });

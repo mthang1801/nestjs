@@ -12,12 +12,12 @@ export class MailService {
     token: string,
   ) {
     const url = `${originUrl}/auth/restore-password?token=${token}&_id=${user.id}`;
-    console.log(join(__dirname, 'templates'));
+
     await this.mailerService.sendMail({
       to: user.email,
       // from: '"Support Team" <support@example.com>', // override default from
       subject: 'Xác nhận khôi phục tài khoản',
-      template: './confirmation', // `.hbs` extension is appended automatically
+      template: 'confirmation', // `.hbs` extension is appended automatically
       context: {
         // ✏️ filling curly brackets with content
         name: user.displayName,

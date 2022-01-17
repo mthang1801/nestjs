@@ -26,7 +26,7 @@ export class DatabaseCollection {
     this.stringJoin = '';
     this.arrayCondition = [];
     this.stringCondition = ' ';
-    this.sortString = ' ';
+    this.sortString = '';
     this.limit = 20;
     this.offset = 0;
   }
@@ -391,7 +391,7 @@ export class DatabaseCollection {
     const condition = '';
     const sql =
       this.arrayCondition.length === 0
-        ? `SEL  ECT count(*) AS total FROM ${this.table} ${this.alias} ${this.stringJoin}`
+        ? `SELECT count(*) AS total FROM ${this.table} ${this.alias} ${this.stringJoin}`
         : `SELECT count(*) AS total    ${this.table} ${this.alias} ${this.stringJoin} ${condition}`;
     return sql;
   }
@@ -410,13 +410,16 @@ export class DatabaseCollection {
   sql(is_limit = true): string {
     let sql_string = '';
     this.stringCondition = this.genCondition();
-
+    const orderString = this.sortString
+      ? 'ORDER BY ' + this.sortString
+      : this.sortString;
     sql_string =
       this.stringSelect +
       ` FROM ${this.table} ${this.alias} ` +
       this.stringJoin +
       this.stringCondition +
-      this.sortString;
+      orderString;
+    console.log(sql_string);
     if (is_limit == true) {
       sql_string += ` LIMIT ${this.limit} OFFSET ${this.offset}`;
     }
