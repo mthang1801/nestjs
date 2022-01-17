@@ -24,19 +24,14 @@ export class UsersController {
     @Req() req,
     @Res() res,
   ): Promise<any> {
-    const { id } = req.user;
-    const result = await this.usersService.updateUserInfo(
-      id,
-      userInfoUpdateDto,
-    );
-    console.log(result);
-    return result;
+    const { user_id } = req.user;
+    return await this.usersService.updateUserInfo(user_id, userInfoUpdateDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
   async getMyInfo(@Req() req): Promise<User> {
-    return this.usersService.getMyInfo(req.user.id);
+    return this.usersService.getMyInfo(req.user.user_id);
   }
 
   @Get('/:id')

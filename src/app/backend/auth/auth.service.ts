@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { AuthCredentialsDto } from './dto/auth-credential.dto';
@@ -10,6 +11,11 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserAuthSocialMedia } from '../users/interfaces/users.interfaces';
+import {
+  saltHashPassword,
+  desaltHashPassword,
+} from '../../../utils/cipherHelper';
+import { PrimaryKeys } from '../../../database/enums/primary-keys.enum';
 @Injectable()
 export class AuthService {
   constructor(
@@ -18,27 +24,30 @@ export class AuthService {
   ) {}
 
   generateToken(user: any): { access_token: string } {
-    const payload = { sub: user.id };
+    const payload = { sub: user[PrimaryKeys.ddv_users] };
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
-  async signUp(
-    authCredentialsDto: AuthCredentialsDto,
-  ): Promise<{ access_token: string }> {
-    const { displayName, email, password, phone } = authCredentialsDto;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.userService.createUser(
-      displayName,
-      email,
-      hashedPassword,
-      phone,
-    );
+  async signUp(authCredentialsDto: AuthCredentialsDto): Promise<any> {
+    const { firstname, lastname, email, password, phone } = authCredentialsDto;
+    console.log(firstname, lastname, email, password, phone);
+    const { passwordHash, salt } = saltHashPassword(password);
 
+    const user = await this.userService.createUser({
+      firstname,
+      lastname,
+      email,
+      password: passwordHash,
+      phone,
+      salt,
+      timestamp: Math.ceil(Date.now() / 1000),
+    });
     return this.generateToken(user);
   }
   async validateUser(username: string, password: string): Promise<User> {
+    console.log(49, username);
     const user = await this.userService.findOne({ email: username });
     if (!user) {
       throw new NotFoundException();
@@ -51,8 +60,26 @@ export class AuthService {
     }
     return user;
   }
-  login(user: any): { access_token: string } {
-    return this.generateToken(user);
+  async login(data: any): Promise<any> {
+    const phone = data['phone'];
+    const email = data['email'];
+    const password = data['password'];
+    try {
+      let user: User = phone
+        ? await this.userService.findOne({ phone })
+        : await this.userService.findOne({ email });
+      if (!user) {
+        throw new NotFoundException({ message: 'Người dùng không tồn tại' });
+      }
+      if (desaltHashPassword(password, user.salt) !== user.password) {
+        throw new BadRequestException({
+          message: 'Tài khoản hoặc mật khẩu không đúng.',
+        });
+      }
+      return this.generateToken(user);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   async loginWithGoogle(

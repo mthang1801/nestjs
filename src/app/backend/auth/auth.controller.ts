@@ -19,21 +19,25 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { FacebookAuthGuard } from './guards/facebook-auth.guards';
 
+/**
+ * Authentication controller
+ * @author Thang
+ */
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
   @Post('register')
   @UsePipes(ValidationPipe)
-  async signUp(
-    @Body() authCredentialsDto: AuthCredentialsDto,
-  ): Promise<{ access_token: string }> {
+  async signUp(@Body() authCredentialsDto: AuthCredentialsDto): Promise<any> {
     return await this.authService.signUp(authCredentialsDto);
   }
 
   @Post('login')
-  @UseGuards(LocalAuthGuard)
-  async login(@Req() req): Promise<{ access_token: string }> {
-    return this.authService.login(req.user);
+  // @UseGuards(LocalAuthGuard)
+  async login(
+    @Body() data: { email?: string; phone?: string; password: string },
+  ): Promise<any> {
+    return await this.authService.login(data);
   }
 
   @Get()
@@ -66,7 +70,7 @@ export class AuthController {
     return tokenRes;
   }
 
-  @Post('reset-password')
+  @Post('reset-password-by-email')
   async resetPassword(@Req() req, @Res() res): Promise<void> {
     const fullUrl = req.protocol + '://' + req.get('host');
     const { data } = req.body;
@@ -77,6 +81,13 @@ export class AuthController {
       message: `request to reset password success, please visit to : ${fullUrl} to activate new password`,
     });
   }
+
+  /**
+   *
+   * @param req
+   * @param res
+   * @returns
+   */
   @Get('restore-password')
   async restorePassword(@Req() req, @Res() res): Promise<void> {
     return new Promise(async (resolve, reject) => {

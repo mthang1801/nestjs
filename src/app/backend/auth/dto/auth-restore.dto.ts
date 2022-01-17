@@ -6,7 +6,7 @@ export class AuthRestoreDto {
   @IsString()
   @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/, {
     message:
-      'Minimum eight characters, at least one letter, one number and one special character',
+      'Password at least eight characters, including one letter, one number and one special character',
   })
   password: string;
 }

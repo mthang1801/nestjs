@@ -11,6 +11,7 @@ export function LessThanOrEqual<T>(value: T): {
 } {
   return { operator: '<=', value };
 }
+
 export function LessThan<T>(value: T): {
   operator: string;
   value: T;
@@ -68,4 +69,11 @@ export function IsNull<T>(): {
   operator: string;
 } {
   return { operator: 'ISNULL' };
+}
+
+export function Not<T>(cb: { operator: string; value?: string }): {
+  operator: string;
+  value?: string;
+} {
+  return { operator: 'NOT ' };
 }

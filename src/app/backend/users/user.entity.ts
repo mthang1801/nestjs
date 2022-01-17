@@ -1,23 +1,28 @@
 export class User {
-  id: number;
-  facebook_access_id: number;
-  google_access_id: number;
-  email: string;
-  displayName: string;
+  status: string;
+  user_type: string;
+  user_login: string;
+  referer: string;
+  is_root: string;
+  company_id: number;
+  last_login: number;
+  timestamp: number;
   password: string;
-  firstName: string;
-  lastName: string;
-  avatar: string;
-  // Contact Information
+  salt: string;
+  firstname: string;
+  lastname: string;
+  company: string;
+  email: string;
   phone: string;
-  city: string;
-  country: string;
-  district: string;
-  address: string;
-  // Token to verification
-  verifyToken: string;
-  provider: string;
-  verifyTokenExpAt: Date | string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  fax: string;
+  url: string;
+  tax_exempt: string;
+  birthday: number;
+  purchase_timestamp_from: number;
+  purchase_timestamp_to: number;
+  responsible_email: string;
+  last_passwords: string;
+  password_change_timestamp: number;
+  api_key: string;
+  janrain_identifier: string;
 }

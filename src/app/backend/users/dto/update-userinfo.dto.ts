@@ -1,16 +1,29 @@
-import { IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class UserInfoUpdateDto {
   @IsString()
-  displayName: string;
+  @IsOptional()
+  firstname: string;
   @IsString()
-  country: string;
+  @IsOptional()
+  lastname: string;
   @IsString()
-  city: string;
+  @IsOptional()
+  company: string;
   @IsString()
-  district: string;
+  @IsOptional()
+  birthday: string;
   @IsString()
-  address: string;
+  @IsOptional()
+  fax: string;
   @IsString()
-  phone: string;
+  @IsOptional()
+  url: string;
+  @IsString()
+  @IsOptional()
+  tax_exempt: string;
+  @IsString()
+  @IsOptional()
+  @IsEmail()
+  responsible_email: string;
 }

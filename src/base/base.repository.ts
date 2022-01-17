@@ -7,8 +7,7 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { DatabaseCollection } from '../database/database.collection';
-import { Operator, Table } from '../database/enums/index';
-import { ObjectLiteral } from '../common/ObjectLiteral';
+import { Table, PrimaryKeys } from '../database/enums/index';
 
 @Injectable()
 export class BaseRepositorty<T> {
@@ -47,7 +46,7 @@ export class BaseRepositorty<T> {
 
     try {
       const rows = await this.databaseService.executeQuery(stringQuery, [
-        { id },
+        { [PrimaryKeys[this.table]]: id },
       ]);
       const result = rows[0];
       if (!result.length) {
@@ -126,13 +125,14 @@ export class BaseRepositorty<T> {
         typeof val === 'number' ? `, ${key} = ${val}` : `, ${key} = '${val}'`;
     });
 
-    sql += ` WHERE id = '${findOneByFilters.id}'`;
+    sql += ` WHERE ${PrimaryKeys[this.table]} = '${
+      findOneByFilters[PrimaryKeys[this.table]]
+    }'`;
 
     try {
-      await this.databaseService.executeQuery(sql, [
-        { id: findOneByFilters.id },
-      ]);
+      await this.databaseService.executeQuery(sql);
       const updatedOne = await this.findById(findOneByFilters.id);
+      console.log(137, updatedOne);
       return updatedOne;
     } catch (error) {
       throw new BadRequestException(error);
