@@ -28,16 +28,21 @@ export class AuthController {
   constructor(private authService: AuthService) {}
   @Post('register')
   @UsePipes(ValidationPipe)
-  async signUp(@Body() authCredentialsDto: AuthCredentialsDto): Promise<any> {
-    return await this.authService.signUp(authCredentialsDto);
+  async signUp(
+    @Body() authCredentialsDto: AuthCredentialsDto,
+    @Res() res,
+  ): Promise<{ status_code: number; access_token: string }> {
+    const { access_token } = await this.authService.signUp(authCredentialsDto);
+    return res.status(201).send({ status_code: 201, access_token });
   }
 
   @Post('login')
-  // @UseGuards(LocalAuthGuard)
   async login(
     @Body() data: { email?: string; phone?: string; password: string },
-  ): Promise<any> {
-    return await this.authService.login(data);
+    @Res() res,
+  ): Promise<{ status_code: number; access_token: string }> {
+    const { access_token } = await this.authService.login(data);
+    return res.status(200).send({ status_code: 200, access_token });
   }
 
   @Get()

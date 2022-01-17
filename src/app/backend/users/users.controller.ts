@@ -23,19 +23,32 @@ export class UsersController {
     @Body() userInfoUpdateDto: UserInfoUpdateDto,
     @Req() req,
     @Res() res,
-  ): Promise<any> {
+  ): Promise<{ status_code: number; data: User }> {
     const { user_id } = req.user;
-    return await this.usersService.updateUserInfo(user_id, userInfoUpdateDto);
+    const updatedUser = await this.usersService.updateUserInfo(
+      user_id,
+      userInfoUpdateDto,
+    );
+
+    return res.status(200).send({ status_code: 200, data: updatedUser });
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getMyInfo(@Req() req): Promise<User> {
-    return this.usersService.getMyInfo(req.user.user_id);
+  async getMyInfo(
+    @Req() req,
+    @Res() res,
+  ): Promise<{ status_code: string; data: User }> {
+    const user = await this.usersService.getMyInfo(req.user.user_id);
+    return res.status(200).send({ status_code: 200, data: user });
   }
 
   @Get('/:id')
-  async getUserById(@Req() req): Promise<User> {
-    return this.usersService.findById(req.params.id);
+  async getUserById(
+    @Req() req,
+    @Res() res,
+  ): Promise<{ status_code: string; data: User }> {
+    const user = await this.usersService.findById(req.params.id);
+    return res.status(200).send({ status_code: 200, data: user });
   }
 }

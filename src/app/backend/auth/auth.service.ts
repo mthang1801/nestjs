@@ -16,6 +16,7 @@ import {
   desaltHashPassword,
 } from '../../../utils/cipherHelper';
 import { PrimaryKeys } from '../../../database/enums/primary-keys.enum';
+import { convertToMySQLDateTime } from '../../../utils/helper';
 @Injectable()
 export class AuthService {
   constructor(
@@ -32,7 +33,6 @@ export class AuthService {
 
   async signUp(authCredentialsDto: AuthCredentialsDto): Promise<any> {
     const { firstname, lastname, email, password, phone } = authCredentialsDto;
-    console.log(firstname, lastname, email, password, phone);
     const { passwordHash, salt } = saltHashPassword(password);
 
     const user = await this.userService.createUser({
@@ -42,12 +42,12 @@ export class AuthService {
       password: passwordHash,
       phone,
       salt,
-      timestamp: Math.ceil(Date.now() / 1000),
+      created_at: convertToMySQLDateTime(),
     });
+
     return this.generateToken(user);
   }
   async validateUser(username: string, password: string): Promise<User> {
-    console.log(49, username);
     const user = await this.userService.findOne({ email: username });
     if (!user) {
       throw new NotFoundException();

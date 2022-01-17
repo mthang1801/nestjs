@@ -26,7 +26,7 @@ export class BaseRepositorty<T> {
       });
     }
     let sql = `INSERT INTO ${this.table} SET ?`;
-
+    console.log(params);
     try {
       await this.databaseService.executeQuery(sql, params);
       let filters = [];
@@ -120,9 +120,10 @@ export class BaseRepositorty<T> {
       if (i === 0) {
         sql +=
           typeof val === 'number' ? `${key} = ${val}` : `${key} = '${val}'`;
+      } else {
+        sql +=
+          typeof val === 'number' ? `, ${key} = ${val}` : `, ${key} = '${val}'`;
       }
-      sql +=
-        typeof val === 'number' ? `, ${key} = ${val}` : `, ${key} = '${val}'`;
     });
 
     sql += ` WHERE ${PrimaryKeys[this.table]} = '${
@@ -131,8 +132,10 @@ export class BaseRepositorty<T> {
 
     try {
       await this.databaseService.executeQuery(sql);
-      const updatedOne = await this.findById(findOneByFilters.id);
-      console.log(137, updatedOne);
+      const updatedOne = await this.findById(
+        findOneByFilters[PrimaryKeys[this.table]],
+      );
+
       return updatedOne;
     } catch (error) {
       throw new BadRequestException(error);
