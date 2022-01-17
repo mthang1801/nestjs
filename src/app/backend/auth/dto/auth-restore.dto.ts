@@ -1,7 +1,7 @@
 import { IsString, Matches } from 'class-validator';
 
 export class AuthRestoreDto {
-  _id: string;
+  user_id: number;
   token: string;
   @IsString()
   @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/, {

@@ -96,17 +96,20 @@ export class AuthService {
     return this.generateToken(userRes);
   }
 
-  async resetPassword(url: string, data: string): Promise<boolean> {
-    await this.userService.resetPassword(url, data);
+  async resetPasswordByEmail(url: string, email: string): Promise<boolean> {
+    await this.userService.resetPasswordByEmail(url, email);
     return true;
   }
-  async restorePassword(_id: string, token: string): Promise<User> {
-    const user = await this.userService.restorePassword(_id, token);
+  async restorePasswordByEmail(user_id: string, token: string): Promise<User> {
+    const user = await this.userService.restorePasswordByEmail(user_id, token);
     return user;
   }
-  async updatePassword(authRestoreDto: AuthRestoreDto): Promise<boolean> {
-    const { _id, password, token } = authRestoreDto;
-    await this.userService.updatePassword(+_id, token, password);
+  async updatePasswordByEmail(
+    user_id: number,
+    token: string,
+    password: string,
+  ): Promise<boolean> {
+    await this.userService.updatePasswordByEmail(user_id, token, password);
     return true;
   }
 }

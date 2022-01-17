@@ -76,11 +76,11 @@ export class AuthController {
   }
 
   @Post('reset-password-by-email')
-  async resetPassword(@Req() req, @Res() res): Promise<void> {
+  async resetPasswordByEmail(@Req() req, @Res() res): Promise<void> {
     const fullUrl = req.protocol + '://' + req.get('host');
-    const { data } = req.body;
+    const { email } = req.body;
 
-    await this.authService.resetPassword(fullUrl, data);
+    await this.authService.resetPasswordByEmail(fullUrl, email);
     res.send({
       statusCode: res.statusCode,
       message: `request to reset password success, please visit to : ${fullUrl} to activate new password`,
@@ -94,11 +94,11 @@ export class AuthController {
    * @returns
    */
   @Get('restore-password')
-  async restorePassword(@Req() req, @Res() res): Promise<void> {
+  async restorePasswordByEmail(@Req() req, @Res() res): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        const { token, _id } = req.query;
-        await this.authService.restorePassword(_id, token);
+        const { token, user_id } = req.query;
+        await this.authService.restorePasswordByEmail(user_id, token);
         res.status(200).render('restore-password');
       } catch (error) {
         throw new BadRequestException(error);
@@ -106,12 +106,13 @@ export class AuthController {
     });
   }
 
-  @Post('update-password')
-  async updatePassword(
-    @Body() authRestoreDto: AuthRestoreDto,
+  @Post('update-password-by-email')
+  async updatePasswordByEmail(
+    @Body() authRestoreDto: any,
     @Res() res,
   ): Promise<void> {
-    await this.authService.updatePassword(authRestoreDto);
+    const { user_id, token, password } = authRestoreDto;
+    await this.authService.updatePasswordByEmail(user_id, token, password);
     res.send({ statusCode: res.statusCode, message: 'updated' });
   }
 }

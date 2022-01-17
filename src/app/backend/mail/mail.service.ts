@@ -1,17 +1,16 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import { IUserConfirm } from '../users/interfaces/users.interfaces';
+import { User } from '../users/user.entity';
 import { join } from 'path';
+import { PrimaryKeys } from '../../../database/enums/index';
 @Injectable()
 export class MailService {
   constructor(private mailerService: MailerService) {}
 
-  async sendUserConfirmation(
-    originUrl: string,
-    user: IUserConfirm,
-    token: string,
-  ) {
-    const url = `${originUrl}/auth/restore-password?token=${token}&_id=${user.id}`;
+  async sendUserConfirmation(originUrl: string, user: User, token: string) {
+    const url = `${originUrl}/v1/auth/restore-password?token=${token}&${
+      PrimaryKeys.ddv_users
+    }=${user[PrimaryKeys.ddv_users]}`;
 
     await this.mailerService.sendMail({
       to: user.email,
@@ -20,7 +19,7 @@ export class MailService {
       template: 'confirmation', // `.hbs` extension is appended automatically
       context: {
         // ✏️ filling curly brackets with content
-        name: user.displayName,
+        name: user.firstname + ' ' + user.lastname,
         url,
       },
     });

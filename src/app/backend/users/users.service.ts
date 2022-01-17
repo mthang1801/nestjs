@@ -28,6 +28,7 @@ import {
   UserAuthSocialMedia,
   NewUserAuthSocialMedia,
 } from './interfaces/users.interfaces';
+import { saltHashPassword } from '../../../utils/cipherHelper';
 @Injectable()
 export class UsersService extends BaseService<User, UserRepository<User>> {
   constructor(
@@ -184,9 +185,12 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async resetPassword(originUrl: string, data: string): Promise<boolean> {
+  async resetPasswordByEmail(
+    originUrl: string,
+    email: string,
+  ): Promise<boolean> {
     const user: any = await this.repository.findOne({
-      where: [{ email: data }, { phone: data }],
+      where: { email },
     });
     if (!user) {
       throw new NotFoundException();
@@ -195,17 +199,21 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     try {
       const verifyToken = uuidv4();
 
-      const _user = await this.repository.updateOne(
-        { id: user.id },
+      const updatedUser = await this.repository.updateOne(
+        { where: { [PrimaryKeys[this.table]]: user[PrimaryKeys[this.table]] } },
         {
-          verifyToken,
-          verifyTokenExpAt: convertToMySQLDateTime(
+          verify_token: verifyToken,
+          verify_token_exp: convertToMySQLDateTime(
             new Date(Date.now() + 2 * 3600 * 1000),
           ),
         },
       );
 
-      await this.mailService.sendUserConfirmation(originUrl, user, verifyToken);
+      await this.mailService.sendUserConfirmation(
+        originUrl,
+        updatedUser,
+        verifyToken,
+      );
       return true;
     } catch (error) {
       throw new InternalServerErrorException({ message: error.message });
@@ -264,42 +272,50 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async restorePassword(id: string, token: string): Promise<any> {
+  async restorePasswordByEmail(user_id: string, token: string): Promise<any> {
     const checkUser: any = await this.repository.findOne({
-      where: { id, verifyToken: token },
+      where: { user_id, verify_token: token },
     });
 
     if (!checkUser) {
       throw new NotFoundException();
     }
+
     if (
-      new Date(checkUser.verifyTokenExpAt) < new Date(new Date().toISOString())
+      new Date(
+        new Date(checkUser.verify_token_exp).getTime() * 7 * 3600 * 1000,
+      ) < new Date()
     ) {
-      throw new RequestTimeoutException();
+      throw new RequestTimeoutException({
+        status_code: 400,
+        message: 'Token đã hết hạn.',
+      });
     }
   }
 
-  async updatePassword(
-    _id: number,
+  async updatePasswordByEmail(
+    user_id: number,
     token: string,
     newPassword: string,
   ): Promise<boolean> {
     try {
       const user: any = await this.repository.findOne({
         where: {
-          id: +_id,
-          verifyToken: token,
+          user_id,
+          verify_token: token,
         },
       });
       if (!user) {
         throw new NotFoundException();
       }
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const { passwordHash, salt } = saltHashPassword(newPassword);
+
       await this.repository.updateOne(
-        { id: user.id },
+        { where: { user_id } },
         {
-          password: hashedPassword,
-          updatedAt: convertToMySQLDateTime(new Date()),
+          password: passwordHash,
+          salt,
+          verify_token: '',
         },
       );
       return true;

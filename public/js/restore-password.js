@@ -15,21 +15,21 @@ $(document).ready(function () {
       return;
     }
     let params = new URL(document.location).searchParams;
-    let _id = params.get('_id');
+    let user_id = params.get('user_id');
     let _token = params.get('token');
 
-    updatePassword(_id, _token, newPassword);
+    updatePassword(user_id, _token, newPassword);
   });
 });
 
-function updatePassword(_id, token, password) {
-  fetch('/auth/update-password', {
+function updatePassword(user_id, token, password) {
+  fetch('/v1/auth/update-password-by-email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      _id,
+      user_id: +user_id,
       token,
       password,
     }),
