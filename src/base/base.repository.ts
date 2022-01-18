@@ -21,7 +21,7 @@ export class BaseRepositorty<T> {
   /**
    * Create new record
    * @param params
-   * @returns 
+   * @returns
    */
   async create(params: any): Promise<any> {
     console.log('=============== create ================');
@@ -48,8 +48,8 @@ export class BaseRepositorty<T> {
 
   /**
    * Show one record by primary key id
-   * @param id 
-   * @returns 
+   * @param id
+   * @returns
    */
   async findById(id: number): Promise<T> {
     console.log('=============== Find By Id ================');
@@ -72,11 +72,11 @@ export class BaseRepositorty<T> {
 
   /**
    * Find one record by item
-   * @param options 
-   * @returns 
+   * @param options
+   * @returns
    */
   async findOne(options: any): Promise<any> {
-    console.log('=============== Find One ================');
+    console.log('=============== FIND ONE ================');
     try {
       const results = await this.find({ ...options, limit: 1 });
       return results[0];
@@ -87,11 +87,11 @@ export class BaseRepositorty<T> {
 
   /**
    * Find items by multi filters
-   * @param options 
+   * @param options
    * @returns array
    */
   async find(options: any): Promise<any[]> {
-    console.log('=============== Find ================');
+    console.log('=============== FIND ================');
     console.log(options);
     const optionKeys = Object.keys(options);
     const orderCmds = [
@@ -129,12 +129,12 @@ export class BaseRepositorty<T> {
 
   /**
    * Update one record by primary key
-   * @param id 
-   * @param params tham số cần update
+   * @param filters any or array of any
+   * @param params any
    * @returns
    */
-  async update(id: number, params: any): Promise<T> {
-    console.log('=============== update ================');
+  async updateOne(filters: any | any[], params: any): Promise<T> {
+    console.log('=============== UPDATE ================');
 
     const findOneByFilters = await this.findOne(filters);
 
@@ -165,7 +165,7 @@ export class BaseRepositorty<T> {
     }
   }
 
-  async delete(id: number): Promise<boolean> {
+  async deleteById(id: number): Promise<boolean> {
     console.log('=============== DELETE BY ID ================');
 
     const queryString = `DELETE FROM ${this.table} WHERE ?`;
@@ -175,7 +175,7 @@ export class BaseRepositorty<T> {
       ]);
       if (res[0].affectedRows === 0) {
         throw new NotFoundException({
-          message: `Not found category with id = ${id} to delete`,
+          message: `Not found id = ${id} in ${this.table} to delete`,
         });
       }
       return true;
@@ -184,4 +184,13 @@ export class BaseRepositorty<T> {
     }
   }
 
+  async deleteOne(filters: any | any[]): Promise<any> {
+    console.log('=============== DELETE ONE ================');
+    const findOneByFilters = await this.findOne(filters);
+    try {
+      return this.deleteById(findOneByFilters.id);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
 }

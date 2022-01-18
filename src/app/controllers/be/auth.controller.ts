@@ -14,13 +14,7 @@ import {
 import { AuthService } from '../../services/auth.service';
 import { AuthCredentialsDto } from '../../dto/auth-credential.dto';
 import { AuthUpdatePasswordDto } from '../../dto/auth-update-password.dto';
-import {
-  IResponseData,
-  IResponseToken,
-  IResponseMessage,
-  IResponseDataSuccess,
-} from '../../interfaces/response.interface';
-
+import { IResponseDataSuccess } from '../../interfaces/response.interface';
 import { GoogleAuthGuard } from '../../helpers/auth/guards/google-auth.guard';
 import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guards';
 import { AuthProvider } from '../../entities/auth-provider.entity';
@@ -44,7 +38,6 @@ export class AuthController extends BaseController {
     @Res() res,
   ): Promise<IResponseDataSuccess<string>> {
     const { access_token } = await this.authService.signUp(authCredentialsDto);
-    // return res.status(201).send({ status_code: 201, access_token });
     return this.respondCreated(res, access_token);
   }
 

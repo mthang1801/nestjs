@@ -13,24 +13,28 @@ import { UserInfoUpdateDto } from '../../dto/update-userinfo.dto';
 import { JwtAuthGuard } from '../../helpers/auth/guards/jwt-auth.guard';
 import { UsersService } from '../../services/users.service';
 import { User } from '../../entities/user.entity';
-
+import { BaseController } from '../../../base/base.controllers';
+import { IUser } from '../../interfaces/users.interface';
+import { IResponseDataSuccess } from '../../interfaces/response.interface';
 @Controller('/be/v1/users')
-export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+export class UsersController extends BaseController {
+  constructor(private readonly usersService: UsersService) {
+    super();
+  }
   @UseGuards(JwtAuthGuard)
   @Put()
   async updateUserInfo(
     @Body() userInfoUpdateDto: UserInfoUpdateDto,
     @Req() req,
     @Res() res,
-  ): Promise<{ status_code: number; data: User }> {
+  ): Promise<IResponseDataSuccess<IUser>> {
     const { user_id } = req.user;
     const updatedUser = await this.usersService.updateUserInfo(
       user_id,
       userInfoUpdateDto,
     );
 
-    return res.status(200).send({ status_code: 200, data: updatedUser });
+    return this.responseSuccess(res, updatedUser);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -38,17 +42,17 @@ export class UsersController {
   async getMyInfo(
     @Req() req,
     @Res() res,
-  ): Promise<{ status_code: string; data: User }> {
+  ): Promise<IResponseDataSuccess<IUser>> {
     const user = await this.usersService.getMyInfo(req.user.user_id);
-    return res.status(200).send({ status_code: 200, data: user });
+    return this.responseSuccess(res, user);
   }
 
   @Get('/:id')
   async getUserById(
     @Req() req,
     @Res() res,
-  ): Promise<{ status_code: string; data: User }> {
+  ): Promise<IResponseDataSuccess<IUser>> {
     const user = await this.usersService.findById(req.params.id);
-    return res.status(200).send({ status_code: 200, data: user });
+    return this.responseSuccess(res, user);
   }
 }

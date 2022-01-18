@@ -9,13 +9,7 @@ import { User } from '../entities/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from './mail.service';
 import { UserRepository } from '../repositories/user.repository';
-import {
-  LogicalOperator,
-  ComparisonOperator,
-  Table,
-  SortBy,
-  JoinTable,
-} from '../../database/enums/index';
+import { Table } from '../../database/enums/index';
 import { convertToMySQLDateTime } from '../../utils/helper';
 import { Like } from '../../database/find-options/operators';
 import * as bcrypt from 'bcrypt';
@@ -24,9 +18,9 @@ import { LoggerService } from '../../logger/custom.logger';
 import { ObjectLiteral } from '../../common/ObjectLiteral';
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
-import { UserAuthSocialMedia } from '../interfaces/users.interfaces';
+import { UserAuthSocialMedia } from '../interfaces/users.interface';
 import { saltHashPassword } from '../../utils/cipherHelper';
-import {} from '../interfaces/users.interfaces';
+import { preprocessUserResult } from '../../utils/helper';
 @Injectable()
 export class UsersService extends BaseService<User, UserRepository<User>> {
   constructor(
@@ -49,124 +43,23 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
           message: 'Địa chỉ email hoặc số điện thoại đã được đăng ký.',
         });
       }
-      const user = await this.repository.create(registerData);
-      return user;
+      let user = await this.repository.create(registerData);
+
+      return preprocessUserResult(user);
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
 
   async create(dataObj: ObjectLiteral): Promise<User> {
-    return this.repository.create(dataObj);
-  }
-
-  async loginThroughSocialMedia(
-    user: UserAuthSocialMedia,
-    provider: AuthProviderEnum,
-  ): Promise<void> {
-    // if (!user.accessToken && !user.refreshToken) {
-    //   throw new InternalServerErrorException({
-    //     message: 'Not found access token or refresh token',
-    //   });
-    // }
-    // // 1. Tạo một google_access để lưu giữ refresh token và access_token,
-    // // 2. Đối với table User
-    // // TH1 : Nếu người dùng chưa có tài khoản -> tạo mới tài khoản ->
-    // //    i.  Gán id của google_access ở B1 vào google_access_id của User sắp khởi tạo
-    // //    ii. Truyền profile và avatar vào cho user
-    // //    iii. Vì password và phone là bắt buộc nhưng do tài khoản là google nên có 2 cách giải quyết
-    // ///       C1 : Gán mặc định một password random, phone mặc định là '0'
-    // ///       C2 : Tạo frontend stepper cho buộc người dùng nhập thêm thông tin, nhưng password không bắt buộc nên vẫn là random
-    // // TH2 : Nếu người dùng đã có tài khoản SYSTEM ->
-    // //    i. Gán id của google_access ở B1 vào google_access_id của User sắp khởi tạo
-    // //    ii. Đối với những fields profile nào người dùng để trống, đưa profile của google vào, ngược lại bỏ qua
-    // // **Lưu ý: ** Mỗi người dùng ngoài SYSTEM chỉ có thể đăng nhập bằng 1 provider
-    // let userExist: User = await this.findOne({ email: user.email });
-    // const keysAccess = {
-    //   accessToken: user.accessToken,
-    //   refreshToken: user.refreshToken || 'empty',
-    // };
-    // const tableProviderAccess =
-    //   provider === AuthProviderEnum.GOOGLE
-    //     ? Table.GOOGLE_ACCESS
-    //     : Table.FACEBOOK_ACCESS;
-    // // Nhận diện google_access_id hoặc facebook_access_id
-    // const userProviderField =
-    //   provider === AuthProviderEnum.GOOGLE
-    //     ? 'google_access_id'
-    //     : 'facebook_access_id';
-    // if (!userExist) {
-    //   // Tạo access provider trước khi tạo user
-    //   const accessProviderRes = await this.repository.create(keysAccess);
-    //   const newUser = {
-    //     [userProviderField]: accessProviderRes.id,
-    //     displayName: user.displayName,
-    //     firstName: user.givenName,
-    //     lastName: user.familyName,
-    //     avatar: user.avatar,
-    //     email: user.email,
-    //     provider,
-    //     password: uuidv4(),
-    //     phone: '0',
-    //   };
-    //   const newUserRes = await this.repository.create(newUser);
-    //   return newUserRes;
-    // }
-    // // Kiểm tra người dùng đã đăng nhập tới provider khác hay chưa
-    // if (
-    //   userExist.provider.toLowerCase() !== AuthProviderEnum.SYSTEM.toLowerCase() &&
-    //   userExist.provider.toLowerCase() !== provider.toLowerCase()
-    // ) {
-    //   throw new BadRequestException({
-    //     message:
-    //       'Người dùng đã kết nối đến provider khác, không thể kết nối thêm, vui lòng điều hướng người dùng đến provider SYSTEM hoặc provider đã đăng nhập trước đó',
-    //   });
-    // }
-    // // Nếu User đã tồn tại, tài khoản đó có thể đã có ProviderId nhưng cũng có thể chỉ là SYSTEM
-    // // Nếu chỉ là tài khoản SYSTEM, cần cấp thêm Provider cho tài khoản đó
-    // let updatedUser: any = {};
-    // let accessProviderRes: any;
-    // if (!userExist[userProviderField]) {
-    //   accessProviderRes = await this.repository.create(keysAccess);
-    // } else {
-    //   // const updatedRes = await this.repository.update(
-    //   //   { id: userExist[userProviderField] },
-    //   //   [keysAccess],
-    //   // );
-    //   // if (!updatedRes) {
-    //   //   throw new InternalServerErrorException({
-    //   //     message: 'Cập nhật token không thành công.',
-    //   //   });
-    //   // }
-    // }
-    // updatedUser[userProviderField] =
-    //   accessProviderRes?.id || userExist[userProviderField];
-    // updatedUser['displayName'] = userExist.displayName || user.displayName;
-    // updatedUser['firstName'] = userExist.firstName || user.givenName;
-    // updatedUser['lastName'] = userExist.lastName || user.familyName;
-    // updatedUser['avatar'] = userExist.avatar || user.avatar;
-    // updatedUser['provider'] = provider;
-    // updatedUser['updatedAt'] = convertDateToTimeStamp(new Date());
-    // // Update lại access provider trước khi update user
-    // await this.repository.updateOne({ id: userExist.id }, [updatedUser]);
-    // const updatedUserResult = {
-    //   ...userExist,
-    //   ...updatedUser,
-    // };
-    // return updatedUserResult;
-  }
-  async loginWithGoogle(user: UserAuthSocialMedia): Promise<void> {
-    // return this.loginThroughSocialMedia(user, AuthProviderEnum.GOOGLE);
-  }
-  async loginWithFacebook(user: UserAuthSocialMedia): Promise<void> {
-    // return this.loginThroughSocialMedia(user, AuthProviderEnum.FACEBOOK);
+    let user = await this.repository.create(dataObj);
+    return preprocessUserResult(user);
   }
 
   async findById(id: number): Promise<User> {
     const user = await this.repository.findById(id);
-    const userObject = JSON.parse(JSON.stringify(user));
-    delete userObject.password;
-    return userObject;
+
+    return preprocessUserResult(user);
   }
 
   async updateUserInfo(user_id: number, dataObj: ObjectLiteral): Promise<User> {
@@ -174,14 +67,14 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
       { where: { user_id } },
       dataObj,
     );
-    delete updatedUser.password;
-    return updatedUser;
+
+    return preprocessUserResult(updatedUser);
   }
 
   async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<User> {
     try {
       const user = await this.repository.findOne({ where: dataObj });
-      return user;
+      return preprocessUserResult(user);
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
@@ -266,15 +159,14 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
       //   limit: 30,
       // });
       // console.log(test);
-      const userObject = JSON.parse(JSON.stringify(user));
-      delete userObject.password;
-      return userObject;
+
+      return preprocessUserResult(user);
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
 
-  async restorePasswordByEmail(user_id: string, token: string): Promise<any> {
+  async restorePasswordByEmail(user_id: string, token: string): Promise<User> {
     const checkUser: any = await this.repository.findOne({
       where: { user_id, verify_token: token },
     });
@@ -293,6 +185,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
         message: 'Token đã hết hạn.',
       });
     }
+    return checkUser;
   }
 
   async updatePasswordByEmail(

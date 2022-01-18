@@ -7,3 +7,15 @@ export interface IAuthProvider {
   extra_data?: string;
   created_at: Date;
 }
+
+export interface IRegister {
+  firstname: string;
+  lastname: string;
+  email: string;
+  password: string;
+  phone: string;
+}
+
+export interface IAuthToken {
+  access_token: string;
+}

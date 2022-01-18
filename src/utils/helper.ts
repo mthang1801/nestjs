@@ -3,3 +3,10 @@ export const convertToMySQLDateTime = (DateTime = new Date()) =>
     .toISOString()
     .slice(0, 19)
     .replace('T', ' ');
+
+export const preprocessUserResult = (user) => {
+  let userObject = { ...user };
+  delete userObject.password;
+  delete userObject.salt;
+  return userObject;
+};

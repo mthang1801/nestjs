@@ -9,7 +9,7 @@ import { UsersService } from './users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { UserAuthSocialMedia } from '../interfaces/users.interfaces';
+import { UserAuthSocialMedia } from '../interfaces/users.interface';
 import { saltHashPassword, desaltHashPassword } from '../../utils/cipherHelper';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import { convertToMySQLDateTime } from '../../utils/helper';
@@ -18,7 +18,8 @@ import { BaseService } from '../../base/base.service';
 import { AuthProvider } from '../entities/auth-provider.entity';
 import { LoggerService } from '../../logger/custom.logger';
 import { Table } from '../../database/enums/tables.enum';
-import { IAuthProvider } from '../interfaces/auth-provider.interface';
+import { IUser } from '../interfaces/users.interface';
+import { IAuthProvider, IAuthToken } from '../interfaces/auth.interface';
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 @Injectable()
 export class AuthService extends BaseService<
@@ -38,14 +39,14 @@ export class AuthService extends BaseService<
     this.table = Table.USERS_AUTH;
   }
 
-  generateToken(user: any): { access_token: string } {
+  generateToken(user: any): IAuthToken {
     const payload = { sub: user[PrimaryKeys.ddv_users] };
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
-  async signUp(authCredentialsDto: AuthCredentialsDto): Promise<any> {
+  async signUp(authCredentialsDto: AuthCredentialsDto): Promise<IAuthToken> {
     const { firstname, lastname, email, password, phone } = authCredentialsDto;
     const { passwordHash, salt } = saltHashPassword(password);
 
@@ -61,7 +62,7 @@ export class AuthService extends BaseService<
 
     return this.generateToken(user);
   }
-  async validateUser(username: string, password: string): Promise<User> {
+  async validateUser(username: string, password: string): Promise<IUser> {
     const user = await this.userService.findOne({ email: username });
     if (!user) {
       throw new NotFoundException();
@@ -74,7 +75,7 @@ export class AuthService extends BaseService<
     }
     return user;
   }
-  async login(data: any): Promise<any> {
+  async login(data: any): Promise<IAuthToken> {
     const phone = data['phone'];
     const email = data['email'];
     const password = data['password'];
@@ -111,7 +112,7 @@ export class AuthService extends BaseService<
         created_at: convertToMySQLDateTime(),
       });
     }
-    const userAuth: AuthProvider = await this.authRepository.create({
+    const authProvider: AuthProvider = await this.authRepository.create({
       user_id: userExists.user_id,
       provider: user.id,
       provider_name: providerName,
@@ -120,16 +121,14 @@ export class AuthService extends BaseService<
       created_date: convertToMySQLDateTime(),
     });
 
-    return userAuth;
+    return authProvider;
   }
 
-  async loginWithGoogle(user: UserAuthSocialMedia): Promise<any> {
+  async loginWithGoogle(user: UserAuthSocialMedia): Promise<AuthProvider> {
     return this.loginWithAuthProvider(user, AuthProviderEnum.GOOGLE);
   }
 
-  async loginWithFacebook(
-    user: UserAuthSocialMedia,
-  ): Promise<{ access_token: string }> {
+  async loginWithFacebook(user: UserAuthSocialMedia): Promise<AuthProvider> {
     return this.loginWithAuthProvider(user, AuthProviderEnum.FACEBOOK);
   }
 
@@ -137,7 +136,7 @@ export class AuthService extends BaseService<
     await this.userService.resetPasswordByEmail(url, email);
     return true;
   }
-  async restorePasswordByEmail(user_id: string, token: string): Promise<User> {
+  async restorePasswordByEmail(user_id: string, token: string): Promise<IUser> {
     const user = await this.userService.restorePasswordByEmail(user_id, token);
     return user;
   }

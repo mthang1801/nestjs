@@ -7,7 +7,11 @@ import { PrimaryKeys } from '../../database/enums/index';
 export class MailService {
   constructor(private mailerService: MailerService) {}
 
-  async sendUserConfirmation(originUrl: string, user: User, token: string) {
+  async sendUserConfirmation(
+    originUrl: string,
+    user: User,
+    token: string,
+  ): Promise<void> {
     const prefixApi = process.env.PREFIX_API_BE;
     const url = join(
       originUrl,
@@ -17,7 +21,6 @@ export class MailService {
         user[PrimaryKeys.ddv_users]
       }`,
     );
-    console.log(process.env.PWD);
     await this.mailerService.sendMail({
       to: user.email,
       // from: '"Support Team" <support@example.com>', // override default from

@@ -1,8 +1,7 @@
 import { Get, Injectable, NestMiddleware } from '@nestjs/common';
 import { Response } from 'express';
 import {
-  IResponseMessage,
-  IResponseData,
+  IResponseError,
   IResponseDataSuccess,
 } from '../app/interfaces/response.interface';
 export class BaseController {
@@ -18,9 +17,9 @@ export class BaseController {
   /**
    *
    * @param message string
-   * @returns IResponseMessage
+   * @returns IResponseError
    */
-  responseWithError(message: string): IResponseMessage {
+  private responseWithError(message: string): IResponseError {
     const data = {
       error: {
         message,
@@ -32,9 +31,9 @@ export class BaseController {
   /**
    *
    * @param data any
-   * @returns IResponseMessage
+   * @returns IResponseError
    */
-  respond(data: any): IResponseDataSuccess<any> {
+  private respond(data: any): IResponseDataSuccess<any> {
     let dataResponse = {
       code: this.statusCode,
     };
@@ -53,7 +52,7 @@ export class BaseController {
   public respondBadRequest(
     res,
     message: string = 'The request was invalid.',
-  ): IResponseMessage {
+  ): IResponseError {
     this.setStatusCode(400);
     this.res = res;
     return this.responseWithError(message);
@@ -65,7 +64,7 @@ export class BaseController {
    * @param message string
    * @returns
    */
-  public respondNotFound(res, message: string = 'Not Found'): IResponseMessage {
+  public respondNotFound(res, message: string = 'Not Found'): IResponseError {
     this.setStatusCode(404);
     this.res = res;
     return this.responseWithError(message);
@@ -99,6 +98,6 @@ export class BaseController {
   }
 
   public responseSuccess(res, data = null): IResponseDataSuccess<any> {
-    return res.status(200).send({ code: this.statusCode, data });
+    return res.status(this.statusCode).send({ code: this.statusCode, data });
   }
 }
