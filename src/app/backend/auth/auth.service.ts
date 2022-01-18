@@ -119,27 +119,21 @@ export class AuthService extends BaseService<
       provider: user.id,
       provider_name: providerName,
       access_token: user.accessToken,
-      extra_data: user.refreshToken,
+      extra_data: user.refreshToken || '',
       created_date: convertToMySQLDateTime(),
     });
-
-    console.log(125, userAuth);
 
     return userAuth;
   }
 
   async loginWithGoogle(user: UserAuthSocialMedia): Promise<any> {
     return this.loginWithAuthProvider(user, AuthProviderEnum.GOOGLE);
-    // const userAuth = await this.authRepository.create();
-    // const userRes = await this.userService.loginWithGoogle(user);
-    // return this.generateToken(userRes);
   }
 
   async loginWithFacebook(
     user: UserAuthSocialMedia,
   ): Promise<{ access_token: string }> {
-    const userRes = await this.userService.loginWithFacebook(user);
-    return this.generateToken(userRes);
+    return this.loginWithAuthProvider(user, AuthProviderEnum.FACEBOOK);
   }
 
   async resetPasswordByEmail(url: string, email: string): Promise<boolean> {

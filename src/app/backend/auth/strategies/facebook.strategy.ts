@@ -7,7 +7,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     super({
       clientID: '308856844484646',
       clientSecret: '0580f9d35ccfd921a4f7ace6e545a6a8',
-      callbackURL: '/auth/facebook/callback',
+      callbackURL: '/v1/auth/facebook/callback',
       scope: ['user_friends', 'email'],
       accessType: 'offline',
       prompt: 'consent',
@@ -44,6 +44,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
       accessToken,
       refreshToken,
     };
+
     done(null, user);
   }
 }

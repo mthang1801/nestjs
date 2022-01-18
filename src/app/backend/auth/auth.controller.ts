@@ -18,6 +18,7 @@ import * as express from 'express';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { FacebookAuthGuard } from './guards/facebook-auth.guards';
+import { AuthProvider } from './auth-provider.entity';
 
 /**
  * Authentication controller
@@ -70,9 +71,12 @@ export class AuthController {
    */
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Req() req, @Res() res): Promise<any> {
+  async googleAuthRedirect(
+    @Req() req,
+    @Res() res,
+  ): Promise<{ status_code: number; data: AuthProvider }> {
     const data = await this.authService.loginWithGoogle(req.user);
-    res.status(201).send({ status_code: 201, data });
+    return res.status(201).send({ status_code: 201, data });
   }
 
   /**
@@ -87,10 +91,10 @@ export class AuthController {
   async facebookAuthRedirect(
     @Req() req,
     @Res() res,
-  ): Promise<{ access_token: string }> {
-    const tokenRes = await this.authService.loginWithFacebook(req.user);
-    res.send(tokenRes);
-    return tokenRes;
+  ): Promise<{ status_code: number; data: AuthProvider }> {
+    const data = await this.authService.loginWithFacebook(req.user);
+
+    return res.status(201).send({ status_code: 201, data });
   }
 
   @Post('reset-password-by-email')
