@@ -17,6 +17,12 @@ export class BaseRepositorty<T> {
   ) {
     this.table = table;
   }
+
+  /**
+   * Create new record
+   * @param params
+   * @returns 
+   */
   async create(params: any): Promise<any> {
     console.log('=============== create ================');
 
@@ -39,6 +45,12 @@ export class BaseRepositorty<T> {
       throw new BadRequestException(error);
     }
   }
+
+  /**
+   * Show one record by primary key id
+   * @param id 
+   * @returns 
+   */
   async findById(id: number): Promise<T> {
     console.log('=============== Find By Id ================');
 
@@ -57,6 +69,12 @@ export class BaseRepositorty<T> {
       throw new BadRequestException(error);
     }
   }
+
+  /**
+   * Find one record by item
+   * @param options 
+   * @returns 
+   */
   async findOne(options: any): Promise<any> {
     console.log('=============== Find One ================');
     try {
@@ -67,6 +85,11 @@ export class BaseRepositorty<T> {
     }
   }
 
+  /**
+   * Find items by multi filters
+   * @param options 
+   * @returns array
+   */
   async find(options: any): Promise<any[]> {
     console.log('=============== Find ================');
     console.log(options);
@@ -105,12 +128,12 @@ export class BaseRepositorty<T> {
   }
 
   /**
-   *
-   * @param filters bộ lọc truy vấn các ràng buộc trong thuộc tính của field
+   * Update one record by primary key
+   * @param id 
    * @param params tham số cần update
    * @returns
    */
-  async updateOne(filters: any | any[], params: any): Promise<T> {
+  async update(id: number, params: any): Promise<T> {
     console.log('=============== update ================');
 
     const findOneByFilters = await this.findOne(filters);
@@ -142,7 +165,7 @@ export class BaseRepositorty<T> {
     }
   }
 
-  async deleteById(id: number): Promise<boolean> {
+  async delete(id: number): Promise<boolean> {
     console.log('=============== DELETE BY ID ================');
 
     const queryString = `DELETE FROM ${this.table} WHERE ?`;
@@ -161,13 +184,4 @@ export class BaseRepositorty<T> {
     }
   }
 
-  async deleteOne(filters: any | any[]): Promise<any> {
-    console.log('=============== DELETE ONE ================');
-    const findOneByFilters = await this.findOne(filters);
-    try {
-      return this.deleteById(findOneByFilters.id);
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
-  }
 }
