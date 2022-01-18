@@ -22,7 +22,7 @@ import * as bcrypt from 'bcrypt';
 import { BaseService } from '../../../base/base.service';
 import { LoggerService } from '../../../logger/custom.logger';
 import { ObjectLiteral } from '../../../common/ObjectLiteral';
-import { AuthProvider } from '../auth/interfaces/provider.interface';
+import { AuthProviderEnum } from '../auth/enums/provider.enum';
 import { PrimaryKeys } from '../../../database/enums/primary-keys.enum';
 import {
   UserAuthSocialMedia,
@@ -60,7 +60,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
 
   async loginThroughSocialMedia(
     user: UserAuthSocialMedia,
-    provider: AuthProvider,
+    provider: AuthProviderEnum,
   ): Promise<void> {
     // if (!user.accessToken && !user.refreshToken) {
     //   throw new InternalServerErrorException({
@@ -85,12 +85,12 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     //   refreshToken: user.refreshToken || 'empty',
     // };
     // const tableProviderAccess =
-    //   provider === AuthProvider.GOOGLE
+    //   provider === AuthProviderEnum.GOOGLE
     //     ? Table.GOOGLE_ACCESS
     //     : Table.FACEBOOK_ACCESS;
     // // Nhận diện google_access_id hoặc facebook_access_id
     // const userProviderField =
-    //   provider === AuthProvider.GOOGLE
+    //   provider === AuthProviderEnum.GOOGLE
     //     ? 'google_access_id'
     //     : 'facebook_access_id';
     // if (!userExist) {
@@ -112,7 +112,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     // }
     // // Kiểm tra người dùng đã đăng nhập tới provider khác hay chưa
     // if (
-    //   userExist.provider.toLowerCase() !== AuthProvider.SYSTEM.toLowerCase() &&
+    //   userExist.provider.toLowerCase() !== AuthProviderEnum.SYSTEM.toLowerCase() &&
     //   userExist.provider.toLowerCase() !== provider.toLowerCase()
     // ) {
     //   throw new BadRequestException({
@@ -154,10 +154,10 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     // return updatedUserResult;
   }
   async loginWithGoogle(user: UserAuthSocialMedia): Promise<void> {
-    // return this.loginThroughSocialMedia(user, AuthProvider.GOOGLE);
+    // return this.loginThroughSocialMedia(user, AuthProviderEnum.GOOGLE);
   }
   async loginWithFacebook(user: UserAuthSocialMedia): Promise<void> {
-    // return this.loginThroughSocialMedia(user, AuthProvider.FACEBOOK);
+    // return this.loginThroughSocialMedia(user, AuthProviderEnum.FACEBOOK);
   }
 
   async findById(id: number): Promise<User> {

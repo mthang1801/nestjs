@@ -9,7 +9,9 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { FacebookStrategy } from './strategies/facebook.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-
+import { AuthProviderRepository } from './auth.repository';
+import { LoggerModule } from '../../../logger/logger.module';
+import { DatabaseModule } from '../../../database/database.module';
 @Module({
   imports: [
     UsersModule,
@@ -22,6 +24,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       }),
       inject: [ConfigService],
     }),
+    LoggerModule,
+    DatabaseModule,
   ],
   providers: [
     AuthService,
@@ -29,6 +33,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     JwtStrategy,
     GoogleStrategy,
     FacebookStrategy,
+    AuthProviderRepository,
+    String,
   ],
   exports: [AuthService],
   controllers: [AuthController],

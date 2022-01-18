@@ -9,7 +9,6 @@ import { DatabaseModule } from './database/database.module';
 import { appConfig, databaseConfig, authConfig } from './config/index.config';
 import { LoggerModule } from './logger/logger.module';
 import { ProductsModule } from './app/backend/products/products.module';
-import { AccessProviderModule } from './app/backend/access-provider/access-provider.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,7 +23,6 @@ import { AccessProviderModule } from './app/backend/access-provider/access-provi
     DatabaseModule,
     LoggerModule,
     ProductsModule,
-    AccessProviderModule,
   ],
 })
 export class AppModule {}

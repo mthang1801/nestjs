@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AuthCredentialsDto } from './dto/auth-credential.dto';
-import { AuthRestoreDto } from './dto/auth-restore.dto';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/user.entity';
@@ -17,12 +16,26 @@ import {
 } from '../../../utils/cipherHelper';
 import { PrimaryKeys } from '../../../database/enums/primary-keys.enum';
 import { convertToMySQLDateTime } from '../../../utils/helper';
+import { AuthProviderRepository } from './auth.repository';
+import { BaseService } from '../../../base/base.service';
+import { AuthProvider } from './auth-provider.entity';
+import { LoggerService } from '../../../logger/custom.logger';
+import { Table } from '../../../database/enums/tables.enum';
 @Injectable()
-export class AuthService {
+export class AuthService extends BaseService<
+  AuthProvider,
+  AuthProviderRepository<AuthProvider>
+> {
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
-  ) {}
+    repository: AuthProviderRepository<AuthProvider>,
+    logger: LoggerService,
+    table: Table,
+  ) {
+    super(repository, logger, table);
+    this.table = Table.USERS_AUTH;
+  }
 
   generateToken(user: any): { access_token: string } {
     const payload = { sub: user[PrimaryKeys.ddv_users] };

@@ -14,14 +14,15 @@ import {
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credential.dto';
 import { AuthRestoreDto } from './dto/auth-restore.dto';
-
+import * as express from 'express';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { FacebookAuthGuard } from './guards/facebook-auth.guards';
 
 /**
  * Authentication controller
- * @author Thang
+ * @Describe Using 3 authenticate types : Local, Google, Facebook
+ * @Author MvThang
  */
 @Controller('auth')
 export class AuthController {
@@ -45,24 +46,40 @@ export class AuthController {
     return res.status(200).send({ status_code: 200, access_token });
   }
 
+  /**
+   * Render page with 2 buttons login google and login facebook
+   */
   @Get()
-  renderAuthPage(@Res() res) {
+  renderAuthPage(@Res() res: express.Response) {
+    console.log('call');
     res.render('authentication');
   }
 
+  /**
+   * Authenticate with google with endpoint /v1/google/login
+   */
   @Get('google/login')
   @UseGuards(GoogleAuthGuard)
-  async loginWithGoogle(@Res() res): Promise<void> {}
+  async loginWithGoogle(): Promise<void> {}
 
+  /**
+   * When an request from server to google, google receive and then it will response with an redirect url
+   * and auth/google/callback is redirect url to server communicate with google
+   * @param req
+   * @returns
+   */
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Req() req): Promise<{ access_token: string }> {
     return this.authService.loginWithGoogle(req.user);
   }
 
+  /**
+   * Authenticate with google with endpoint /v1/google/login
+   */
   @Get('facebook/login')
   @UseGuards(FacebookAuthGuard)
-  async loginWithFacebook(@Res() res): Promise<void> {}
+  async loginWithFacebook(): Promise<void> {}
 
   @Get('facebook/callback')
   @UseGuards(FacebookAuthGuard)
