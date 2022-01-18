@@ -6,7 +6,7 @@ import {
   NestExpressApplication,
 } from '@nestjs/platform-express';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { AppModule } from './app/modules/app.module';
 import { join } from 'path';
 import * as hbs from 'hbs';
 import { ConfigService } from '@nestjs/config';

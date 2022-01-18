@@ -23,7 +23,7 @@ $(document).ready(function () {
 });
 
 function updatePassword(user_id, token, password) {
-  fetch('/v1/auth/update-password-by-email', {
+  fetch('/be/v1/auth/update-password-by-email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -35,11 +35,13 @@ function updatePassword(user_id, token, password) {
     }),
   })
     .then((res) => {
-      if (res.status === 400) {
+      console.log(res);
+      if (res.status !== 200) {
         $('#error').html('Cập nhật thất bại, mật khẩu không phù hợp');
         $('#success').html('');
         return;
       }
+
       $('#success').html('Cập nhật mật khẩu thành công');
       $('#submit').remove();
       $('#form-inputs').remove();
