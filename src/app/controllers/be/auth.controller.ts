@@ -18,6 +18,7 @@ import {
   IResponseData,
   IResponseToken,
   IResponseMessage,
+  IResponseDataSuccess,
 } from '../../interfaces/response.interface';
 
 import { GoogleAuthGuard } from '../../helpers/auth/guards/google-auth.guard';
@@ -25,29 +26,35 @@ import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guard
 import { AuthProvider } from '../../entities/auth-provider.entity';
 import { LoginDto } from '../../dto/auth-login.dto';
 import { Response } from 'express';
-
+import { BaseController } from '../../../base/base.controllers';
 /**
  * Authentication controller
  * @Describe Using 3 authenticate types : Local, Google, Facebook
  * @Author MvThang
  */
 @Controller('/be/v1/auth')
-export class AuthController {
-  constructor(private authService: AuthService) {}
+export class AuthController extends BaseController {
+  constructor(private authService: AuthService) {
+    super();
+  }
   @Post('register')
   @UsePipes(ValidationPipe)
   async signUp(
     @Body() authCredentialsDto: AuthCredentialsDto,
     @Res() res,
-  ): Promise<IResponseToken> {
+  ): Promise<IResponseDataSuccess<string>> {
     const { access_token } = await this.authService.signUp(authCredentialsDto);
-    return res.status(201).send({ status_code: 201, access_token });
+    // return res.status(201).send({ status_code: 201, access_token });
+    return this.respondCreated(res, access_token);
   }
 
   @Post('login')
-  async login(@Body() data: LoginDto, @Res() res): Promise<IResponseToken> {
+  async login(
+    @Body() data: LoginDto,
+    @Res() res,
+  ): Promise<IResponseDataSuccess<string>> {
     const { access_token } = await this.authService.login(data);
-    return res.status(200).send({ status_code: 200, access_token });
+    return this.responseSuccess(res, access_token);
   }
 
   /**
@@ -76,9 +83,9 @@ export class AuthController {
   async googleAuthRedirect(
     @Req() req,
     @Res() res,
-  ): Promise<IResponseData<AuthProvider>> {
+  ): Promise<IResponseDataSuccess<AuthProvider>> {
     const data = await this.authService.loginWithGoogle(req.user);
-    return res.status(201).send({ status_code: 201, data });
+    return this.responseSuccess(res, data);
   }
 
   /**
@@ -93,10 +100,9 @@ export class AuthController {
   async facebookAuthRedirect(
     @Req() req,
     @Res() res,
-  ): Promise<IResponseData<AuthProvider>> {
+  ): Promise<IResponseDataSuccess<AuthProvider>> {
     const data = await this.authService.loginWithFacebook(req.user);
-
-    return res.status(201).send({ status_code: 201, data });
+    return this.responseSuccess(res, data);
   }
 
   /**
@@ -110,15 +116,15 @@ export class AuthController {
   async resetPasswordByEmail(
     @Req() req,
     @Res() res,
-  ): Promise<IResponseMessage> {
+  ): Promise<IResponseDataSuccess<string>> {
     const fullUrl = req.protocol + '://' + req.get('host');
     const { email } = req.body;
 
     await this.authService.resetPasswordByEmail(fullUrl, email);
-    return res.status(200).send({
-      status_code: 200,
-      message: `request to reset password success, please visit to email to activate new password`,
-    });
+    return this.responseSuccess(
+      res,
+      `request to reset password success, please visit to email to activate new password`,
+    );
   }
 
   /**
@@ -152,10 +158,11 @@ export class AuthController {
   async updatePasswordByEmail(
     @Body() authRestoreDto: AuthUpdatePasswordDto,
     @Res() res,
-  ): Promise<IResponseMessage> {
+  ): Promise<IResponseDataSuccess<string>> {
     const { user_id, token, password } = authRestoreDto;
 
     await this.authService.updatePasswordByEmail(user_id, token, password);
-    return res.status(200).send({ status_code: 200, message: 'updated' });
+
+    return this.responseSuccess(res, `updated`);
   }
 }

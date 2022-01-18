@@ -1,28 +1,3 @@
-export interface IUser {
-  displayName: string;
-  email: string;
-  password: string;
-  phone: string;
-  city: string;
-  country: string;
-  district: string;
-  address: string;
-  verifyToken: string;
-  verifyTokenExpAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface IUserConfirm {
-  id: string;
-  displayName: string;
-  email: string;
-}
-
-export interface IUserRestorePwd extends IUser {
-  verifyTokenExpAt: Date;
-}
-
 export interface UserAuthSocialMedia {
   id: string;
   displayName: string;
@@ -35,13 +10,32 @@ export interface UserAuthSocialMedia {
   refreshToken: string;
 }
 
-export interface NewUserAuthSocialMedia {
-  email: string;
-  googleId: string;
-  displayName: string;
-  firstName: string;
-  lastName: string;
-  avatar: string;
+export interface IUser {
+  user_id?: number;
+  status: string;
+  user_type: string;
+  user_login: string;
+  referer: string;
+  is_root: string;
+  company_id: number;
+  last_login?: Date;
+  created_at: Date;
   password: string;
+  salt: string;
+  firstname: string;
+  lastname: string;
+  company: string;
+  email: string;
   phone: string;
+  fax: string;
+  url: string;
+  tax_exempt?: string;
+  birthday: Date;
+  purchase_timestamp_from?: Date;
+  purchase_timestamp_to?: Date;
+  responsible_email?: string;
+  last_passwords?: string;
+  password_change_timestamp?: number;
+  api_key?: string;
+  janrain_identifier: string;
 }

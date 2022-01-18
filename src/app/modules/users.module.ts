@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { UsersController as UsersControllerBe } from '../controllers/be/users.controller';
 import { UsersController as UsersControllerFe } from '../controllers/fe/users.controller';
@@ -23,7 +23,7 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
     MailModule,
   ],
   exports: [UsersService],
-  providers: [UsersService, JwtStrategy, String],
+  providers: [UsersService, JwtStrategy, String, Object],
   controllers: [UsersControllerBe, UsersControllerFe],
 })
 export class UsersModule {}
