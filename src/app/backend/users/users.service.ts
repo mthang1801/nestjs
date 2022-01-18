@@ -58,6 +58,10 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
+  async create(dataObj: ObjectLiteral): Promise<User> {
+    return this.repository.create(dataObj);
+  }
+
   async loginThroughSocialMedia(
     user: UserAuthSocialMedia,
     provider: AuthProviderEnum,
@@ -226,44 +230,44 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
         where: { [PrimaryKeys[this.table]]: id },
       });
 
-      // const test = await this.repository.find({
-      //   select: ['*'],
-      //   join: {
-      //     alias: 'user',
-      //     [JoinTable.leftJoin]: {
-      //       orders: { fieldJoin: 'customer_id', rootJoin: 'id' },
-      //       orderItem: {
-      //         fieldJoin: 'orderItem.orderId',
-      //         rootJoin: 'orders.order_id',
-      //       },
-      //       products: {
-      //         fieldJoin: 'products.product_id',
-      //         rootJoin: 'orderItem.productId',
-      //       },
-      //     },
-      //   },
-      //   where: [
-      //     { firstName: Like('Mai văn'), lastName: 'Quốc' },
-      //     { firstName: [Like('Mai'), 'Nguyễn'], lastName: 'Bê' },
-      //     { firstName: 'Mai văn', lastName: 'Thắng' },
-      //     { firstName: 'Quang' },
-      //   ],
-      //   // where: {
-      //   //   firstName: [Like('Mai'), 'Nguyễn'],
-      //   //   lastName: Like('Thắng'),
-      //   //   country: Like('VietNam'),
-      //   //   email: 'mthang1801@gmail.com',
-      //   // },
-      //   orderBy: [
-      //     { field: 'orderItem.id', sort_by: SortBy.ASC },
-      //     { field: 'product.price', sort_by: SortBy.DESC },
-      //     { field: 'product.id', sort_by: SortBy.ASC },
-      //     { field: 'product.quantity', sort_by: SortBy.DESC },
-      //   ],
-      //   skip: 0,
-      //   limit: 30,
-      // });
-      // console.log(test);
+      const test = await this.repository.find({
+        select: ['*'],
+        join: {
+          alias: 'user',
+          [JoinTable.leftJoin]: {
+            orders: { fieldJoin: 'customer_id', rootJoin: 'id' },
+            orderItem: {
+              fieldJoin: 'orderItem.orderId',
+              rootJoin: 'orders.order_id',
+            },
+            products: {
+              fieldJoin: 'products.product_id',
+              rootJoin: 'orderItem.productId',
+            },
+          },
+        },
+        where: [
+          { firstName: Like('Mai văn'), lastName: 'Quốc' },
+          { firstName: [Like('Mai'), 'Nguyễn'], lastName: 'Bê' },
+          { firstName: 'Mai văn', lastName: 'Thắng' },
+          { firstName: 'Quang' },
+        ],
+        // where: {
+        //   firstName: [Like('Mai'), 'Nguyễn'],
+        //   lastName: Like('Thắng'),
+        //   country: Like('VietNam'),
+        //   email: 'mthang1801@gmail.com',
+        // },
+        orderBy: [
+          { field: 'orderItem.id', sort_by: SortBy.ASC },
+          { field: 'product.price', sort_by: SortBy.DESC },
+          { field: 'product.id', sort_by: SortBy.ASC },
+          { field: 'product.quantity', sort_by: SortBy.DESC },
+        ],
+        skip: 0,
+        limit: 30,
+      });
+      console.log(test);
       const userObject = JSON.parse(JSON.stringify(user));
       delete userObject.password;
       return userObject;

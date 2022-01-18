@@ -1,4 +1,5 @@
 export class User {
+  user_id?: string;
   status: string;
   user_type: string;
   user_login: string;

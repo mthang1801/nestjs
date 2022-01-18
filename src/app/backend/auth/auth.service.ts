@@ -21,11 +21,14 @@ import { BaseService } from '../../../base/base.service';
 import { AuthProvider } from './auth-provider.entity';
 import { LoggerService } from '../../../logger/custom.logger';
 import { Table } from '../../../database/enums/tables.enum';
+import { IAuthProvider } from './interfaces/auth-provider.interface';
+import { AuthProviderEnum } from './enums/provider.enum';
 @Injectable()
 export class AuthService extends BaseService<
   AuthProvider,
   AuthProviderRepository<AuthProvider>
 > {
+  protected authRepository: AuthProviderRepository<AuthProvider>;
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
@@ -34,6 +37,7 @@ export class AuthService extends BaseService<
     table: Table,
   ) {
     super(repository, logger, table);
+    this.authRepository = repository;
     this.table = Table.USERS_AUTH;
   }
 
@@ -95,11 +99,40 @@ export class AuthService extends BaseService<
     }
   }
 
-  async loginWithGoogle(
+  async loginWithAuthProvider(
     user: UserAuthSocialMedia,
-  ): Promise<{ access_token: string }> {
-    const userRes = await this.userService.loginWithGoogle(user);
-    return this.generateToken(userRes);
+    providerName: AuthProviderEnum,
+  ): Promise<AuthProvider> {
+    let userExists: User = await this.userService.findOne({
+      email: user.email,
+    });
+    if (!userExists) {
+      userExists = await this.userService.create({
+        firstname: user.givenName,
+        lastname: user.familyName,
+        email: user.email,
+        created_at: convertToMySQLDateTime(),
+      });
+    }
+    const userAuth: AuthProvider = await this.authRepository.create({
+      user_id: userExists.user_id,
+      provider: user.id,
+      provider_name: providerName,
+      access_token: user.accessToken,
+      extra_data: user.refreshToken,
+      created_date: convertToMySQLDateTime(),
+    });
+
+    console.log(125, userAuth);
+
+    return userAuth;
+  }
+
+  async loginWithGoogle(user: UserAuthSocialMedia): Promise<any> {
+    return this.loginWithAuthProvider(user, AuthProviderEnum.GOOGLE);
+    // const userAuth = await this.authRepository.create();
+    // const userRes = await this.userService.loginWithGoogle(user);
+    // return this.generateToken(userRes);
   }
 
   async loginWithFacebook(

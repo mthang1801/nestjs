@@ -70,8 +70,9 @@ export class AuthController {
    */
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Req() req): Promise<{ access_token: string }> {
-    return this.authService.loginWithGoogle(req.user);
+  async googleAuthRedirect(@Req() req, @Res() res): Promise<any> {
+    const data = await this.authService.loginWithGoogle(req.user);
+    res.status(201).send({ status_code: 201, data });
   }
 
   /**
