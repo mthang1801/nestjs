@@ -11,8 +11,6 @@ import { GoogleStrategy } from '../helpers/auth/strategies/google.strategy';
 import { FacebookStrategy } from '../helpers/auth/strategies/facebook.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthProviderRepository } from '../repositories/auth.repository';
-import { LoggerModule } from '../../logger/logger.module';
-import { DatabaseModule } from '../../database/database.module';
 @Module({
   imports: [
     UsersModule,
@@ -25,8 +23,6 @@ import { DatabaseModule } from '../../database/database.module';
       }),
       inject: [ConfigService],
     }),
-    LoggerModule,
-    DatabaseModule,
   ],
   providers: [
     AuthService,

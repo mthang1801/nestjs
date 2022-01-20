@@ -5,12 +5,9 @@ import { UsersController as UsersControllerFe } from '../controllers/fe/users.co
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from '../helpers/auth/strategies/jwt.strategy';
 import { MailModule } from './mail.module';
-import { DatabaseModule } from '../../database/database.module';
-import { LoggerModule } from '../../logger/logger.module';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
-    LoggerModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -19,7 +16,6 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
       }),
       inject: [ConfigService],
     }),
-    DatabaseModule,
     MailModule,
   ],
   exports: [UsersService],

@@ -40,5 +40,5 @@ export interface IUser {
   verify_token: string;
   verify_token_exp: Date;
   otp: number;
-  otp_exp: Date;
+  otp_incorrect_times: number;
 }

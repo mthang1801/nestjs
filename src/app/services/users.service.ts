@@ -217,14 +217,33 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
   }
 
   async updateUserOTP(user_id: number, otp: number): Promise<User> {
-    const updatedUser = this.repository.update(user_id, { otp });
+    const updatedUser = this.repository.update(user_id, {
+      otp,
+      otp_incorrect_times: 0,
+    });
     return updatedUser;
   }
 
-  async updateUserOTPExpiration(user_id): Promise<boolean> {
-    const dateExp = new Date(new Date().getTime() + 15 * 1000 * 60);
-    const otp_exp = convertToMySQLDateTime(dateExp);
-    this.repository.update(user_id, { otp_exp });
-    return true;
+  async restorePasswordByOTP(user_id: number, otp: number): Promise<boolean> {
+    try {
+      const user = await this.repository.findById(user_id);
+
+      if (user.otp_incorrect_times > 2) {
+        throw new BadRequestException({
+          message: 'Số lần nhập mã OTP vượt quá giới hạn',
+        });
+      }
+      if (user.otp !== otp) {
+        const otp_incorrect_times = user.otp_incorrect_times + 1;
+        await this.repository.update(user.user_id, {
+          otp_incorrect_times,
+        });
+
+        throw new BadRequestException({ message: 'OTP không chính xác' });
+      }
+      return true;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }

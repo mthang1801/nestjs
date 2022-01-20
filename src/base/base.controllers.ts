@@ -25,7 +25,7 @@ export class BaseController {
     const data = {
       error: {
         message,
-        code: this.statusCode,
+        statusCode: this.statusCode,
       },
     };
     return this.res.status(this.statusCode).send(data);
@@ -37,7 +37,7 @@ export class BaseController {
    */
   private respond(data: any): IResponseDataSuccess<any> {
     let dataResponse = {
-      code: this.statusCode,
+      statusCode: this.statusCode,
     };
     if (data) {
       dataResponse['data'] = data;
@@ -104,6 +104,8 @@ export class BaseController {
    * @returns object with code and data
    */
   public responseSuccess(res, data = null): IResponseDataSuccess<any> {
-    return res.status(this.statusCode).send({ code: this.statusCode, data });
+    return res
+      .status(this.statusCode)
+      .send({ statusCode: this.statusCode, data });
   }
 }

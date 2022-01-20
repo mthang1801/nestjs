@@ -21,7 +21,7 @@ import { AuthProvider } from '../../entities/auth-provider.entity';
 import { LoginDto } from '../../dto/auth-login.dto';
 import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
-import { RestorePasswordOTP } from '../../dto/auth-restore-pwd-otp.dto';
+import { RestorePasswordOTPDto } from '../../dto/auth-restore-pwd-otp.dto';
 /**
  * Authentication controller
  * @Describe Using 3 authenticate types : Local, Google, Facebook
@@ -176,12 +176,15 @@ export class AuthController extends BaseController {
 
   /**
    *
-   * @param restorePwd RestorePasswordOTP
+   * @param restorePwd RestorePasswordOTPDto
    */
   @Post('restore-password-by-otp')
   async restorePasswordByOTP(
-    @Body() restorePwd: RestorePasswordOTP,
+    @Body() restorePwdDto: RestorePasswordOTPDto,
+    @Res() res,
   ): Promise<void> {
-    console.log(restorePwd);
+    const { user_id, otp } = restorePwdDto;
+    await this.authService.restorePasswordByOTP(user_id, otp);
+    res.render('otp-auth');
   }
 }

@@ -173,10 +173,14 @@ export class AuthService extends BaseService<
         from: '+16075368673',
         to: '+84939323700',
       });
-      await this.userService.updateUserOTPExpiration(user.user_id);
+
       return newOTP;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  async restorePasswordByOTP(user_id: number, otp: number): Promise<boolean> {
+    return await this.userService.restorePasswordByOTP(user_id, otp);
   }
 }

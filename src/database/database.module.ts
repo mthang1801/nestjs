@@ -1,4 +1,4 @@
-import { Module, OnApplicationShutdown, Logger } from '@nestjs/common';
+import { Module, OnApplicationShutdown, Logger, Global } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DatabaseService } from './database.service';
 import { DatabasePoolFactory } from './database.provider';
@@ -7,6 +7,7 @@ import { Pool } from 'mysql2/promise';
 import { UserRepository } from '../app/repositories/user.repository';
 import { ConfigService } from '@nestjs/config';
 
+@Global()
 @Module({
   providers: [
     {
