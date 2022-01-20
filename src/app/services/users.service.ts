@@ -62,10 +62,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
   }
 
   async updateUserInfo(user_id: number, dataObj: ObjectLiteral): Promise<User> {
-    const updatedUser = await this.repository.updateOne(
-      { where: { user_id } },
-      dataObj,
-    );
+    const updatedUser = await this.repository.update(user_id, dataObj);
 
     return updatedUser;
   }
@@ -93,15 +90,12 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     try {
       const verifyToken = uuidv4();
 
-      const updatedUser = await this.repository.updateOne(
-        { where: { [PrimaryKeys[this.table]]: user[PrimaryKeys[this.table]] } },
-        {
-          verify_token: verifyToken,
-          verify_token_exp: convertToMySQLDateTime(
-            new Date(Date.now() + 2 * 3600 * 1000),
-          ),
-        },
-      );
+      const updatedUser = await this.repository.update(user.user_id, {
+        verify_token: verifyToken,
+        verify_token_exp: convertToMySQLDateTime(
+          new Date(Date.now() + 2 * 3600 * 1000),
+        ),
+      });
 
       await this.mailService.sendUserConfirmation(
         originUrl,
@@ -211,17 +205,26 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
       }
       const { passwordHash, salt } = saltHashPassword(newPassword);
 
-      await this.repository.updateOne(
-        { where: { user_id } },
-        {
-          password: passwordHash,
-          salt,
-          verify_token: '',
-        },
-      );
+      await this.repository.update(user_id, {
+        password: passwordHash,
+        salt,
+        verify_token: '',
+      });
       return true;
     } catch (error) {
       throw new InternalServerErrorException();
     }
+  }
+
+  async updateUserOTP(user_id: number, otp: number): Promise<User> {
+    const updatedUser = this.repository.update(user_id, { otp });
+    return updatedUser;
+  }
+
+  async updateUserOTPExpiration(user_id): Promise<boolean> {
+    const dateExp = new Date(new Date().getTime() + 15 * 1000 * 60);
+    const otp_exp = convertToMySQLDateTime(dateExp);
+    this.repository.update(user_id, { otp_exp });
+    return true;
   }
 }

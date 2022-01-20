@@ -8,15 +8,18 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
   implements IBaseService<T>
 {
   protected readonly logger: LoggerService;
+
   protected readonly repository: R;
+
   protected table: Table;
+
   constructor(repository: R, logger: LoggerService, table: Table) {
     this.repository = repository;
     this.logger = logger;
     this.table = table;
   }
-  deleteById(id: number): Promise<boolean> {
-    return this.repository.deleteById(id);
+  delete(id: number): Promise<boolean> {
+    return this.repository.delete(id);
   }
 
   findById(id: number): Promise<T> {
@@ -32,5 +35,13 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
 
   find(options: any): Promise<any[]> {
     return this.repository.find(options);
+  }
+
+  update(id: number, params: any): Promise<T> {
+    return this.repository.update(id, params);
+  }
+
+  create(params): Promise<T> {
+    return this.repository.create(params);
   }
 }

@@ -21,6 +21,7 @@ import { AuthProvider } from '../../entities/auth-provider.entity';
 import { LoginDto } from '../../dto/auth-login.dto';
 import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
+import { RestorePasswordOTP } from '../../dto/auth-restore-pwd-otp.dto';
 /**
  * Authentication controller
  * @Describe Using 3 authenticate types : Local, Google, Facebook
@@ -158,5 +159,29 @@ export class AuthController extends BaseController {
     await this.authService.updatePasswordByEmail(user_id, token, password);
 
     return this.responseSuccess(res, `updated`);
+  }
+
+  /**
+   * Reset password by phone, using OTP sending method
+   * @param phone string
+   */
+  @Post('reset-password-by-otp')
+  async resetPasswordByPhone(
+    @Body('phone') phone: string,
+    @Res() res,
+  ): Promise<IResponseDataSuccess<number>> {
+    const otp = await this.authService.resetPasswordByPhone(phone);
+    return this.respondCreated(res, { otp });
+  }
+
+  /**
+   *
+   * @param restorePwd RestorePasswordOTP
+   */
+  @Post('restore-password-by-otp')
+  async restorePasswordByOTP(
+    @Body() restorePwd: RestorePasswordOTP,
+  ): Promise<void> {
+    console.log(restorePwd);
   }
 }

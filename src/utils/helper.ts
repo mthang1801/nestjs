@@ -10,3 +10,6 @@ export const preprocessUserResult = (user) => {
   delete userObject.salt;
   return userObject;
 };
+
+export const generateOTPDigits = () =>
+  Math.floor(100000 + Math.random() * 900000);

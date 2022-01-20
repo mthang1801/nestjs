@@ -32,7 +32,7 @@ export class BaseRepositorty<T> {
       });
     }
     let sql = `INSERT INTO ${this.table} SET ?`;
-    console.log(params);
+
     try {
       await this.databaseService.executeQuery(sql, params);
       let filters = [];
@@ -129,15 +129,17 @@ export class BaseRepositorty<T> {
 
   /**
    * Update one record by primary key
-   * @param filters any or array of any
-   * @param params any
+   * @param id primary key
+   * @param params object<any> with
    * @returns
    */
-  async updateOne(filters: any | any[], params: any): Promise<T> {
-    console.log('=============== UPDATE ================');
-
-    const findOneByFilters = await this.findOne(filters);
-
+  async update(id: number, params: any): Promise<T> {
+    console.log('=============== UPDATE BY ID ================');
+    if (typeof params !== 'object') {
+      throw new BadRequestException({
+        message: 'Tham số truyền vào không thể nhận dạng key/value.',
+      });
+    }
     let sql = `UPDATE ${this.table} SET `;
     Object.entries(params).forEach(([key, val], i) => {
       if (i === 0) {
@@ -149,23 +151,18 @@ export class BaseRepositorty<T> {
       }
     });
 
-    sql += ` WHERE ${PrimaryKeys[this.table]} = '${
-      findOneByFilters[PrimaryKeys[this.table]]
-    }'`;
-
+    sql += ` WHERE ${PrimaryKeys[this.table]} = '${id}'`;
     try {
       await this.databaseService.executeQuery(sql);
-      const updatedOne = await this.findById(
-        findOneByFilters[PrimaryKeys[this.table]],
-      );
-
-      return updatedOne;
+      const updatedUser = await this.findById(id);
+      console.log(updatedUser);
+      return updatedUser;
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async deleteById(id: number): Promise<boolean> {
+  async delete(id: number): Promise<boolean> {
     console.log('=============== DELETE BY ID ================');
 
     const queryString = `DELETE FROM ${this.table} WHERE ?`;
@@ -179,16 +176,6 @@ export class BaseRepositorty<T> {
         });
       }
       return true;
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
-  }
-
-  async deleteOne(filters: any | any[]): Promise<any> {
-    console.log('=============== DELETE ONE ================');
-    const findOneByFilters = await this.findOne(filters);
-    try {
-      return this.deleteById(findOneByFilters.id);
     } catch (error) {
       throw new BadRequestException(error);
     }

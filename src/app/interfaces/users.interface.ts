@@ -39,4 +39,6 @@ export interface IUser {
   janrain_identifier: string;
   verify_token: string;
   verify_token_exp: Date;
+  otp: number;
+  otp_exp: Date;
 }

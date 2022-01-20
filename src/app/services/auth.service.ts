@@ -19,8 +19,10 @@ import { AuthProvider } from '../entities/auth-provider.entity';
 import { LoggerService } from '../../logger/custom.logger';
 import { Table } from '../../database/enums/tables.enum';
 import { IUser } from '../interfaces/users.interface';
-import { IAuthProvider, IAuthToken } from '../interfaces/auth.interface';
+import { IAuthToken } from '../interfaces/auth.interface';
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
+import { generateOTPDigits } from '../../utils/helper';
+import * as twilio from 'twilio';
 @Injectable()
 export class AuthService extends BaseService<
   AuthProvider,
@@ -149,5 +151,32 @@ export class AuthService extends BaseService<
   ): Promise<boolean> {
     await this.userService.updatePasswordByEmail(user_id, token, password);
     return true;
+  }
+
+  async resetPasswordByPhone(phone: string): Promise<number> {
+    try {
+      const user = await this.userService.findOne({ phone });
+      if (!user) {
+        throw new NotFoundException({
+          message: 'Số điện thoại chưa được đăng ký.',
+        });
+      }
+      const newOTP = generateOTPDigits();
+      await this.userService.updateUserOTP(user.user_id, newOTP);
+
+      const client = twilio(
+        'ACf45884c1ecedeb6821c81156065d8610',
+        '08fa4d62968cbff2e9c017ccb3a16219',
+      );
+      await client.messages.create({
+        body: `Mã OTP để xác nhận khôi phục mật khẩu là ${newOTP}, mã có hiệu lực trong vòng 90 giây, nhằm đảm bảo tài khoản được an toàn, quý khách vui lòng không chia sẽ mã này cho bất kỳ ai.`,
+        from: '+16075368673',
+        to: '+84939323700',
+      });
+      await this.userService.updateUserOTPExpiration(user.user_id);
+      return newOTP;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }
