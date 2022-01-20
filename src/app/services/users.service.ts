@@ -5,7 +5,7 @@ import {
   NotFoundException,
   RequestTimeoutException,
 } from '@nestjs/common';
-import { User } from '../entities/user.entity';
+import { UserEntity } from '../entities/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from './mail.service';
 import { UserRepository } from '../repositories/user.repository';
@@ -21,10 +21,13 @@ import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import { UserAuthSocialMedia } from '../interfaces/users.interface';
 import { saltHashPassword } from '../../utils/cipherHelper';
 @Injectable()
-export class UsersService extends BaseService<User, UserRepository<User>> {
+export class UsersService extends BaseService<
+  UserEntity,
+  UserRepository<UserEntity>
+> {
   constructor(
     private readonly mailService: MailService,
-    repository: UserRepository<User>,
+    repository: UserRepository<UserEntity>,
     logger: LoggerService,
     table: Table,
   ) {
@@ -32,7 +35,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     this.table = Table.USERS;
   }
 
-  async createUser(registerData): Promise<User> {
+  async createUser(registerData): Promise<UserEntity> {
     try {
       const checkUserExists = await this.repository.findOne({
         where: [{ email: registerData.email }, { phone: registerData.phone }],
@@ -50,24 +53,27 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async create(dataObj: ObjectLiteral): Promise<User> {
+  async create(dataObj: ObjectLiteral): Promise<UserEntity> {
     let user = await this.repository.create(dataObj);
     return user;
   }
 
-  async findById(id: number): Promise<User> {
+  async findById(id: number): Promise<UserEntity> {
     const user = await this.repository.findById(id);
 
     return user;
   }
 
-  async updateUserInfo(user_id: number, dataObj: ObjectLiteral): Promise<User> {
+  async updateUserInfo(
+    user_id: number,
+    dataObj: ObjectLiteral,
+  ): Promise<UserEntity> {
     const updatedUser = await this.repository.update(user_id, dataObj);
 
     return updatedUser;
   }
 
-  async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<User> {
+  async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<UserEntity> {
     try {
       const user = await this.repository.findOne({ where: dataObj });
       return user;
@@ -108,7 +114,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async getMyInfo(id: string): Promise<User> {
+  async getMyInfo(id: string): Promise<UserEntity> {
     try {
       const user = await this.repository.findOne({
         where: { [PrimaryKeys[this.table]]: id },
@@ -159,7 +165,10 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async restorePasswordByEmail(user_id: string, token: string): Promise<User> {
+  async restorePasswordByEmail(
+    user_id: string,
+    token: string,
+  ): Promise<UserEntity> {
     const checkUser: any = await this.repository.findOne({
       where: { user_id, verify_token: token },
     });
@@ -216,7 +225,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async updateUserOTP(user_id: number, otp: number): Promise<User> {
+  async updateUserOTP(user_id: number, otp: number): Promise<UserEntity> {
     const updatedUser = this.repository.update(user_id, {
       otp,
       otp_incorrect_times: 0,

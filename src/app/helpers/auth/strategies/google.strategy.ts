@@ -9,7 +9,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientID:
         '1000906918287-cpjqf7q1h6l1f1dpfjnfrcapg5v2qj4j.apps.googleusercontent.com',
       clientSecret: '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',
-      callbackURL: '/v1/auth/google/callback',
+      callbackURL: '/be/v1/auth/google/callback',
       scope: ['profile', 'email', 'openid'],
       response_type: 'id_token permission',
       accessType: 'offline',

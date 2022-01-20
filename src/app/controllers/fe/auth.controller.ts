@@ -12,12 +12,12 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
-import { AuthCredentialsDto } from '../../dto/auth-credential.dto';
-import { AuthRestoreDto } from '../../dto/auth-restore.dto';
+import { AuthCredentialsDto } from '../../dto/auth/auth-credential.dto';
+import { AuthRestoreDto } from '../../dto/auth/auth-restore.dto';
 import * as express from 'express';
 import { GoogleAuthGuard } from '../../helpers/auth/guards/google-auth.guard';
 import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guards';
-import { AuthProvider } from '../../entities/auth-provider.entity';
+import { IAuthProvider } from '../../interfaces/auth.interface';
 
 /**
  * Authentication controller
@@ -73,7 +73,7 @@ export class AuthController {
   async googleAuthRedirect(
     @Req() req,
     @Res() res,
-  ): Promise<{ status_code: number; data: AuthProvider }> {
+  ): Promise<{ status_code: number; data: IAuthProvider }> {
     const data = await this.authService.loginWithGoogle(req.user);
     return res.status(201).send({ status_code: 201, data });
   }
@@ -90,7 +90,7 @@ export class AuthController {
   async facebookAuthRedirect(
     @Req() req,
     @Res() res,
-  ): Promise<{ status_code: number; data: AuthProvider }> {
+  ): Promise<{ status_code: number; data: IAuthProvider }> {
     const data = await this.authService.loginWithFacebook(req.user);
 
     return res.status(201).send({ status_code: 201, data });

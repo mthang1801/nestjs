@@ -9,10 +9,10 @@ import {
   Res,
   Response,
 } from '@nestjs/common';
-import { UserInfoUpdateDto } from '../../dto/update-userinfo.dto';
+import { UserUpdateDto } from '../../dto/update-user.dto';
 import { JwtAuthGuard } from '../../helpers/auth/guards/jwt-auth.guard';
 import { UsersService } from '../../services/users.service';
-import { User } from '../../entities/user.entity';
+import { UserEntity } from '../../entities/user.entity';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponseDataSuccess } from '../../interfaces/response.interface';
@@ -24,14 +24,14 @@ export class UsersController extends BaseController {
   @UseGuards(JwtAuthGuard)
   @Put()
   async updateUserInfo(
-    @Body() userInfoUpdateDto: UserInfoUpdateDto,
+    @Body() userUpdateDto: UserUpdateDto,
     @Req() req,
     @Res() res,
   ): Promise<IResponseDataSuccess<IUser>> {
     const { user_id } = req.user;
     const updatedUser = await this.usersService.updateUserInfo(
       user_id,
-      userInfoUpdateDto,
+      userUpdateDto,
     );
 
     return this.responseSuccess(res, updatedUser);
@@ -49,7 +49,6 @@ export class UsersController extends BaseController {
   @Get('/otp')
   async otp_demo(@Req() req, @Res() res) {
     res.status(200).render('otp-auth');
-
   }
   @Get('/:id')
   async getUserById(

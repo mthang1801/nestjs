@@ -12,16 +12,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
-import { AuthCredentialsDto } from '../../dto/auth-credential.dto';
-import { AuthUpdatePasswordDto } from '../../dto/auth-update-password.dto';
+import { AuthCredentialsDto } from '../../dto/auth/auth-credential.dto';
+import { AuthUpdatePasswordDto } from '../../dto/auth/auth-update-password.dto';
 import { IResponseDataSuccess } from '../../interfaces/response.interface';
 import { GoogleAuthGuard } from '../../helpers/auth/guards/google-auth.guard';
 import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guards';
-import { AuthProvider } from '../../entities/auth-provider.entity';
-import { LoginDto } from '../../dto/auth-login.dto';
+import { AuthProviderEntity } from '../../entities/auth-provider.entity';
+import { LoginDto } from '../../dto/auth/auth-login.dto';
 import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
-import { RestorePasswordOTPDto } from '../../dto/auth-restore-pwd-otp.dto';
+import { RestorePasswordOTPDto } from '../../dto/auth/auth-restore-pwd-otp.dto';
 /**
  * Authentication controller
  * @Describe Using 3 authenticate types : Local, Google, Facebook
@@ -75,11 +75,10 @@ export class AuthController extends BaseController {
    */
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(
-    @Req() req,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<AuthProvider>> {
+  async googleAuthRedirect(@Req() req, @Res() res): Promise<any> {
     const data = await this.authService.loginWithGoogle(req.user);
+    // return this.responseSuccess(res, data);
+    res.cookie('token', data);
     return this.responseSuccess(res, data);
   }
 
@@ -95,7 +94,7 @@ export class AuthController extends BaseController {
   async facebookAuthRedirect(
     @Req() req,
     @Res() res,
-  ): Promise<IResponseDataSuccess<AuthProvider>> {
+  ): Promise<IResponseDataSuccess<AuthProviderEntity>> {
     const data = await this.authService.loginWithFacebook(req.user);
     return this.responseSuccess(res, data);
   }
