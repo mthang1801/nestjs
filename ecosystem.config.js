@@ -1,0 +1,13 @@
+module.exports = {
+  apps: [
+    {
+		name: 'ddvecom-service',
+		script: './src/main.ts',
+		instances: 2,
+		autorestart: true,
+		exec_mode: 'cluster',
+		max_memory_restart: '500M',
+		kill_timeout : 3000
+    }
+  ]
+};
