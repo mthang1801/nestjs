@@ -47,6 +47,7 @@ export class AuthController extends BaseController {
     @Res() res,
   ): Promise<IResponseDataSuccess<string>> {
     const { access_token } = await this.authService.login(data);
+    console.log(access_token);
     return this.responseSuccess(res, access_token);
   }
 

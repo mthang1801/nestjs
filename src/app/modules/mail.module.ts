@@ -3,7 +3,6 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { Module } from '@nestjs/common';
 import { MailService } from '../services/mail.service';
 import { join } from 'path';
-
 @Module({
   imports: [
     MailerModule.forRoot({
@@ -22,7 +21,8 @@ import { join } from 'path';
         from: '"No Reply" <support@ddvecom.com>',
       },
       template: {
-        dir: join(__dirname, '..', 'helpers', 'mail', 'templates'),
+        // dir: join(__dirname, '..', 'helpers', 'mail', 'templates'),
+        dir: join(__dirname, '..', '..', '..', 'views', 'mail'),
         adapter: new HandlebarsAdapter(), // or new PugAdapter() or new EjsAdapter()
         options: {
           strict: true,

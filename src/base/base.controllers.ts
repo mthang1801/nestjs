@@ -6,7 +6,10 @@ import {
 } from '../app/interfaces/response.interface';
 export class BaseController {
   private statusCode: number = 200;
-  protected res: any;
+  private res: any;
+
+  constructor() {}
+
   getStatusCode() {
     return this.statusCode;
   }
@@ -15,7 +18,6 @@ export class BaseController {
   }
 
   /**
-   *
    * @param message string
    * @returns IResponseError
    */
@@ -28,8 +30,8 @@ export class BaseController {
     };
     return this.res.status(this.statusCode).send(data);
   }
+
   /**
-   *
    * @param data any
    * @returns IResponseError
    */
@@ -44,7 +46,7 @@ export class BaseController {
   }
 
   /**
-   * @Describe  400 - The request was invalid.
+   * @description  400 - The request was invalid.
    * @param res Response
    * @param message string
    * @returns
@@ -59,7 +61,7 @@ export class BaseController {
   }
 
   /**
-   * @Describe  Response 404. Not Found
+   * @description  Response 404. Not Found
    * @param res Response
    * @param message string
    * @returns
@@ -77,7 +79,6 @@ export class BaseController {
   }
 
   /**
-   *
    * @param res Response
    * @param data any
    */
@@ -89,7 +90,6 @@ export class BaseController {
   }
 
   /**
-   *
    * @param res
    * @returns void
    */
@@ -97,6 +97,12 @@ export class BaseController {
     return this.res.status(204).send({ code: 204 });
   }
 
+  /**
+   * @description return result when request with PUT, GET, DELETE method success
+   * @param res
+   * @param data
+   * @returns object with code and data
+   */
   public responseSuccess(res, data = null): IResponseDataSuccess<any> {
     return res.status(this.statusCode).send({ code: this.statusCode, data });
   }

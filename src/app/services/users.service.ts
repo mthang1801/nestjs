@@ -20,7 +20,6 @@ import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import { UserAuthSocialMedia } from '../interfaces/users.interface';
 import { saltHashPassword } from '../../utils/cipherHelper';
-import { preprocessUserResult } from '../../utils/helper';
 @Injectable()
 export class UsersService extends BaseService<User, UserRepository<User>> {
   constructor(
@@ -45,7 +44,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
       }
       let user = await this.repository.create(registerData);
 
-      return preprocessUserResult(user);
+      return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
@@ -53,13 +52,13 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
 
   async create(dataObj: ObjectLiteral): Promise<User> {
     let user = await this.repository.create(dataObj);
-    return preprocessUserResult(user);
+    return user;
   }
 
   async findById(id: number): Promise<User> {
     const user = await this.repository.findById(id);
 
-    return preprocessUserResult(user);
+    return user;
   }
 
   async updateUserInfo(user_id: number, dataObj: ObjectLiteral): Promise<User> {
@@ -68,13 +67,13 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
       dataObj,
     );
 
-    return preprocessUserResult(updatedUser);
+    return updatedUser;
   }
 
   async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<User> {
     try {
       const user = await this.repository.findOne({ where: dataObj });
-      return preprocessUserResult(user);
+      return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
@@ -160,7 +159,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
       // });
       // console.log(test);
 
-      return preprocessUserResult(user);
+      return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }

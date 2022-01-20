@@ -83,6 +83,7 @@ export class AuthService extends BaseService<
       let user: User = phone
         ? await this.userService.findOne({ phone })
         : await this.userService.findOne({ email });
+      console.log(user);
       if (!user) {
         throw new NotFoundException({ message: 'Người dùng không tồn tại' });
       }
@@ -91,6 +92,7 @@ export class AuthService extends BaseService<
           message: 'Tài khoản hoặc mật khẩu không đúng.',
         });
       }
+
       return this.generateToken(user);
     } catch (error) {
       throw new InternalServerErrorException(error);
