@@ -30,6 +30,17 @@ async function bootstrap() {
 
   const PORT = configService.get<number>('port');
 
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
+    next();
+  });
+  app.enableCors({
+    allowedHeaders:"*",
+    origin: "*"
+});
+
   await app.listen(PORT, async () =>
     console.log(`Application is running on: ${await app.getUrl()}`),
   );
