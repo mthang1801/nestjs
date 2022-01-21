@@ -23,8 +23,9 @@ export class BannerController extends BaseController{
     return banners;
   }
   @Get('/:id')
-  getAllBannersById(@Param('id') id): string {
-    return `This action returns banner id ${id}`;
+  getAllBannersById(@Param('id') id): any {
+    const banners = this.bannerService.getBannerById(id);
+    return banners;
   }
 
   @Post()
@@ -32,10 +33,14 @@ export class BannerController extends BaseController{
 
   createBanner(@Body() body: BannerCreateDTO): any {
     const banner = this.bannerService.CreateBanner(body)
+    return banner
   }
   @Put('/:id')
-  updateBannerbyId(@Body() body, @Param('id') id): string {
-    return `this action update a banner`;
+  @UsePipes(ValidationPipe)
+
+  updateBannerbyId(@Body() body, @Param('id') id): any {
+    const banner = this.bannerService.UpdateBanner(body,id)
+    return banner
   }
   @Delete('/:id')
   deleteBannerById(@Param('id') id) : any{
