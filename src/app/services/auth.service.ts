@@ -21,7 +21,9 @@ import { Table } from '../../database/enums/tables.enum';
 import { IAuthToken } from '../interfaces/auth.interface';
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 import { generateOTPDigits } from '../../utils/helper';
-
+import { AuthLoginProvider } from '../dto/auth/auth-login-provider.dto';
+import { UserProfileEntity } from '../entities/user-profile.entity';
+import { UserProfilesService } from '../services/user-profiles.service';
 import * as twilio from 'twilio';
 @Injectable()
 export class AuthService extends BaseService<
@@ -32,6 +34,7 @@ export class AuthService extends BaseService<
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
+    private userProfile: UserProfilesService,
     repository: AuthProviderRepository<AuthProviderEntity>,
     logger: LoggerService,
     table: Table,
@@ -115,6 +118,7 @@ export class AuthService extends BaseService<
         email: user.email,
         created_at: convertToMySQLDateTime(),
       });
+      await this.userProfile.createUserProfile(userExists);
     }
 
     let authProvider: AuthProviderEntity = await this.authRepository.findOne({
@@ -136,12 +140,20 @@ export class AuthService extends BaseService<
     return this.generateToken(userExists);
   }
 
-  async loginWithGoogle(user: UserAuthSocialMedia): Promise<IAuthToken> {
+  async loginWithPassportGoogle(
+    user: UserAuthSocialMedia,
+  ): Promise<IAuthToken> {
     return this.loginWithAuthProvider(user, AuthProviderEnum.GOOGLE);
   }
 
-  async loginWithFacebook(user: UserAuthSocialMedia): Promise<IAuthToken> {
+  async loginWithPassportFacebook(
+    user: UserAuthSocialMedia,
+  ): Promise<IAuthToken> {
     return this.loginWithAuthProvider(user, AuthProviderEnum.FACEBOOK);
+  }
+
+  async loginWithGoogle(AuthLoginProvider: AuthLoginProvider): Promise<void> {
+    console.log(AuthLoginProvider);
   }
 
   async resetPasswordByEmail(url: string, email: string): Promise<boolean> {

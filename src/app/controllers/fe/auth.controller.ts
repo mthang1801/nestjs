@@ -74,7 +74,7 @@ export class AuthController {
     @Req() req,
     @Res() res,
   ): Promise<{ status_code: number; data: IAuthProvider }> {
-    const data = await this.authService.loginWithGoogle(req.user);
+    const data = await this.authService.loginWithPassportGoogle(req.user);
     return res.status(201).send({ status_code: 201, data });
   }
 
@@ -91,7 +91,7 @@ export class AuthController {
     @Req() req,
     @Res() res,
   ): Promise<{ status_code: number; data: IAuthProvider }> {
-    const data = await this.authService.loginWithFacebook(req.user);
+    const data = await this.authService.loginWithPassportFacebook(req.user);
 
     return res.status(201).send({ status_code: 201, data });
   }

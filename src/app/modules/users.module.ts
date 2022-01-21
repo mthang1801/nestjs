@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from '../helpers/auth/strategies/jwt.strategy';
 import { MailModule } from './mail.module';
 import { ConfigService, ConfigModule } from '@nestjs/config';
-import { UserProfileModule } from './user-profile.module';
+import { UsersProfilesModule } from './user-profiles.module';
 @Module({
   imports: [
     JwtModule.registerAsync({
@@ -18,7 +18,7 @@ import { UserProfileModule } from './user-profile.module';
       inject: [ConfigService],
     }),
     MailModule,
-    UserProfileModule,
+    UsersProfilesModule,
   ],
   exports: [UsersService],
   providers: [UsersService, JwtStrategy],

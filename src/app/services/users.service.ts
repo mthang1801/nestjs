@@ -16,10 +16,10 @@ import * as bcrypt from 'bcrypt';
 import { BaseService } from '../../base/base.service';
 import { LoggerService } from '../../logger/custom.logger';
 import { ObjectLiteral } from '../../common/ObjectLiteral';
-import { UserProfileService } from '../services/user-profile.service';
 import { UserProfileEntity } from '../entities/user-profile.entity';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import { saltHashPassword } from '../../utils/cipherHelper';
+import { UserProfilesService } from '../services/user-profiles.service';
 @Injectable()
 export class UsersService extends BaseService<
   UserEntity,
@@ -28,8 +28,9 @@ export class UsersService extends BaseService<
   protected userRepository: UserRepository<UserEntity>;
   constructor(
     private readonly mailService: MailService,
-    private userProfileService: UserProfileService,
+    private readonly userProfileService: UserProfilesService,
     repository: UserRepository<UserEntity>,
+
     logger: LoggerService,
     table: Table,
   ) {
@@ -49,7 +50,7 @@ export class UsersService extends BaseService<
         });
       }
       let user = await this.userRepository.create(registerData);
-      // await this.userProfileService.createUserProfile(user);
+      await this.userProfileService.createUserProfile(user);
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);

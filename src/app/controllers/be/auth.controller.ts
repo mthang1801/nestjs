@@ -18,6 +18,7 @@ import { IResponseDataSuccess } from '../../interfaces/response.interface';
 import { GoogleAuthGuard } from '../../helpers/auth/guards/google-auth.guard';
 import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guards';
 import { AuthProviderEntity } from '../../entities/auth-provider.entity';
+import { AuthLoginProvider } from '../../dto/auth/auth-login-provider.dto';
 import { LoginDto } from '../../dto/auth/auth-login.dto';
 import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
@@ -65,7 +66,7 @@ export class AuthController extends BaseController {
    */
   @Get('google/login')
   @UseGuards(GoogleAuthGuard)
-  async loginWithGoogle(): Promise<void> {}
+  async passportLoginWithGoogle(): Promise<void> {}
 
   /**
    * When an request from server to google, google receive and then it will response with an redirect url
@@ -76,7 +77,7 @@ export class AuthController extends BaseController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Req() req, @Res() res): Promise<any> {
-    const data = await this.authService.loginWithGoogle(req.user);
+    const data = await this.authService.loginWithPassportGoogle(req.user);
     // return this.responseSuccess(res, data);
     res.cookie('token', data);
     return this.responseSuccess(res, data);
@@ -87,7 +88,7 @@ export class AuthController extends BaseController {
    */
   @Get('facebook/login')
   @UseGuards(FacebookAuthGuard)
-  async loginWithFacebook(): Promise<void> {}
+  async passportLoginWithFacebook(): Promise<void> {}
 
   @Get('facebook/callback')
   @UseGuards(FacebookAuthGuard)
@@ -95,9 +96,23 @@ export class AuthController extends BaseController {
     @Req() req,
     @Res() res,
   ): Promise<IResponseDataSuccess<AuthProviderEntity>> {
-    const data = await this.authService.loginWithFacebook(req.user);
+    const data = await this.authService.loginWithPassportFacebook(req.user);
     return this.responseSuccess(res, data);
   }
+
+  /**
+   *
+   * @param AuthLoginProvider
+   */
+  @Post('/v1/google/login/')
+  async loginWithGoolge(
+    @Body() AuthLoginProvider: AuthLoginProvider,
+  ): Promise<void> {
+    await this.authService.loginWithGoogle(AuthLoginProvider);
+  }
+
+  @Post('facebook/login')
+  async loginWithFacebook(): Promise<void> {}
 
   /**
    * @Describe When user click reset or forget passwrod button, this request will send to server. Place to receive is here.
