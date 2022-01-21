@@ -18,7 +18,7 @@ import { IResponseDataSuccess } from '../../interfaces/response.interface';
 import { GoogleAuthGuard } from '../../helpers/auth/guards/google-auth.guard';
 import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guards';
 import { AuthProviderEntity } from '../../entities/auth-provider.entity';
-import { AuthLoginProvider } from '../../dto/auth/auth-login-provider.dto';
+import { GoogleLoginProviderDto } from '../../dto/auth/auth-login-provider.dto';
 import { LoginDto } from '../../dto/auth/auth-login.dto';
 import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
@@ -41,7 +41,7 @@ export class AuthController extends BaseController {
     @Res() res,
   ): Promise<any> {
     const dataResponse = await this.authService.signUp(authCredentialsDto);
-    console.log(dataResponse);
+
     return this.optionalResponse(
       res,
       dataResponse.statusCode,
@@ -51,10 +51,19 @@ export class AuthController extends BaseController {
     );
   }
 
+  /**
+   * Login with email or phone and password
+   * @param data
+   * @param res
+   * @returns
+   */
   @Post('login')
   async login(@Body() data: LoginDto, @Res() res): Promise<any> {
     const dataResponse = await this.authService.login(data);
 
+    if (dataResponse.statusCode === 200 && dataResponse.success) {
+      return this.responseSuccess(res, dataResponse.data, dataResponse.message);
+    }
     return this.optionalResponse(
       res,
       dataResponse.statusCode,
@@ -72,62 +81,28 @@ export class AuthController extends BaseController {
     res.render('authentication');
   }
 
-  /**
-   * Authenticate with google with endpoint /v1/google/login
-   */
-  @Get('google/login')
-  @UseGuards(GoogleAuthGuard)
-  async passportLoginWithGoogle(): Promise<void> {}
-
-  /**
-   * When an request from server to google, google receive and then it will response with an redirect url
-   * and auth/google/callback is redirect url to server communicate with google
-   * @param req
-   * @return an object with status_code and data
-   */
-  @Get('google/callback')
-  @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(
-    @Req() req,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<any>> {
-    const access_token = await this.authService.loginWithPassportGoogle(
-      req.user,
-    );
-    return this.responseSuccess(res, { access_token });
-  }
-
-  /**
-   * Authenticate with google with endpoint /be/v1/google/login
-   */
-  @Get('facebook/login')
-  @UseGuards(FacebookAuthGuard)
-  async passportLoginWithFacebook(): Promise<void> {}
-
-  @Get('facebook/callback')
-  @UseGuards(FacebookAuthGuard)
-  async facebookAuthRedirect(
-    @Req() req,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<any>> {
-    const access_token = await this.authService.loginWithPassportFacebook(
-      req.user,
-    );
-    return this.responseSuccess(res, { access_token });
-  }
-
-  /**
-   *
-   * @param AuthLoginProvider
-   */
-  @Post('/v1/google/login')
+  @Post('/google/login')
   async loginWithGoolge(
-    @Body() AuthLoginProvider: AuthLoginProvider,
-  ): Promise<void> {
-    await this.authService.loginWithGoogle(AuthLoginProvider);
+    @Body() googleLoginProvider: GoogleLoginProviderDto,
+    @Res() res,
+    s,
+  ): Promise<any> {
+    const userResponse = await this.authService.loginWithGoogle(
+      googleLoginProvider,
+    );
+    if (userResponse.statusCode === 200) {
+      return this.responseSuccess(res, userResponse.data);
+    }
+    return this.optionalResponse(
+      res,
+      userResponse.statusCode,
+      null,
+      userResponse.message,
+      false,
+    );
   }
 
-  @Post('/v1/facebook/login')
+  @Post('/facebook/login')
   async loginWithFacebook(): Promise<void> {}
 
   /**

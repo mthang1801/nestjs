@@ -54,6 +54,15 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
     };
   }
 
+  responseError(statusCode: number = 500, message: string | string[] = '') {
+    return {
+      statusCode,
+      data: {},
+      message,
+      success: false,
+    };
+  }
+
   errorNotFound(message: string = '') {
     return {
       statusCode: 404,

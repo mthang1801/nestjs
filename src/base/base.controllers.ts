@@ -6,7 +6,7 @@ import {
 } from '../app/interfaces/response.interface';
 export class BaseController {
   private message: string = '';
-  private data: any = {};
+  private data: any = null;
   private success: boolean = true;
   private res: any;
   private statusCode: number = 200;
@@ -130,6 +130,7 @@ export class BaseController {
     this.res = res;
     this.setStatusCode(200);
     this.message = message;
+    this.success = true;
     if (typeof data !== 'object') {
       this.data = { data };
     }
@@ -140,7 +141,7 @@ export class BaseController {
   public optionalResponse(
     res,
     statusCode = 200,
-    data: any = {},
+    data: any = null,
     message: string = '',
     success: boolean = true,
   ) {

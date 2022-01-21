@@ -80,9 +80,10 @@ export class UsersService extends BaseService<
     return updatedUser;
   }
 
-  async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<UserEntity> {
+  async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<any> {
     try {
       const user = await this.userRepository.findOne({ where: dataObj });
+
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -121,7 +122,7 @@ export class UsersService extends BaseService<
     }
   }
 
-  async getMyInfo(id: string): Promise<UserEntity> {
+  async getMyInfo(id: string): Promise<any> {
     try {
       const user = await this.userRepository.findOne({
         where: { [PrimaryKeys[this.table]]: id },
@@ -166,7 +167,7 @@ export class UsersService extends BaseService<
       // });
       // console.log(test);
 
-      return user;
+      return this.responseSuccess({ userData: user });
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }

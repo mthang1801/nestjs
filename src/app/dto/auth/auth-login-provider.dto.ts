@@ -1,10 +1,21 @@
-export class AuthLoginProvider {
-  id: string;
-  displayName: string;
+import { IsNotEmpty } from 'class-validator';
+
+export class GoogleLoginProviderDto {
+  @IsNotEmpty()
+  google_id: string;
+
+  @IsNotEmpty()
   familyName: string;
+
+  @IsNotEmpty()
   givenName: string;
+
+  @IsNotEmpty()
   email: string;
-  avatar: string;
+
+  @IsNotEmpty()
+  imageUrl: string;
+
+  @IsNotEmpty()
   accessToken: string;
-  refreshToken: string;
 }

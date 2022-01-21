@@ -21,7 +21,7 @@ import { Table } from '../../database/enums/tables.enum';
 import { IAuthToken } from '../interfaces/auth.interface';
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 import { generateOTPDigits } from '../../utils/helper';
-import { AuthLoginProvider } from '../dto/auth/auth-login-provider.dto';
+import { GoogleLoginProviderDto } from '../dto/auth/auth-login-provider.dto';
 import { dataResponse } from '../../utils/helper';
 import { UserProfilesService } from '../services/user-profiles.service';
 import { HandleResult } from '../helpers/exeptions/exceptions';
@@ -118,55 +118,55 @@ export class AuthService extends BaseService<
   }
 
   async loginWithAuthProvider(
-    user: UserAuthSocialMedia,
+    providerData: GoogleLoginProviderDto,
     providerName: AuthProviderEnum,
-  ): Promise<IAuthToken> {
-    let userExists: UserEntity = await this.userService.findOne({
-      email: user.email,
-    });
-    if (!userExists) {
-      userExists = await this.userService.create({
-        firstname: user.givenName,
-        lastname: user.familyName,
-        email: user.email,
-        created_at: convertToMySQLDateTime(),
+  ): Promise<any> {
+    try {
+      let userExists: any = await this.userService.findOne({
+        email: providerData.email,
       });
-      await this.userProfile.createUserProfile(userExists);
-    }
+      console.log(userExists);
+      if (!userExists) {
+        userExists = await this.userService.create({
+          firstname: providerData.givenName,
+          lastname: providerData.familyName,
+          email: providerData.email,
+          created_at: convertToMySQLDateTime(),
+        });
+        await this.userProfile.createUserProfile(userExists);
+      }
 
-    let authProvider: AuthProviderEntity = await this.authRepository.findOne({
-      user_id: userExists.user_id,
-      provider_name: providerName,
-    });
-
-    if (!authProvider) {
-      authProvider = await this.authRepository.create({
+      let authProvider: AuthProviderEntity = await this.authRepository.findOne({
         user_id: userExists.user_id,
-        provider: user.id,
         provider_name: providerName,
-        access_token: user.accessToken,
-        extra_data: user.refreshToken || '',
-        created_date: convertToMySQLDateTime(),
       });
+
+      if (!authProvider) {
+        authProvider = await this.authRepository.create({
+          user_id: userExists.user_id,
+          provider: providerData.google_id,
+          provider_name: providerName,
+          access_token: providerData.accessToken,
+          extra_data: '',
+          created_date: convertToMySQLDateTime(),
+        });
+      }
+      return this.responseSuccess({
+        token: this.generateToken(userExists),
+        userData: userExists,
+      });
+    } catch (error) {
+      return this.responseError(+error.status, error.response.message);
     }
-
-    return this.generateToken(userExists);
   }
 
-  async loginWithPassportGoogle(
-    user: UserAuthSocialMedia,
-  ): Promise<IAuthToken> {
-    return this.loginWithAuthProvider(user, AuthProviderEnum.GOOGLE);
-  }
-
-  async loginWithPassportFacebook(
-    user: UserAuthSocialMedia,
-  ): Promise<IAuthToken> {
-    return this.loginWithAuthProvider(user, AuthProviderEnum.FACEBOOK);
-  }
-
-  async loginWithGoogle(AuthLoginProvider: AuthLoginProvider): Promise<void> {
-    console.log(AuthLoginProvider);
+  async loginWithGoogle(
+    googleLoginProvider: GoogleLoginProviderDto,
+  ): Promise<any> {
+    return this.loginWithAuthProvider(
+      googleLoginProvider,
+      AuthProviderEnum.GOOGLE,
+    );
   }
 
   async resetPasswordByEmail(url: string, email: string): Promise<boolean> {

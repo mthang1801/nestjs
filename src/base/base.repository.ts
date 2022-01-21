@@ -79,6 +79,7 @@ export class BaseRepositorty<T> {
     console.log('=============== FIND ONE ================');
     try {
       const results = await this.find({ ...options, limit: 1 });
+
       return results[0];
     } catch (error) {
       throw new InternalServerErrorException(error);

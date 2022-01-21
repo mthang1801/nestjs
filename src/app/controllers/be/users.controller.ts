@@ -39,12 +39,9 @@ export class UsersController extends BaseController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getMyInfo(
-    @Req() req,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<IUser>> {
-    const user = await this.usersService.getMyInfo(req.user.user_id);
-    return this.responseSuccess(res, user);
+  async getMyInfo(@Req() req, @Res() res): Promise<any> {
+    const userResponse = await this.usersService.getMyInfo(req.user.user_id);
+    return this.responseSuccess(res, userResponse.data);
   }
   @Get('/otp')
   async otp_demo(@Req() req, @Res() res): Promise<void> {
