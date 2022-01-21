@@ -4,10 +4,10 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { AuthCredentialsDto } from '../dto/auth-credential.dto';
+import { AuthCredentialsDto } from '../dto/auth/auth-credential.dto';
 import { UsersService } from './users.service';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../entities/user.entity';
+import { UserEntity } from '../entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserAuthSocialMedia } from '../interfaces/users.interface';
 import { saltHashPassword, desaltHashPassword } from '../../utils/cipherHelper';
@@ -15,24 +15,27 @@ import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import { convertToMySQLDateTime } from '../../utils/helper';
 import { AuthProviderRepository } from '../repositories/auth.repository';
 import { BaseService } from '../../base/base.service';
-import { AuthProvider } from '../entities/auth-provider.entity';
+import { AuthProviderEntity } from '../entities/auth-provider.entity';
 import { LoggerService } from '../../logger/custom.logger';
 import { Table } from '../../database/enums/tables.enum';
-import { IUser } from '../interfaces/users.interface';
 import { IAuthToken } from '../interfaces/auth.interface';
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 import { generateOTPDigits } from '../../utils/helper';
+import { AuthLoginProvider } from '../dto/auth/auth-login-provider.dto';
+import { UserProfileEntity } from '../entities/user-profile.entity';
+import { UserProfilesService } from '../services/user-profiles.service';
 import * as twilio from 'twilio';
 @Injectable()
 export class AuthService extends BaseService<
-  AuthProvider,
-  AuthProviderRepository<AuthProvider>
+  AuthProviderEntity,
+  AuthProviderRepository<AuthProviderEntity>
 > {
-  protected authRepository: AuthProviderRepository<AuthProvider>;
+  protected authRepository: AuthProviderRepository<AuthProviderEntity>;
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
-    repository: AuthProviderRepository<AuthProvider>,
+    private userProfile: UserProfilesService,
+    repository: AuthProviderRepository<AuthProviderEntity>,
     logger: LoggerService,
     table: Table,
   ) {
@@ -64,7 +67,7 @@ export class AuthService extends BaseService<
 
     return this.generateToken(user);
   }
-  async validateUser(username: string, password: string): Promise<IUser> {
+  async validateUser(username: string, password: string): Promise<UserEntity> {
     const user = await this.userService.findOne({ email: username });
     if (!user) {
       throw new NotFoundException();
@@ -82,10 +85,10 @@ export class AuthService extends BaseService<
     const email = data['email'];
     const password = data['password'];
     try {
-      let user: User = phone
+      let user: UserEntity = phone
         ? await this.userService.findOne({ phone })
         : await this.userService.findOne({ email });
-      console.log(user);
+
       if (!user) {
         throw new NotFoundException({ message: 'Người dùng không tồn tại' });
       }
@@ -104,8 +107,8 @@ export class AuthService extends BaseService<
   async loginWithAuthProvider(
     user: UserAuthSocialMedia,
     providerName: AuthProviderEnum,
-  ): Promise<AuthProvider> {
-    let userExists: User = await this.userService.findOne({
+  ): Promise<IAuthToken> {
+    let userExists: UserEntity = await this.userService.findOne({
       email: user.email,
     });
     if (!userExists) {
@@ -115,32 +118,52 @@ export class AuthService extends BaseService<
         email: user.email,
         created_at: convertToMySQLDateTime(),
       });
+      await this.userProfile.createUserProfile(userExists);
     }
-    const authProvider: AuthProvider = await this.authRepository.create({
+
+    let authProvider: AuthProviderEntity = await this.authRepository.findOne({
       user_id: userExists.user_id,
-      provider: user.id,
       provider_name: providerName,
-      access_token: user.accessToken,
-      extra_data: user.refreshToken || '',
-      created_date: convertToMySQLDateTime(),
     });
 
-    return authProvider;
+    if (!authProvider) {
+      authProvider = await this.authRepository.create({
+        user_id: userExists.user_id,
+        provider: user.id,
+        provider_name: providerName,
+        access_token: user.accessToken,
+        extra_data: user.refreshToken || '',
+        created_date: convertToMySQLDateTime(),
+      });
+    }
+
+    return this.generateToken(userExists);
   }
 
-  async loginWithGoogle(user: UserAuthSocialMedia): Promise<AuthProvider> {
+  async loginWithPassportGoogle(
+    user: UserAuthSocialMedia,
+  ): Promise<IAuthToken> {
     return this.loginWithAuthProvider(user, AuthProviderEnum.GOOGLE);
   }
 
-  async loginWithFacebook(user: UserAuthSocialMedia): Promise<AuthProvider> {
+  async loginWithPassportFacebook(
+    user: UserAuthSocialMedia,
+  ): Promise<IAuthToken> {
     return this.loginWithAuthProvider(user, AuthProviderEnum.FACEBOOK);
+  }
+
+  async loginWithGoogle(AuthLoginProvider: AuthLoginProvider): Promise<void> {
+    console.log(AuthLoginProvider);
   }
 
   async resetPasswordByEmail(url: string, email: string): Promise<boolean> {
     await this.userService.resetPasswordByEmail(url, email);
     return true;
   }
-  async restorePasswordByEmail(user_id: string, token: string): Promise<IUser> {
+  async restorePasswordByEmail(
+    user_id: string,
+    token: string,
+  ): Promise<UserEntity> {
     const user = await this.userService.restorePasswordByEmail(user_id, token);
     return user;
   }

@@ -12,16 +12,17 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
-import { AuthCredentialsDto } from '../../dto/auth-credential.dto';
-import { AuthUpdatePasswordDto } from '../../dto/auth-update-password.dto';
+import { AuthCredentialsDto } from '../../dto/auth/auth-credential.dto';
+import { AuthUpdatePasswordDto } from '../../dto/auth/auth-update-password.dto';
 import { IResponseDataSuccess } from '../../interfaces/response.interface';
 import { GoogleAuthGuard } from '../../helpers/auth/guards/google-auth.guard';
 import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guards';
-import { AuthProvider } from '../../entities/auth-provider.entity';
-import { LoginDto } from '../../dto/auth-login.dto';
+import { AuthProviderEntity } from '../../entities/auth-provider.entity';
+import { AuthLoginProvider } from '../../dto/auth/auth-login-provider.dto';
+import { LoginDto } from '../../dto/auth/auth-login.dto';
 import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
-import { RestorePasswordOTPDto } from '../../dto/auth-restore-pwd-otp.dto';
+import { RestorePasswordOTPDto } from '../../dto/auth/auth-restore-pwd-otp.dto';
 /**
  * Authentication controller
  * @Describe Using 3 authenticate types : Local, Google, Facebook
@@ -65,7 +66,7 @@ export class AuthController extends BaseController {
    */
   @Get('google/login')
   @UseGuards(GoogleAuthGuard)
-  async loginWithGoogle(): Promise<void> {}
+  async passportLoginWithGoogle(): Promise<void> {}
 
   /**
    * When an request from server to google, google receive and then it will response with an redirect url
@@ -75,11 +76,10 @@ export class AuthController extends BaseController {
    */
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(
-    @Req() req,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<AuthProvider>> {
-    const data = await this.authService.loginWithGoogle(req.user);
+  async googleAuthRedirect(@Req() req, @Res() res): Promise<any> {
+    const data = await this.authService.loginWithPassportGoogle(req.user);
+    // return this.responseSuccess(res, data);
+    res.cookie('token', data);
     return this.responseSuccess(res, data);
   }
 
@@ -88,17 +88,31 @@ export class AuthController extends BaseController {
    */
   @Get('facebook/login')
   @UseGuards(FacebookAuthGuard)
-  async loginWithFacebook(): Promise<void> {}
+  async passportLoginWithFacebook(): Promise<void> {}
 
   @Get('facebook/callback')
   @UseGuards(FacebookAuthGuard)
   async facebookAuthRedirect(
     @Req() req,
     @Res() res,
-  ): Promise<IResponseDataSuccess<AuthProvider>> {
-    const data = await this.authService.loginWithFacebook(req.user);
+  ): Promise<IResponseDataSuccess<AuthProviderEntity>> {
+    const data = await this.authService.loginWithPassportFacebook(req.user);
     return this.responseSuccess(res, data);
   }
+
+  /**
+   *
+   * @param AuthLoginProvider
+   */
+  @Post('/v1/google/login/')
+  async loginWithGoolge(
+    @Body() AuthLoginProvider: AuthLoginProvider,
+  ): Promise<void> {
+    await this.authService.loginWithGoogle(AuthLoginProvider);
+  }
+
+  @Post('facebook/login')
+  async loginWithFacebook(): Promise<void> {}
 
   /**
    * @Describe When user click reset or forget passwrod button, this request will send to server. Place to receive is here.

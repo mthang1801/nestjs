@@ -3,4 +3,5 @@ export enum Table {
   PRODUCTS = 'products',
   CATEGORIES = 'categories',
   USERS_AUTH = 'ddv_users_auth_external',
+  USER_PROFILES = 'ddv_user_profiles',
 }

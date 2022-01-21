@@ -1,53 +1,50 @@
 import {
-    Body,
-    Controller,
-    Get,
-    Put,
-    Post,
-    UseGuards,
-    Req,
-    Res
-  } from '@nestjs/common';
-  import { CreateUserGroupsDto } from '../../dto/usergroups/create-usergroups.dto';
-  import { JwtAuthGuard } from '../../helpers/auth/guards/jwt-auth.guard';
-  import { UsersService } from '../../services/users.service';
-  import { User } from '../../entities/user.entity';
-  import { BaseController } from '../../../base/base.controllers';
-  import { IUser } from '../../interfaces/users.interface';
-  import { IResponseDataSuccess } from '../../interfaces/response.interface';
+  Body,
+  Controller,
+  Get,
+  Put,
+  Post,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
+import { CreateUserGroupsDto } from '../../dto/usergroups/create-usergroups.dto';
+import { JwtAuthGuard } from '../../helpers/auth/guards/jwt-auth.guard';
+import { UsersService } from '../../services/users.service';
+import { BaseController } from '../../../base/base.controllers';
+import { IUser } from '../../interfaces/users.interface';
+import { IResponseDataSuccess } from '../../interfaces/response.interface';
+
+/**
+ * User groups controllers
+ * @author khoa.nt
+ */
+@Controller('/be/v1/usergroups')
+export class UsergroupsController extends BaseController {
+  constructor(private readonly usersService: UsersService) {
+    super();
+  }
 
   /**
-   * User groups controllers
-   * @author khoa.nt
+   * Create new record
+   * @param createUserGroupsDto
+   * @param req
+   * @param res
+   * @returns
    */
-  @Controller('/be/v1/usergroups')
-  export class UsergroupsController extends BaseController {
-    constructor(private readonly usersService: UsersService) {
-      super();
-    }
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  async create(
+    @Body() createUserGroupsDto: CreateUserGroupsDto,
+    @Req() req,
+    @Res() res,
+  ): Promise<IResponseDataSuccess<IUser>> {
+    const { user_id } = req.user;
+    const updatedUser = await this.usersService.updateUserInfo(
+      user_id,
+      createUserGroupsDto,
+    );
 
-    /**
-     * Create new record
-     * @param createUserGroupsDto 
-     * @param req 
-     * @param res 
-     * @returns 
-     */
-    @UseGuards(JwtAuthGuard)
-    @Post()
-    async create(
-      @Body() createUserGroupsDto: CreateUserGroupsDto,
-      @Req() req,
-      @Res() res,
-    ): Promise<IResponseDataSuccess<IUser>> {
-      const { user_id } = req.user;
-      const updatedUser = await this.usersService.updateUserInfo(
-        user_id,
-        createUserGroupsDto,
-      );
-  
-      return this.responseSuccess(res, updatedUser);
-    }
-
+    return this.responseSuccess(res, updatedUser);
   }
-  
+}
