@@ -18,6 +18,7 @@ async function bootstrap() {
     new ExpressAdapter(),
   );
   const configService = app.get(ConfigService);
+  app.enableCors();
   app.useGlobalPipes(new ValidationPipe(ValidationConfig));
   app.setGlobalPrefix(configService.get<string>('apiPrefix'));
 

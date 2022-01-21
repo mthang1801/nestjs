@@ -39,19 +39,22 @@ export class UsersService extends BaseService<
     this.table = Table.USERS;
   }
 
-  async createUser(registerData): Promise<UserEntity> {
+  async createUser(registerData): Promise<any> {
     try {
       const checkUserExists = await this.userRepository.findOne({
         where: [{ email: registerData.email }, { phone: registerData.phone }],
       });
       if (checkUserExists) {
-        throw new BadRequestException({
-          message: 'Địa chỉ email hoặc số điện thoại đã được đăng ký.',
-        });
+        return this.optionalResult(
+          200,
+          {},
+          'Địa chỉ email hoặc số điện thoại đã được đăng ký.',
+          false,
+        );
       }
       let user = await this.userRepository.create(registerData);
       await this.userProfileService.createUserProfile(user);
-      return user;
+      return this.responseSuccess({ user });
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
@@ -68,7 +71,7 @@ export class UsersService extends BaseService<
     return user;
   }
 
-  async updateUserInfo(
+  async updateUser(
     user_id: number,
     dataObj: ObjectLiteral,
   ): Promise<UserEntity> {

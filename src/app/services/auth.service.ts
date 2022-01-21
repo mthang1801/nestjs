@@ -22,8 +22,10 @@ import { IAuthToken } from '../interfaces/auth.interface';
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 import { generateOTPDigits } from '../../utils/helper';
 import { AuthLoginProvider } from '../dto/auth/auth-login-provider.dto';
-import { UserProfileEntity } from '../entities/user-profile.entity';
+import { dataResponse } from '../../utils/helper';
 import { UserProfilesService } from '../services/user-profiles.service';
+import { HandleResult } from '../helpers/exeptions/exceptions';
+// import { IAuthToken } from '../interfaces/auth.interface';
 import * as twilio from 'twilio';
 @Injectable()
 export class AuthService extends BaseService<
@@ -44,18 +46,16 @@ export class AuthService extends BaseService<
     this.table = Table.USERS_AUTH;
   }
 
-  generateToken(user: any): IAuthToken {
+  generateToken(user: any): any {
     const payload = { sub: user[PrimaryKeys.ddv_users] };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    return this.jwtService.sign(payload);
   }
 
-  async signUp(authCredentialsDto: AuthCredentialsDto): Promise<IAuthToken> {
+  async signUp(authCredentialsDto: AuthCredentialsDto): Promise<any> {
     const { firstname, lastname, email, password, phone } = authCredentialsDto;
     const { passwordHash, salt } = saltHashPassword(password);
 
-    const user = await this.userService.createUser({
+    const userResponse = await this.userService.createUser({
       firstname,
       lastname,
       email,
@@ -65,7 +65,14 @@ export class AuthService extends BaseService<
       created_at: convertToMySQLDateTime(),
     });
 
-    return this.generateToken(user);
+    if (!userResponse.success) {
+      return userResponse;
+    }
+
+    return this.responseSuccess({
+      token: this.generateToken(userResponse.data.user),
+      userData: userResponse.data.user,
+    });
   }
   async validateUser(username: string, password: string): Promise<UserEntity> {
     const user = await this.userService.findOne({ email: username });
@@ -80,7 +87,7 @@ export class AuthService extends BaseService<
     }
     return user;
   }
-  async login(data: any): Promise<IAuthToken> {
+  async login(data: any): Promise<any> {
     const phone = data['phone'];
     const email = data['email'];
     const password = data['password'];
@@ -90,15 +97,21 @@ export class AuthService extends BaseService<
         : await this.userService.findOne({ email });
 
       if (!user) {
-        throw new NotFoundException({ message: 'Người dùng không tồn tại' });
+        return this.errorNotFound('Người dùng không tồn tại.');
       }
       if (desaltHashPassword(password, user.salt) !== user.password) {
-        throw new BadRequestException({
-          message: 'Tài khoản hoặc mật khẩu không đúng.',
-        });
+        return this.optionalResult(
+          200,
+          {},
+          'Tài khoản hoặc mật khẩu không đúng',
+          false,
+        );
       }
 
-      return this.generateToken(user);
+      return this.responseSuccess({
+        token: this.generateToken(user),
+        userData: user,
+      });
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

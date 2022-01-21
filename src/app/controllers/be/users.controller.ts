@@ -23,13 +23,13 @@ export class UsersController extends BaseController {
   }
   @UseGuards(JwtAuthGuard)
   @Put()
-  async updateUserInfo(
+  async updateUser(
     @Body() userUpdateDto: UserUpdateDto,
     @Req() req,
     @Res() res,
   ): Promise<IResponseDataSuccess<IUser>> {
     const { user_id } = req.user;
-    const updatedUser = await this.usersService.updateUserInfo(
+    const updatedUser = await this.usersService.updateUser(
       user_id,
       userUpdateDto,
     );

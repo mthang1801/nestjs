@@ -23,6 +23,7 @@ import { LoginDto } from '../../dto/auth/auth-login.dto';
 import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
 import { RestorePasswordOTPDto } from '../../dto/auth/auth-restore-pwd-otp.dto';
+
 /**
  * Authentication controller
  * @Describe Using 3 authenticate types : Local, Google, Facebook
@@ -38,19 +39,29 @@ export class AuthController extends BaseController {
   async signUp(
     @Body() authCredentialsDto: AuthCredentialsDto,
     @Res() res,
-  ): Promise<IResponseDataSuccess<string>> {
-    const { access_token } = await this.authService.signUp(authCredentialsDto);
-    return this.respondCreated(res, access_token);
+  ): Promise<any> {
+    const dataResponse = await this.authService.signUp(authCredentialsDto);
+    console.log(dataResponse);
+    return this.optionalResponse(
+      res,
+      dataResponse.statusCode,
+      dataResponse.data,
+      dataResponse.message,
+      dataResponse.success,
+    );
   }
 
   @Post('login')
-  async login(
-    @Body() data: LoginDto,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<string>> {
-    const { access_token } = await this.authService.login(data);
-    console.log(access_token);
-    return this.responseSuccess(res, access_token);
+  async login(@Body() data: LoginDto, @Res() res): Promise<any> {
+    const dataResponse = await this.authService.login(data);
+
+    return this.optionalResponse(
+      res,
+      dataResponse.statusCode,
+      dataResponse.data,
+      dataResponse.message,
+      dataResponse.success,
+    );
   }
 
   /**
@@ -76,11 +87,14 @@ export class AuthController extends BaseController {
    */
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Req() req, @Res() res): Promise<any> {
-    const data = await this.authService.loginWithPassportGoogle(req.user);
-    // return this.responseSuccess(res, data);
-    res.cookie('token', data);
-    return this.responseSuccess(res, data);
+  async googleAuthRedirect(
+    @Req() req,
+    @Res() res,
+  ): Promise<IResponseDataSuccess<any>> {
+    const access_token = await this.authService.loginWithPassportGoogle(
+      req.user,
+    );
+    return this.responseSuccess(res, { access_token });
   }
 
   /**
@@ -95,23 +109,25 @@ export class AuthController extends BaseController {
   async facebookAuthRedirect(
     @Req() req,
     @Res() res,
-  ): Promise<IResponseDataSuccess<AuthProviderEntity>> {
-    const data = await this.authService.loginWithPassportFacebook(req.user);
-    return this.responseSuccess(res, data);
+  ): Promise<IResponseDataSuccess<any>> {
+    const access_token = await this.authService.loginWithPassportFacebook(
+      req.user,
+    );
+    return this.responseSuccess(res, { access_token });
   }
 
   /**
    *
    * @param AuthLoginProvider
    */
-  @Post('/v1/google/login/')
+  @Post('/v1/google/login')
   async loginWithGoolge(
     @Body() AuthLoginProvider: AuthLoginProvider,
   ): Promise<void> {
     await this.authService.loginWithGoogle(AuthLoginProvider);
   }
 
-  @Post('facebook/login')
+  @Post('/v1/facebook/login')
   async loginWithFacebook(): Promise<void> {}
 
   /**
@@ -132,7 +148,8 @@ export class AuthController extends BaseController {
     await this.authService.resetPasswordByEmail(fullUrl, email);
     return this.responseSuccess(
       res,
-      `request to reset password success, please visit to email to activate new password`,
+      {},
+      'Yêu cầu khôi phục tài khoản thành công, quý khách vui lòng truy cập vào email để cập nhật lại mật khẩu mới.',
     );
   }
 
@@ -148,7 +165,7 @@ export class AuthController extends BaseController {
     try {
       const { token, user_id } = req.query;
       await this.authService.restorePasswordByEmail(user_id, token);
-      res.status(200).render('restore-password');
+      res.render('restore-password');
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -172,7 +189,7 @@ export class AuthController extends BaseController {
 
     await this.authService.updatePasswordByEmail(user_id, token, password);
 
-    return this.responseSuccess(res, `updated`);
+    return this.responseSuccess(res, {}, `Cập nhật thành công.`);
   }
 
   /**

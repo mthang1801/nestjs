@@ -40,7 +40,7 @@ export class UsergroupsController extends BaseController {
     @Res() res,
   ): Promise<IResponseDataSuccess<IUser>> {
     const { user_id } = req.user;
-    const updatedUser = await this.usersService.updateUserInfo(
+    const updatedUser = await this.usersService.updateUser(
       user_id,
       createUserGroupsDto,
     );
