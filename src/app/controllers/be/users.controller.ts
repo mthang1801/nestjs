@@ -47,8 +47,8 @@ export class UsersController extends BaseController {
     return this.responseSuccess(res, user);
   }
   @Get('/otp')
-  async otp_demo(@Req() req, @Res() res) {
-    res.status(200).render('otp-auth');
+  async otp_demo(@Req() req, @Res() res): Promise<void> {
+    res.render('otp-auth');
   }
   @Get('/:id')
   async getUserById(

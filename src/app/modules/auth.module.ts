@@ -31,7 +31,6 @@ import { AuthProviderRepository } from '../repositories/auth.repository';
     GoogleStrategy,
     FacebookStrategy,
     AuthProviderRepository,
-    String,
   ],
   exports: [AuthService],
   controllers: [AuthControllerBe, AuthControllerFe],
