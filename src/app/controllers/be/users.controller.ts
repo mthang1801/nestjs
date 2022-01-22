@@ -4,6 +4,7 @@ import {
   Get,
   Put,
   Post,
+  Patch,
   UseGuards,
   Req,
   Res,
@@ -22,37 +23,46 @@ export class UsersController extends BaseController {
     super();
   }
   @UseGuards(JwtAuthGuard)
-  @Put()
+  @Patch()
   async updateUser(
     @Body() userUpdateDto: UserUpdateDto,
     @Req() req,
     @Res() res,
-  ): Promise<IResponseDataSuccess<IUser>> {
-    const { user_id } = req.user;
-    const updatedUser = await this.usersService.updateUser(
-      user_id,
-      userUpdateDto,
-    );
+  ): Promise<any> {
+    try {
+      const { user_id } = req.user;
+      const updatedUser = await this.usersService.updateUser(
+        user_id,
+        userUpdateDto,
+      );
 
-    return this.responseSuccess(res, updatedUser);
+      return this.responseSuccess(res, updatedUser);
+    } catch (error) {
+      return this.responseFail(res, error.statusCode, error.message);
+    }
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
   async getMyInfo(@Req() req, @Res() res): Promise<any> {
-    const userResponse = await this.usersService.getMyInfo(req.user.user_id);
-    return this.responseSuccess(res, userResponse.data);
+    try {
+      const userResponse = await this.usersService.getMyInfo(req.user.user_id);
+      console.log(userResponse);
+      return this.responseSuccess(res, userResponse.data);
+    } catch (error) {
+      return this.responseFail(res, error.statusCode, error.message);
+    }
   }
-  @Get('/otp')
-  async otp_demo(@Req() req, @Res() res): Promise<void> {
-    res.render('otp-auth');
-  }
-  @Get('/:id')
-  async getUserById(
-    @Req() req,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<IUser>> {
-    const user = await this.usersService.findById(req.params.id);
-    return this.responseSuccess(res, user);
-  }
+  // @Get('/otp')
+  // async otp_demo(@Req() req, @Res() res): Promise<void> {
+  //   res.render('otp-auth');
+  // }
+  // @Get('/:id')
+  // async getUserById(
+  //   @Req() req,
+  //   @Res() res,
+  // ): Promise<IResponseDataSuccess<IUser>> {
+  //   const user = await this.usersService.findById(req.params.id);
+  //   return this.responseSuccess(res, user);
+  // }
 }

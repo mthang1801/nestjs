@@ -15,10 +15,8 @@ import { ConfigService } from '@nestjs/config';
       useFactory: async () => DatabasePoolFactory(),
     },
     DatabaseService,
-    UserRepository,
-    String,
   ],
-  exports: [DatabaseService, UserRepository],
+  exports: [DatabaseService],
 })
 export class DatabaseModule implements OnApplicationShutdown {
   private readonly logger = new Logger(DatabaseModule.name);

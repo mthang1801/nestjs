@@ -5,7 +5,6 @@ import { AuthController as AuthControllerFe } from '../controllers/fe/auth.contr
 import { UsersModule } from './users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from '../helpers/auth/strategies/jwt.strategy';
-import { LocalStrategy } from '../helpers/auth/strategies/local.strategy';
 import { GoogleStrategy } from '../helpers/auth/strategies/google.strategy';
 import { FacebookStrategy } from '../helpers/auth/strategies/facebook.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -26,7 +25,6 @@ import { UsersProfilesModule } from './user-profiles.module';
   ],
   providers: [
     AuthService,
-    LocalStrategy,
     JwtStrategy,
     GoogleStrategy,
     FacebookStrategy,

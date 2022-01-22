@@ -7,6 +7,7 @@ import { JwtStrategy } from '../helpers/auth/strategies/jwt.strategy';
 import { MailModule } from './mail.module';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 import { UsersProfilesModule } from './user-profiles.module';
+import { UserRepository } from '../repositories/user.repository';
 @Module({
   imports: [
     JwtModule.registerAsync({
@@ -21,7 +22,7 @@ import { UsersProfilesModule } from './user-profiles.module';
     UsersProfilesModule,
   ],
   exports: [UsersService],
-  providers: [UsersService, JwtStrategy],
+  providers: [UsersService, JwtStrategy, UserRepository],
   controllers: [UsersControllerBe, UsersControllerFe],
 })
 export class UsersModule {}

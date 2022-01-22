@@ -5,7 +5,7 @@ import {
   IResponseDataSuccess,
 } from '../app/interfaces/response.interface';
 export class BaseController {
-  private message: string = '';
+  private message: string | string[] = '';
   private data: any = null;
   private success: boolean = true;
   private res: any;
@@ -90,16 +90,11 @@ export class BaseController {
    * @param res Response
    * @param data any
    */
-  public respondCreated(
-    res,
-    data = null,
-    message = '',
-  ): IResponseDataSuccess<any> {
+  public respondCreated(res, data = null): IResponseDataSuccess<any> {
     this.setStatusCode(201);
     this.success = true;
     this.data = data;
     this.res = res;
-    this.message = message;
     return this.respond();
   }
 
@@ -125,7 +120,7 @@ export class BaseController {
   public responseSuccess(
     res,
     data = null,
-    message = '',
+    message: string = '',
   ): IResponseDataSuccess<any> {
     this.res = res;
     this.setStatusCode(200);
@@ -137,13 +132,31 @@ export class BaseController {
     this.data = data;
     return this.respond();
   }
+  /**
+   *
+   * @param res Response
+   * @param satatusCode number
+   * @param message string | string[]
+   * @returns success : false, statusCode and message
+   */
+  public responseFail(
+    res,
+    satatusCode: number = 500,
+    message: string | string[] = '',
+  ) {
+    this.res = res;
+    this.setStatusCode(satatusCode);
+    this.message = message;
+    this.success = false;
+    return this.respond();
+  }
 
   public optionalResponse(
     res,
     statusCode = 200,
-    data: any = null,
-    message: string = '',
     success: boolean = true,
+    message: string = '',
+    data: any = null,
   ) {
     this.res = res;
     this.setStatusCode(statusCode);

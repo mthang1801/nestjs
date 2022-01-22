@@ -1,5 +1,4 @@
-import { Pool, createPool } from 'mysql2/promise';
-import { ConfigService } from '@nestjs/config';
+import { createPool } from 'mysql2/promise';
 export const DatabasePoolFactory = async () => {
   return createPool({
     user: process.env.DATABASE_USERNAME,

@@ -18,6 +18,39 @@ export class BaseRepositorty<T> {
     this.table = table;
   }
 
+  InternalServerError(
+    message: string | string[] = 'Có lỗi xảy ra từ hệ thống.',
+  ) {
+    return {
+      statusCode: 500,
+      message,
+    };
+  }
+
+  BadRequestError(message: string | string[] = 'Bad request.') {
+    return {
+      statusCode: 400,
+      message,
+    };
+  }
+
+  ErrorNotFound(message: string | string[] = 'Not Found.') {
+    return {
+      statusCode: 404,
+      message,
+    };
+  }
+
+  ErrorDoNothing(
+    statusCode: number = 400,
+    message: string | string[] = 'Something went wrong.',
+  ) {
+    return {
+      statusCode: statusCode,
+      message,
+    };
+  }
+
   /**
    * Create new record
    * @param params
@@ -25,25 +58,26 @@ export class BaseRepositorty<T> {
    */
   async create(params: any): Promise<any> {
     console.log('=============== create ================');
-
-    if (Array.isArray(params) || typeof params !== 'object') {
-      throw new BadRequestException({
-        message: 'Tham số truyền vào phải là Object',
-      });
-    }
-    let sql = `INSERT INTO ${this.table} SET ?`;
-
-    try {
-      await this.databaseService.executeQuery(sql, params);
-      let filters = [];
-      for (let [key, val] of Object.entries(params)) {
-        filters.push({ [key]: val });
+    return new Promise(async (resolve, reject) => {
+      if (Array.isArray(params) || typeof params !== 'object') {
+        return reject(
+          this.BadRequestError('Tham số truyền vào phải là Object'),
+        );
       }
+      let sql = `INSERT INTO ${this.table} SET ?`;
 
-      return await this.findOne({ where: params });
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+      try {
+        await this.databaseService.executeQuery(sql, params);
+        let filters = [];
+        for (let [key, val] of Object.entries(params)) {
+          filters.push({ [key]: val });
+        }
+
+        resolve(this.findOne({ where: params }));
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   /**
@@ -53,21 +87,20 @@ export class BaseRepositorty<T> {
    */
   async findById(id: number): Promise<T> {
     console.log('=============== Find By Id ================');
+    return new Promise(async (resolve, reject) => {
+      try {
+        const stringQuery = `SELECT * FROM ${this.table} WHERE ?`;
 
-    const stringQuery = `SELECT * FROM ${this.table} WHERE ?`;
+        const rows = await this.databaseService.executeQuery(stringQuery, [
+          { [PrimaryKeys[this.table]]: id },
+        ]);
+        const result = rows[0];
 
-    try {
-      const rows = await this.databaseService.executeQuery(stringQuery, [
-        { [PrimaryKeys[this.table]]: id },
-      ]);
-      const result = rows[0];
-      if (!result.length) {
-        throw new NotFoundException();
+        resolve(result[0]);
+      } catch (error) {
+        reject(error);
       }
-      return result[0];
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+    });
   }
 
   /**
@@ -77,13 +110,15 @@ export class BaseRepositorty<T> {
    */
   async findOne(options: any): Promise<any> {
     console.log('=============== FIND ONE ================');
-    try {
-      const results = await this.find({ ...options, limit: 1 });
+    return new Promise(async (resolve, reject) => {
+      try {
+        const results = await this.find({ ...options, limit: 1 });
 
-      return results[0];
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+        resolve(results[0]);
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   /**
@@ -119,12 +154,17 @@ export class BaseRepositorty<T> {
       }
     }
 
-    try {
-      const results = await this.databaseService.executeQuery(collection.sql());
-      return results[0];
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return new Promise(async (resolve, reject) => {
+      try {
+        const results = await this.databaseService.executeQuery(
+          collection.sql(),
+        );
+
+        resolve(results[0]);
+      } catch (error) {
+        reject(this.InternalServerError(error));
+      }
+    });
   }
 
   /**
@@ -135,48 +175,59 @@ export class BaseRepositorty<T> {
    */
   async update(id: number, params: any): Promise<T> {
     console.log('=============== UPDATE BY ID ================');
-    if (typeof params !== 'object') {
-      throw new BadRequestException({
-        message: 'Tham số truyền vào không thể nhận dạng key/value.',
+    return new Promise(async (resolve, reject) => {
+      if (typeof params !== 'object') {
+        return reject(
+          this.BadRequestError(
+            "'Tham số truyền vào không thể nhận dạng key/value.'",
+          ),
+        );
+      }
+      let sql = `UPDATE ${this.table} SET `;
+      Object.entries(params).forEach(([key, val], i) => {
+        if (i === 0) {
+          sql +=
+            typeof val === 'number' ? `${key} = ${val}` : `${key} = '${val}'`;
+        } else {
+          sql +=
+            typeof val === 'number'
+              ? `, ${key} = ${val}`
+              : `, ${key} = '${val}'`;
+        }
       });
-    }
-    let sql = `UPDATE ${this.table} SET `;
-    Object.entries(params).forEach(([key, val], i) => {
-      if (i === 0) {
-        sql +=
-          typeof val === 'number' ? `${key} = ${val}` : `${key} = '${val}'`;
-      } else {
-        sql +=
-          typeof val === 'number' ? `, ${key} = ${val}` : `, ${key} = '${val}'`;
+
+      sql += ` WHERE ${PrimaryKeys[this.table]} = '${id}'`;
+      try {
+        await this.databaseService.executeQuery(sql);
+        const updatedUser = await this.findById(id);
+        resolve(updatedUser);
+      } catch (error) {
+        reject(error);
       }
     });
-
-    sql += ` WHERE ${PrimaryKeys[this.table]} = '${id}'`;
-    try {
-      await this.databaseService.executeQuery(sql);
-      const updatedUser = await this.findById(id);
-      return updatedUser;
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
   }
 
   async delete(id: number): Promise<boolean> {
     console.log('=============== DELETE BY ID ================');
 
     const queryString = `DELETE FROM ${this.table} WHERE ?`;
-    try {
-      const res = await this.databaseService.executeQuery(queryString, [
-        { id },
-      ]);
-      if (res[0].affectedRows === 0) {
-        throw new NotFoundException({
-          message: `Not found id = ${id} in ${this.table} to delete`,
-        });
+    return new Promise(async (resolve, reject) => {
+      try {
+        const res = await this.databaseService.executeQuery(queryString, [
+          { id },
+        ]);
+        if (res[0].affectedRows === 0) {
+          return reject(
+            this.ErrorDoNothing(
+              200,
+              `Not found id = ${id} in ${this.table} to delete`,
+            ),
+          );
+        }
+        resolve(true);
+      } catch (error) {
+        reject(error);
       }
-      return true;
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+    });
   }
 }

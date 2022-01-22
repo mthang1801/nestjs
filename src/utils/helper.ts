@@ -13,15 +13,3 @@ export const preprocessUserResult = (user) => {
 
 export const generateOTPDigits = () =>
   Math.floor(100000 + Math.random() * 900000);
-
-export const dataResponse = (
-  statusCode = 200,
-  data = {},
-  message = '',
-  success = true,
-) => ({
-  success,
-  message,
-  data,
-  statusCode,
-});

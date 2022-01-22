@@ -38,6 +38,10 @@ async function bootstrap() {
     next();
   });
 
+  app.use((error, req, res, next) => {
+    console.log('hello');
+  });
+
   // app.enableCors({
   //   allowedHeaders:"*",
   //   origin: "*"
@@ -48,17 +52,12 @@ async function bootstrap() {
     'https://ddvdev.ntlogistics.vn/',
     'https://ddvcmsdev.ntlogistics.vn/',
     'http://localhost:5000',
-    'http://[::1]:5000',
-    'http://127.0.0.1:5000',
   ];
   app.enableCors({
     origin: function (origin, callback) {
-      console.log(origin);
       if (whitelist.indexOf(origin) !== -1 || !origin) {
-        console.log('allowed cors for:', origin);
         callback(null, true);
       } else {
-        console.log('blocked cors for:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },

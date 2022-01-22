@@ -5,12 +5,10 @@ import {
   Post,
   Req,
   Res,
-  UseGuards,
   UsePipes,
   ValidationPipe,
-  InternalServerErrorException,
-  BadRequestException,
   Next,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
 import { AuthCredentialsDto } from '../../dto/auth/auth-credential.dto';
@@ -21,6 +19,7 @@ import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guard
 import { AuthProviderEntity } from '../../entities/auth-provider.entity';
 import { GoogleLoginProviderDto } from '../../dto/auth/auth-login-provider.dto';
 import { LoginDto } from '../../dto/auth/auth-login.dto';
+import { AuthCheckTokenDto } from '../../dto/auth/auth-check-token.dto';
 import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
 import { RestorePasswordOTPDto } from '../../dto/auth/auth-restore-pwd-otp.dto';
@@ -35,25 +34,28 @@ export class AuthController extends BaseController {
   constructor(private authService: AuthService) {
     super();
   }
+  /**
+   * Register System account
+   * @param authCredentialsDto {firstname : string, lastname: string, email : string, password : string, phone : string}
+   * @param res
+   * @returns
+   */
   @Post('register')
   @UsePipes(ValidationPipe)
   async signUp(
     @Body() authCredentialsDto: AuthCredentialsDto,
     @Res() res,
   ): Promise<any> {
-    const dataResponse = await this.authService.signUp(authCredentialsDto);
-
-    return this.optionalResponse(
-      res,
-      dataResponse.statusCode,
-      dataResponse.data,
-      dataResponse.message,
-      dataResponse.success,
-    );
+    try {
+      const dataResponse = await this.authService.signUp(authCredentialsDto);
+      return this.respondCreated(res, dataResponse.data);
+    } catch (error) {
+      return this.responseFail(res, error.statusCode, error.message);
+    }
   }
 
   /**
-   * Login with email or phone and password
+   * Login system account with email or phone and password
    * @param data
    * @param res
    * @returns
@@ -61,58 +63,38 @@ export class AuthController extends BaseController {
   @Post('login')
   async login(@Body() data: LoginDto, @Res() res, @Next() next): Promise<any> {
     try {
-      const error: any = new Error('Login failed');
-      error.statusCode = 403;
-      error.success = false;
-      throw error;
+      const dataResponse = await this.authService.login(data);
+      return this.responseSuccess(res, dataResponse.data);
     } catch (error) {
-      next(error);
+      return this.responseFail(res, error.statusCode, error.message);
     }
-    // const dataResponse = await this.authService.login(data);
-
-    // if (dataResponse.statusCode === 200 && dataResponse.success) {
-    //   return this.responseSuccess(res, dataResponse.data, dataResponse.message);
-    // }
-    // return this.optionalResponse(
-    //   res,
-    //   dataResponse.statusCode,
-    //   dataResponse.data,
-    //   dataResponse.message,
-    //   dataResponse.success,
-    // );
   }
 
-  /**
-   * Render page with 2 buttons login google and login facebook
-   */
-  @Get()
-  renderAuthPage(@Res() res: Response) {
-    res.render('authentication');
-  }
+  // /**
+  //  * Render page with 2 buttons login google and login facebook
+  //  */
+  // @Get()
+  // renderAuthPage(@Res() res: Response) {
+  //   res.render('authentication');
+  // }
 
   @Post('/google/login')
   async loginWithGoolge(
     @Body() googleLoginProvider: GoogleLoginProviderDto,
     @Res() res,
-    s,
   ): Promise<any> {
-    const userResponse = await this.authService.loginWithGoogle(
-      googleLoginProvider,
-    );
-    if (userResponse.statusCode === 200) {
+    try {
+      const userResponse = await this.authService.loginWithGoogle(
+        googleLoginProvider,
+      );
       return this.responseSuccess(res, userResponse.data);
+    } catch (error) {
+      return this.responseFail(res, error.statusCode, error.message);
     }
-    return this.optionalResponse(
-      res,
-      userResponse.statusCode,
-      null,
-      userResponse.message,
-      false,
-    );
   }
 
-  @Post('/facebook/login')
-  async loginWithFacebook(): Promise<void> {}
+  // @Post('/facebook/login')
+  // async loginWithFacebook(): Promise<void> {}
 
   /**
    * @Describe When user click reset or forget passwrod button, this request will send to server. Place to receive is here.
@@ -122,19 +104,19 @@ export class AuthController extends BaseController {
    * @returns
    */
   @Post('reset-password-by-email')
-  async resetPasswordByEmail(
-    @Req() req,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<string>> {
-    const fullUrl = req.protocol + '://' + req.get('host');
-    const { email } = req.body;
-
-    await this.authService.resetPasswordByEmail(fullUrl, email);
-    return this.responseSuccess(
-      res,
-      {},
-      'Yêu cầu khôi phục tài khoản thành công, quý khách vui lòng truy cập vào email để cập nhật lại mật khẩu mới.',
-    );
+  async resetPasswordByEmail(@Req() req, @Res() res): Promise<any> {
+    try {
+      const fullUrl = req.protocol + '://' + req.get('host');
+      const { email } = req.body;
+      await this.authService.resetPasswordByEmail(fullUrl, email);
+      return this.responseSuccess(
+        res,
+        null,
+        'Yêu cầu khôi phục tài khoản thành công, quý khách vui lòng truy cập vào email để cập nhật lại mật khẩu mới.',
+      );
+    } catch (error) {
+      return this.responseFail(error, error.statusCode, error.message);
+    }
   }
 
   /**
@@ -144,14 +126,17 @@ export class AuthController extends BaseController {
    * @param req
    * @param res
    */
-  @Get('restore-password')
-  async restorePasswordByEmail(@Req() req, @Res() res): Promise<void> {
+  @Get('forgot-password')
+  async forgotPasswordByEmail(
+    @Query() authCheckToken: AuthCheckTokenDto,
+    @Res() res,
+  ): Promise<void> {
     try {
-      const { token, user_id } = req.query;
-      await this.authService.restorePasswordByEmail(user_id, token);
-      res.render('restore-password');
+      const { token, user_id } = authCheckToken;
+      await this.authService.renderForgotPasswordByEmail(user_id, token);
+      res.render('forgot-password-form');
     } catch (error) {
-      throw new BadRequestException(error);
+      res.render('forgot-password-token-exp');
     }
   }
 
@@ -168,38 +153,43 @@ export class AuthController extends BaseController {
   async updatePasswordByEmail(
     @Body() authRestoreDto: AuthUpdatePasswordDto,
     @Res() res,
-  ): Promise<IResponseDataSuccess<string>> {
-    const { user_id, token, password } = authRestoreDto;
+  ): Promise<any> {
+    try {
+      console.log(authRestoreDto);
+      const { user_id, token, password } = authRestoreDto;
 
-    await this.authService.updatePasswordByEmail(user_id, token, password);
+      await this.authService.updatePasswordByEmail(user_id, token, password);
 
-    return this.responseSuccess(res, {}, `Cập nhật thành công.`);
+      return this.responseSuccess(res, null, `Cập nhật thành công.`);
+    } catch (error) {
+      return this.responseFail(res, error.statusCode, error.message);
+    }
   }
 
-  /**
-   * Reset password by phone, using OTP sending method
-   * @param phone string
-   */
-  @Post('reset-password-by-otp')
-  async resetPasswordByPhone(
-    @Body('phone') phone: string,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<number>> {
-    const otp = await this.authService.resetPasswordByPhone(phone);
-    return this.respondCreated(res, { otp });
-  }
+  // /**
+  //  * Reset password by phone, using OTP sending method
+  //  * @param phone string
+  //  */
+  // @Post('reset-password-by-otp')
+  // async resetPasswordByPhone(
+  //   @Body('phone') phone: string,
+  //   @Res() res,
+  // ): Promise<IResponseDataSuccess<number>> {
+  //   const otp = await this.authService.resetPasswordByPhone(phone);
+  //   return this.respondCreated(res, { otp });
+  // }
 
-  /**
-   *
-   * @param restorePwd RestorePasswordOTPDto
-   */
-  @Post('restore-password-by-otp')
-  async restorePasswordByOTP(
-    @Body() restorePwdDto: RestorePasswordOTPDto,
-    @Res() res,
-  ): Promise<void> {
-    const { user_id, otp } = restorePwdDto;
-    await this.authService.restorePasswordByOTP(user_id, otp);
-    res.render('otp-auth');
-  }
+  // /**
+  //  *
+  //  * @param restorePwd RestorePasswordOTPDto
+  //  */
+  // @Post('restore-password-by-otp')
+  // async restorePasswordByOTP(
+  //   @Body() restorePwdDto: RestorePasswordOTPDto,
+  //   @Res() res,
+  // ): Promise<void> {
+  //   const { user_id, otp } = restorePwdDto;
+  //   await this.authService.restorePasswordByOTP(user_id, otp);
+  //   res.render('otp-auth');
+  // }
 }

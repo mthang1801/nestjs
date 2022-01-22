@@ -25,26 +25,26 @@ export class UsergroupsController extends BaseController {
     super();
   }
 
-  /**
-   * Create new record
-   * @param createUserGroupsDto
-   * @param req
-   * @param res
-   * @returns
-   */
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  async create(
-    @Body() createUserGroupsDto: CreateUserGroupsDto,
-    @Req() req,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<IUser>> {
-    const { user_id } = req.user;
-    const updatedUser = await this.usersService.updateUser(
-      user_id,
-      createUserGroupsDto,
-    );
+  // /**
+  //  * Create new record
+  //  * @param createUserGroupsDto
+  //  * @param req
+  //  * @param res
+  //  * @returns
+  //  */
+  // @UseGuards(JwtAuthGuard)
+  // @Post()
+  // async create(
+  //   @Body() createUserGroupsDto: CreateUserGroupsDto,
+  //   @Req() req,
+  //   @Res() res,
+  // ): Promise<IResponseDataSuccess<IUser>> {
+  //   const { user_id } = req.user;
+  //   const updatedUser = await this.usersService.updateUser(
+  //     user_id,
+  //     createUserGroupsDto,
+  //   );
 
-    return this.responseSuccess(res, updatedUser);
-  }
+  //   return this.responseSuccess(res, updatedUser);
+  // }
 }
