@@ -23,7 +23,7 @@ import { UserProfileEntity } from '../entities/user-profile.entity';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import { saltHashPassword } from '../../utils/cipherHelper';
 import { UserProfilesService } from '../services/user-profiles.service';
-import { rejects } from 'assert';
+import { HttpException, HttpStatus } from '@nestjs/common';
 @Injectable()
 export class UsersService extends BaseService<
   UserEntity,
@@ -43,142 +43,118 @@ export class UsersService extends BaseService<
     this.table = Table.USERS;
   }
 
-  async createUser(registerData): Promise<any> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const checkUserExists = await this.userRepository.findOne({
-          where: [{ email: registerData.email }, { phone: registerData.phone }],
-        });
-        if (checkUserExists) {
-          return reject(
-            this.optionalResponse(
-              200,
-              'Địa chỉ email hoặc số điện thoại đã được đăng ký.',
-            ),
-          );
-        }
-        let user = await this.userRepository.create(registerData);
-        await this.userProfileService.createUserProfile(user);
-
-        resolve(this.responseSuccess({ user }));
-      } catch (error) {
-        reject(error);
-      }
+  async createUser(registerData): Promise<UserEntity> {
+    const checkUserExists = await this.userRepository.findOne({
+      where: [{ email: registerData.email }, { phone: registerData.phone }],
     });
+    if (checkUserExists) {
+      throw new HttpException(
+        'Địa chỉ email hoặc số điện thoại đã được đăng ký.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    let user = await this.userRepository.create(registerData);
+    await this.userProfileService.createUserProfile(user);
+    return user;
   }
 
-  // async create(dataObj: ObjectLiteral): Promise<UserEntity> {
-  //   let user = await this.userRepository.create(dataObj);
-  //   return user;
-  // }
+  async create(dataObj: ObjectLiteral): Promise<UserEntity> {
+    let user = await this.userRepository.create(dataObj);
+    return user;
+  }
 
-  // async findById(id: number): Promise<UserEntity> {
-  //   const user = await this.userRepository.findById(id);
-
-  //   return user;
-  // }
+  async findById(id: number): Promise<UserEntity> {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new HttpException(
+        'Không tìm thấy người dùng.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return preprocessUserResult(user);
+  }
 
   async updateUser(
     user_id: number,
     dataObj: ObjectLiteral,
   ): Promise<UserEntity> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const updatedUser = await this.userRepository.update(user_id, dataObj);
+    const updatedUser = await this.userRepository.update(user_id, dataObj);
 
-        resolve(updatedUser);
-      } catch (error) {
-        reject(error);
-      }
-    });
+    return preprocessUserResult(updatedUser);
   }
 
-  async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<any> {
-    try {
-      const user = await this.userRepository.findOne({ where: dataObj });
-
-      return user;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
+  async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<UserEntity> {
+    const user = await this.userRepository.findOne({ where: dataObj });
+    return user;
   }
 
   async resetPasswordByEmail(
     originUrl: string,
     email: string,
   ): Promise<boolean> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const user: any = await this.userRepository.findOne({
-          where: { email },
-        });
-        if (!user) {
-          return reject(this.errorNotFound('Địa chỉ email không tồn tại.'));
-        }
-
-        const verifyToken = uuidv4();
-
-        const updatedUser = await this.userRepository.update(user.user_id, {
-          verify_token: verifyToken,
-          verify_token_exp: convertToMySQLDateTime(
-            new Date(Date.now() + 2 * 3600 * 1000),
-          ),
-        });
-
-        await this.mailService.sendUserConfirmation(
-          originUrl,
-          updatedUser,
-          verifyToken,
-        );
-        resolve(true);
-      } catch (error) {
-        reject(error);
-      }
+    const user: any = await this.userRepository.findOne({
+      where: { email },
     });
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    try {
+      const verifyToken = uuidv4();
+
+      const updatedUser = await this.userRepository.update(user.user_id, {
+        verify_token: verifyToken,
+        verify_token_exp: convertToMySQLDateTime(
+          new Date(Date.now() + 2 * 3600 * 1000),
+        ),
+      });
+
+      await this.mailService.sendUserConfirmation(
+        originUrl,
+        updatedUser,
+        verifyToken,
+      );
+      return true;
+    } catch (error) {
+      throw new InternalServerErrorException({ message: error.message });
+    }
   }
 
-  async getMyInfo(id: string): Promise<any> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const user = await this.userRepository.findOne({
-          where: { [PrimaryKeys[this.table]]: id },
-        });
+  async getMyInfo(id: string): Promise<UserEntity> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { [PrimaryKeys[this.table]]: id },
+      });
 
-        if (!user) {
-          return reject(this.errorNotFound('Người dùng không tồn tại.'));
-        }
-
-        resolve(this.responseSuccess({ userData: preprocessUserResult(user) }));
-      } catch (error) {
-        reject(error);
-      }
-    });
+      return preprocessUserResult(user);
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
-  async renderForgotPasswordByEmail(
+  async restorePasswordByEmail(
     user_id: string,
     token: string,
   ): Promise<UserEntity> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const checkUser: any = await this.userRepository.findOne({
-          where: { user_id, verify_token: token },
-        });
-        if (!checkUser) {
-          return reject(this.errorNotFound('User_id và token không đúng'));
-        }
-
-        if (
-          convertToMySQLDateTime(new Date(checkUser.verify_token_exp)) <
-          convertToMySQLDateTime(new Date())
-        ) {
-          return reject(this.optionalResponse(200, 'Token đã hết hạn.'));
-        }
-        resolve(checkUser);
-      } catch (error) {
-        reject(error);
-      }
+    const checkUser: any = await this.userRepository.findOne({
+      where: { user_id, verify_token: token },
     });
+
+    if (!checkUser) {
+      throw new NotFoundException();
+    }
+
+    if (
+      new Date(
+        new Date(checkUser.verify_token_exp).getTime() * 7 * 3600 * 1000,
+      ) < new Date()
+    ) {
+      throw new RequestTimeoutException({
+        status_code: 400,
+        message: 'Token đã hết hạn.',
+      });
+    }
+    return checkUser;
   }
 
   async updatePasswordByEmail(
@@ -186,71 +162,60 @@ export class UsersService extends BaseService<
     token: string,
     newPassword: string,
   ): Promise<boolean> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const user: any = await this.userRepository.findOne({
-          where: {
-            user_id,
-            verify_token: token,
-          },
-        });
+    try {
+      const user: any = await this.userRepository.findOne({
+        where: {
+          user_id,
+          verify_token: token,
+        },
+      });
 
-        if (
-          convertToMySQLDateTime(user.verify_token_exp) <
-          convertToMySQLDateTime(new Date())
-        ) {
-          return reject(
-            this.optionalResponse(
-              200,
-              "'Token đã hết hiệu lực, cập nhật thất bại.'",
-            ),
-          );
-        }
-        if (!user) {
-          return reject(this.errorNotFound('Không tìm thấy người dùng.'));
-        }
-        const { passwordHash, salt } = saltHashPassword(newPassword);
-
-        await this.userRepository.update(user_id, {
-          password: passwordHash,
-          salt,
-          verify_token: '',
+      if (new Date(user.verify_token_exp) < new Date()) {
+        throw new RequestTimeoutException({
+          message: 'Token đã hết hiệu lực, cập nhật thất bại.',
         });
-        resolve(true);
-      } catch (error) {
-        reject(error);
       }
-    });
+
+      if (!user) {
+        throw new NotFoundException();
+      }
+      const { passwordHash, salt } = saltHashPassword(newPassword);
+
+      await this.userRepository.update(user_id, {
+        password: passwordHash,
+        salt,
+        verify_token: '',
+      });
+      return true;
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
   }
 
-  // async updateUserOTP(user_id: number, otp: number): Promise<UserEntity> {
-  //   const updatedUser = this.userRepository.update(user_id, {
-  //     otp,
-  //     otp_incorrect_times: 0,
-  //   });
-  //   return updatedUser;
-  // }
+  async updateUserOTP(user_id: number, otp: number): Promise<UserEntity> {
+    const updatedUser = this.userRepository.update(user_id, {
+      otp,
+      otp_incorrect_times: 0,
+    });
+    return updatedUser;
+  }
 
-  // async restorePasswordByOTP(user_id: number, otp: number): Promise<boolean> {
-  //   try {
-  //     const user = await this.userRepository.findById(user_id);
+  async restorePasswordByOTP(user_id: number, otp: number): Promise<boolean> {
+    const user = await this.userRepository.findById(user_id);
 
-  //     if (user.otp_incorrect_times > 2) {
-  //       throw new BadRequestException({
-  //         message: 'Số lần nhập mã OTP vượt quá giới hạn',
-  //       });
-  //     }
-  //     if (user.otp !== otp) {
-  //       const otp_incorrect_times = user.otp_incorrect_times + 1;
-  //       await this.userRepository.update(user.user_id, {
-  //         otp_incorrect_times,
-  //       });
+    if (user.otp_incorrect_times > 2) {
+      throw new BadRequestException({
+        message: 'Số lần nhập mã OTP vượt quá giới hạn',
+      });
+    }
+    if (user.otp !== otp) {
+      const otp_incorrect_times = user.otp_incorrect_times + 1;
+      await this.userRepository.update(user.user_id, {
+        otp_incorrect_times,
+      });
 
-  //       throw new BadRequestException({ message: 'OTP không chính xác' });
-  //     }
-  //     return true;
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(error);
-  //   }
-  // }
+      throw new BadRequestException({ message: 'OTP không chính xác' });
+    }
+    return true;
+  }
 }

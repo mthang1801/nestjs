@@ -47,12 +47,8 @@ async function bootstrap() {
   //   origin: "*"
   // });
 
-  var whitelist = [
-    'http://localhost:3000',
-    'https://ddvdev.ntlogistics.vn/',
-    'https://ddvcmsdev.ntlogistics.vn/',
-    'http://localhost:5000',
-  ];
+  const whitelist = configService.get<string[]>('whiteListCORS');
+
   app.enableCors({
     origin: function (origin, callback) {
       if (whitelist.indexOf(origin) !== -1 || !origin) {

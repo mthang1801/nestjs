@@ -1,13 +1,7 @@
-import { Get, Injectable, NestMiddleware } from '@nestjs/common';
-import { Response } from 'express';
-import {
-  IResponseError,
-  IResponseDataSuccess,
-} from '../app/interfaces/response.interface';
+import { IResponse } from '../app/interfaces/response.interface';
 export class BaseController {
   private message: string | string[] = '';
   private data: any = null;
-  private success: boolean = true;
   private res: any;
   private statusCode: number = 200;
 
@@ -24,10 +18,9 @@ export class BaseController {
    * @param message string
    * @returns IResponseError
    */
-  private responseWithError(): IResponseError {
+  private responseWithError(): IResponse {
     const data = {
       message: this.message,
-      success: this.success,
       data: this.data,
     };
     return this.res.send(data);
@@ -37,9 +30,8 @@ export class BaseController {
    * @param data any
    * @returns IResponseError
    */
-  private respond(): IResponseDataSuccess<any> {
+  private respond(): IResponse {
     let dataResponse = {
-      success: this.success,
       message: this.message,
       data: typeof this.data !== 'object' ? { data: this.data } : this.data,
     };
@@ -56,9 +48,8 @@ export class BaseController {
   public respondBadRequest(
     res,
     message: string = 'The request was invalid.',
-  ): IResponseError {
+  ): IResponse {
     this.setStatusCode(400);
-    this.success = false;
     this.message = message;
     this.res = res;
     return this.responseWithError();
@@ -70,9 +61,8 @@ export class BaseController {
    * @param message string
    * @returns
    */
-  public respondNotFound(res, message: string = 'Not Found'): IResponseError {
+  public respondNotFound(res, message: string = 'Not Found'): IResponse {
     this.setStatusCode(404);
-    this.success = false;
     this.message = message;
     this.res = res;
     return this.responseWithError();
@@ -80,7 +70,6 @@ export class BaseController {
 
   public respondInternalError(res, message: string = 'Internal Server Error') {
     this.setStatusCode(500);
-    this.success = false;
     this.message = message;
     this.res = res;
     return this.responseWithError();
@@ -90,9 +79,8 @@ export class BaseController {
    * @param res Response
    * @param data any
    */
-  public respondCreated(res, data = null): IResponseDataSuccess<any> {
+  public respondCreated(res, data = null): IResponse {
     this.setStatusCode(201);
-    this.success = true;
     this.data = data;
     this.res = res;
     return this.respond();
@@ -102,8 +90,7 @@ export class BaseController {
    * @param res
    * @returns void
    */
-  public respondNoContent(res): IResponseDataSuccess<any> {
-    this.success = true;
+  public respondNoContent(res): IResponse {
     this.setStatusCode(204);
     this.message = '';
     this.data = {};
@@ -117,15 +104,10 @@ export class BaseController {
    * @param data
    * @returns object with code and data
    */
-  public responseSuccess(
-    res,
-    data = null,
-    message: string = '',
-  ): IResponseDataSuccess<any> {
+  public responseSuccess(res, data = null, message: string = ''): IResponse {
     this.res = res;
     this.setStatusCode(200);
     this.message = message;
-    this.success = true;
     if (typeof data !== 'object') {
       this.data = { data };
     }
@@ -147,14 +129,12 @@ export class BaseController {
     this.res = res;
     this.setStatusCode(satatusCode);
     this.message = message;
-    this.success = false;
     return this.respond();
   }
 
   public optionalResponse(
     res,
     statusCode = 200,
-    success: boolean = true,
     message: string = '',
     data: any = null,
   ) {
@@ -162,7 +142,6 @@ export class BaseController {
     this.setStatusCode(statusCode);
     this.data = data;
     this.message = message;
-    this.success = success;
     return this.respond();
   }
 }

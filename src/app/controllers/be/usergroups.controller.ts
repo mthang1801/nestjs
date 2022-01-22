@@ -13,7 +13,7 @@ import { JwtAuthGuard } from '../../helpers/auth/guards/jwt-auth.guard';
 import { UsersService } from '../../services/users.service';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
-import { IResponseDataSuccess } from '../../interfaces/response.interface';
+import { IResponse } from '../../interfaces/response.interface';
 
 /**
  * User groups controllers
@@ -25,26 +25,26 @@ export class UsergroupsController extends BaseController {
     super();
   }
 
-  // /**
-  //  * Create new record
-  //  * @param createUserGroupsDto
-  //  * @param req
-  //  * @param res
-  //  * @returns
-  //  */
-  // @UseGuards(JwtAuthGuard)
-  // @Post()
-  // async create(
-  //   @Body() createUserGroupsDto: CreateUserGroupsDto,
-  //   @Req() req,
-  //   @Res() res,
-  // ): Promise<IResponseDataSuccess<IUser>> {
-  //   const { user_id } = req.user;
-  //   const updatedUser = await this.usersService.updateUser(
-  //     user_id,
-  //     createUserGroupsDto,
-  //   );
+  /**
+   * Create new record
+   * @param createUserGroupsDto
+   * @param req
+   * @param res
+   * @returns
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  async create(
+    @Body() createUserGroupsDto: CreateUserGroupsDto,
+    @Req() req,
+    @Res() res,
+  ): Promise<IResponse> {
+    const { user_id } = req.user;
+    const updatedUser = await this.usersService.updateUser(
+      user_id,
+      createUserGroupsDto,
+    );
 
-  //   return this.responseSuccess(res, updatedUser);
-  // }
+    return this.responseSuccess(res, updatedUser);
+  }
 }

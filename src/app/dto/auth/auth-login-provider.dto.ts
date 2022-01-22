@@ -1,6 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
 
-export class GoogleLoginProviderDto {
+export class AuthLoginProviderDto {
   @IsNotEmpty()
   google_id: string;
 

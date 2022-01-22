@@ -1,34 +1,29 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuthCredentialsDto } from '../dto/auth/auth-credential.dto';
 import { UsersService } from './users.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserEntity } from '../entities/user.entity';
-import * as bcrypt from 'bcrypt';
-import { UserAuthSocialMedia } from '../interfaces/users.interface';
 import { saltHashPassword, desaltHashPassword } from '../../utils/cipherHelper';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import {
   convertToMySQLDateTime,
   preprocessUserResult,
-  generateOTPDigits,
 } from '../../utils/helper';
 import { AuthProviderRepository } from '../repositories/auth.repository';
 import { BaseService } from '../../base/base.service';
 import { AuthProviderEntity } from '../entities/auth-provider.entity';
 import { LoggerService } from '../../logger/custom.logger';
 import { Table } from '../../database/enums/tables.enum';
-import { IAuthToken } from '../interfaces/auth.interface';
+
+import { IResponseUserToken } from '../interfaces/response.interface';
+
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
-import { GoogleLoginProviderDto } from '../dto/auth/auth-login-provider.dto';
+import { generateOTPDigits } from '../../utils/helper';
+import { AuthLoginProviderDto } from '../dto/auth/auth-login-provider.dto';
+
 import { UserProfilesService } from '../services/user-profiles.service';
-import { HandleResult } from '../helpers/exeptions/exceptions';
-// import { IAuthToken } from '../interfaces/auth.interface';
 import * as twilio from 'twilio';
+import { HttpException, HttpStatus } from '@nestjs/common';
 @Injectable()
 export class AuthService extends BaseService<
   AuthProviderEntity,
@@ -48,218 +43,150 @@ export class AuthService extends BaseService<
     this.table = Table.USERS_AUTH;
   }
 
-  generateToken(user: any): any {
+  generateToken(user: UserEntity): string {
     const payload = { sub: user[PrimaryKeys.ddv_users] };
     return this.jwtService.sign(payload);
   }
 
-  async signUp(authCredentialsDto: AuthCredentialsDto): Promise<any> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const { firstname, lastname, email, password, phone } =
-          authCredentialsDto;
-        const { passwordHash, salt } = saltHashPassword(password);
+  async signUp(
+    authCredentialsDto: AuthCredentialsDto,
+  ): Promise<IResponseUserToken> {
+    const { firstname, lastname, email, password, phone } = authCredentialsDto;
+    const { passwordHash, salt } = saltHashPassword(password);
 
-        const userResponse = await this.userService.createUser({
-          firstname,
-          lastname,
-          email,
-          password: passwordHash,
-          phone,
-          salt,
-          created_at: convertToMySQLDateTime(),
-        });
-
-        if (!userResponse.success) {
-          return reject(userResponse);
-        }
-
-        resolve(
-          this.responseSuccess({
-            token: this.generateToken(userResponse.data.user),
-            userData: userResponse.data.user,
-          }),
-        );
-      } catch (error) {
-        reject(error);
-      }
+    const user = await this.userService.createUser({
+      firstname,
+      lastname,
+      email,
+      password: passwordHash,
+      phone,
+      salt,
+      created_at: convertToMySQLDateTime(),
     });
+
+    return {
+      token: this.generateToken(user),
+      userData: preprocessUserResult(user),
+    };
   }
 
-  async login(data: any): Promise<any> {
+  async login(data: any): Promise<IResponseUserToken> {
     const phone = data['phone'];
     const email = data['email'];
     const password = data['password'];
-    return new Promise(async (resolve, reject) => {
-      try {
-        let user: UserEntity = phone
-          ? await this.userService.findOne({ phone })
-          : await this.userService.findOne({ email });
 
-        if (!user) {
-          return reject(this.errorNotFound('Người dùng không tồn tại.'));
-        }
-        if (desaltHashPassword(password, user.salt) !== user.password) {
-          return reject(
-            this.optionalResponse(200, 'Tài khoản hoặc mật khẩu không đúng'),
-          );
-        }
+    let user: UserEntity = phone
+      ? await this.userService.findOne({ phone })
+      : await this.userService.findOne({ email });
 
-        return resolve(
-          this.responseSuccess({
-            token: this.generateToken(user),
-            userData: preprocessUserResult(user),
-          }),
-        );
-      } catch (error) {
-        reject(error);
-      }
-    });
+    if (!user) {
+      throw new NotFoundException({ message: 'Người dùng không tồn tại' });
+    }
+    if (desaltHashPassword(password, user.salt) !== user.password) {
+      throw new HttpException(
+        'Tài khoản hoặc mật khẩu không đúng.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const dataResult = {
+      token: this.generateToken(user),
+      userData: preprocessUserResult(user),
+    };
+    return dataResult;
   }
 
   async loginWithAuthProvider(
-    providerData: GoogleLoginProviderDto,
+    providerData: AuthLoginProviderDto,
     providerName: AuthProviderEnum,
-  ): Promise<any> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        let userExists: any = await this.userService.findOne({
-          email: providerData.email,
-        });
-
-        if (!userExists) {
-          userExists = await this.userService.create({
-            firstname: providerData.givenName,
-            lastname: providerData.familyName,
-            email: providerData.email,
-            created_at: convertToMySQLDateTime(),
-          });
-          await this.userProfile.createUserProfile(userExists);
-        }
-        const userProfile = await this.userProfile.findById(userExists.user_id);
-
-        if (!userProfile) {
-          await this.userProfile.createUserProfile(userExists);
-        }
-
-        let authProvider: AuthProviderEntity =
-          await this.authRepository.findOne({
-            user_id: userExists.user_id,
-            provider_name: providerName,
-          });
-
-        if (!authProvider) {
-          authProvider = await this.authRepository.create({
-            user_id: userExists.user_id,
-            provider: providerData.google_id,
-            provider_name: providerName,
-            access_token: providerData.accessToken,
-            extra_data: '',
-            created_date: convertToMySQLDateTime(),
-          });
-        }
-        resolve(
-          this.responseSuccess({
-            token: this.generateToken(userExists),
-            userData: preprocessUserResult(userExists),
-          }),
-        );
-      } catch (error) {
-        reject(error);
-      }
+  ): Promise<IResponseUserToken> {
+    let userExists: UserEntity = await this.userService.findOne({
+      email: providerData.email,
     });
+    if (!userExists) {
+      userExists = await this.userService.create({
+        firstname: providerData.givenName,
+        lastname: providerData.familyName,
+        email: providerData.email,
+        created_at: convertToMySQLDateTime(),
+      });
+      await this.userProfile.createUserProfile(userExists);
+    }
+
+    let authProvider: AuthProviderEntity = await this.authRepository.findOne({
+      user_id: userExists.user_id,
+      provider_name: providerName,
+    });
+
+    if (!authProvider) {
+      authProvider = await this.authRepository.create({
+        user_id: userExists.user_id,
+        provider: providerData.google_id,
+        provider_name: providerName,
+        access_token: providerData.accessToken,
+        created_date: convertToMySQLDateTime(),
+      });
+    }
+
+    return {
+      token: this.generateToken(userExists),
+      userData: preprocessUserResult(userExists),
+    };
   }
 
   async loginWithGoogle(
-    googleLoginProvider: GoogleLoginProviderDto,
-  ): Promise<any> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        resolve(
-          this.loginWithAuthProvider(
-            googleLoginProvider,
-            AuthProviderEnum.GOOGLE,
-          ),
-        );
-      } catch (error) {
-        reject(error);
-      }
-    });
+    authLoginProviderDto: AuthLoginProviderDto,
+  ): Promise<IResponseUserToken> {
+    return this.loginWithAuthProvider(
+      authLoginProviderDto,
+      AuthProviderEnum.GOOGLE,
+    );
   }
 
   async resetPasswordByEmail(url: string, email: string): Promise<boolean> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        await this.userService.resetPasswordByEmail(url, email);
-        resolve(true);
-      } catch (error) {
-        reject(error);
-      }
-    });
+    await this.userService.resetPasswordByEmail(url, email);
+    return true;
   }
-
-  async renderForgotPasswordByEmail(
+  async restorePasswordByEmail(
     user_id: string,
     token: string,
   ): Promise<UserEntity> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const user = await this.userService.renderForgotPasswordByEmail(
-          user_id,
-          token,
-        );
-
-        resolve(preprocessUserResult(user));
-      } catch (error) {
-        console.log(error);
-        reject(error);
-      }
-    });
+    const user = await this.userService.restorePasswordByEmail(user_id, token);
+    return user;
   }
-
   async updatePasswordByEmail(
     user_id: number,
     token: string,
     password: string,
   ): Promise<boolean> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        await this.userService.updatePasswordByEmail(user_id, token, password);
-        resolve(true);
-      } catch (error) {
-        reject(error);
-      }
-    });
+    await this.userService.updatePasswordByEmail(user_id, token, password);
+    return true;
   }
 
-  // async resetPasswordByPhone(phone: string): Promise<number> {
-  //   try {
-  //     const user = await this.userService.findOne({ phone });
-  //     if (!user) {
-  //       throw new NotFoundException({
-  //         message: 'Số điện thoại chưa được đăng ký.',
-  //       });
-  //     }
-  //     const newOTP = generateOTPDigits();
-  //     await this.userService.updateUserOTP(user.user_id, newOTP);
+  async resetPasswordByPhone(phone: string): Promise<number> {
+    const user = await this.userService.findOne({ phone });
+    if (!user) {
+      throw new HttpException(
+        'Số điện thoại chưa được đăng ký.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const newOTP = generateOTPDigits();
+    await this.userService.updateUserOTP(user.user_id, newOTP);
 
-  //     const client = twilio(
-  //       'ACf45884c1ecedeb6821c81156065d8610',
-  //       '08fa4d62968cbff2e9c017ccb3a16219',
-  //     );
-  //     await client.messages.create({
-  //       body: `Mã OTP để xác nhận khôi phục mật khẩu là ${newOTP}, mã có hiệu lực trong vòng 90 giây, nhằm đảm bảo tài khoản được an toàn, quý khách vui lòng không chia sẽ mã này cho bất kỳ ai.`,
-  //       from: '+16075368673',
-  //       to: '+84939323700',
-  //     });
+    const client = twilio(
+      'ACf45884c1ecedeb6821c81156065d8610',
+      '08fa4d62968cbff2e9c017ccb3a16219',
+    );
+    await client.messages.create({
+      body: `Mã OTP để xác nhận khôi phục mật khẩu là ${newOTP}, mã có hiệu lực trong vòng 90 giây, nhằm đảm bảo tài khoản được an toàn, quý khách vui lòng không chia sẽ mã này cho bất kỳ ai.`,
+      from: '+16075368673',
+      to: '+84939323700',
+    });
 
-  //     return newOTP;
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(error);
-  //   }
-  // }
+    return newOTP;
+  }
 
-  // async restorePasswordByOTP(user_id: number, otp: number): Promise<boolean> {
-  //   return await this.userService.restorePasswordByOTP(user_id, otp);
-  // }
+  async restorePasswordByOTP(user_id: number, otp: number): Promise<boolean> {
+    return await this.userService.restorePasswordByOTP(user_id, otp);
+  }
 }
