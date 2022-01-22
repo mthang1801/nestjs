@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth.module';
 import { UsersModule } from './users.module';
 import { MailModule } from './mail.module';
+import { BannerModule } from './banner.module';
 import { DatabaseModule } from '../../database/database.module';
 import {
   appConfig,
@@ -25,9 +26,7 @@ import { ObjectModule } from './object.module';
     MailModule,
     DatabaseModule,
     LoggerModule,
-    StringModule,
-    ObjectModule,
-    UsersProfilesModule,
+    BannerModule,
   ],
 })
 export class AppModule {}
