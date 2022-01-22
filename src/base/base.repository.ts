@@ -79,6 +79,7 @@ export class BaseRepositorty<T> {
     console.log('=============== FIND ONE ================');
     try {
       const results = await this.find({ ...options, limit: 1 });
+
       return results[0];
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -92,7 +93,6 @@ export class BaseRepositorty<T> {
    */
   async find(options: any): Promise<any[]> {
     console.log('=============== FIND ================');
-    console.log(options);
     const optionKeys = Object.keys(options);
     const orderCmds = [
       'select',
@@ -155,7 +155,6 @@ export class BaseRepositorty<T> {
     try {
       await this.databaseService.executeQuery(sql);
       const updatedUser = await this.findById(id);
-      console.log(updatedUser);
       return updatedUser;
     } catch (error) {
       throw new InternalServerErrorException(error);

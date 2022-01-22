@@ -44,4 +44,45 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
   create(params): Promise<T> {
     return this.repository.create(params);
   }
+
+  responseSuccess(data: any = {}, message: string = '') {
+    return {
+      statusCode: 200,
+      data,
+      message,
+      success: true,
+    };
+  }
+
+  responseError(statusCode: number = 500, message: string | string[] = '') {
+    return {
+      statusCode,
+      data: {},
+      message,
+      success: false,
+    };
+  }
+
+  errorNotFound(message: string = '') {
+    return {
+      statusCode: 404,
+      message,
+      data: {},
+      success: false,
+    };
+  }
+
+  optionalResult(
+    statusCode: number = 200,
+    data: any = {},
+    message: string = '',
+    success: boolean = true,
+  ) {
+    return {
+      statusCode,
+      data,
+      message,
+      success,
+    };
+  }
 }

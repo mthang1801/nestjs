@@ -19,3 +19,9 @@ export interface IRegister {
 export interface IAuthToken {
   access_token: string;
 }
+
+export interface IAuthResult {
+  status: number;
+  access_token?: string;
+  message?: string | any;
+}

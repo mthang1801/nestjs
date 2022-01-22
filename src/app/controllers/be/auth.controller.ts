@@ -12,16 +12,18 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
-import { AuthCredentialsDto } from '../../dto/auth-credential.dto';
-import { AuthUpdatePasswordDto } from '../../dto/auth-update-password.dto';
+import { AuthCredentialsDto } from '../../dto/auth/auth-credential.dto';
+import { AuthUpdatePasswordDto } from '../../dto/auth/auth-update-password.dto';
 import { IResponseDataSuccess } from '../../interfaces/response.interface';
 import { GoogleAuthGuard } from '../../helpers/auth/guards/google-auth.guard';
 import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guards';
-import { AuthProvider } from '../../entities/auth-provider.entity';
-import { LoginDto } from '../../dto/auth-login.dto';
+import { AuthProviderEntity } from '../../entities/auth-provider.entity';
+import { GoogleLoginProviderDto } from '../../dto/auth/auth-login-provider.dto';
+import { LoginDto } from '../../dto/auth/auth-login.dto';
 import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
-import { RestorePasswordOTPDto } from '../../dto/auth-restore-pwd-otp.dto';
+import { RestorePasswordOTPDto } from '../../dto/auth/auth-restore-pwd-otp.dto';
+
 /**
  * Authentication controller
  * @Describe Using 3 authenticate types : Local, Google, Facebook
@@ -37,19 +39,38 @@ export class AuthController extends BaseController {
   async signUp(
     @Body() authCredentialsDto: AuthCredentialsDto,
     @Res() res,
-  ): Promise<IResponseDataSuccess<string>> {
-    const { access_token } = await this.authService.signUp(authCredentialsDto);
-    return this.respondCreated(res, access_token);
+  ): Promise<any> {
+    const dataResponse = await this.authService.signUp(authCredentialsDto);
+
+    return this.optionalResponse(
+      res,
+      dataResponse.statusCode,
+      dataResponse.data,
+      dataResponse.message,
+      dataResponse.success,
+    );
   }
 
+  /**
+   * Login with email or phone and password
+   * @param data
+   * @param res
+   * @returns
+   */
   @Post('login')
-  async login(
-    @Body() data: LoginDto,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<string>> {
-    const { access_token } = await this.authService.login(data);
-    console.log(access_token);
-    return this.responseSuccess(res, access_token);
+  async login(@Body() data: LoginDto, @Res() res): Promise<any> {
+    const dataResponse = await this.authService.login(data);
+
+    if (dataResponse.statusCode === 200 && dataResponse.success) {
+      return this.responseSuccess(res, dataResponse.data, dataResponse.message);
+    }
+    return this.optionalResponse(
+      res,
+      dataResponse.statusCode,
+      dataResponse.data,
+      dataResponse.message,
+      dataResponse.success,
+    );
   }
 
   /**
@@ -60,45 +81,29 @@ export class AuthController extends BaseController {
     res.render('authentication');
   }
 
-  /**
-   * Authenticate with google with endpoint /v1/google/login
-   */
-  @Get('google/login')
-  @UseGuards(GoogleAuthGuard)
-  async loginWithGoogle(): Promise<void> {}
-
-  /**
-   * When an request from server to google, google receive and then it will response with an redirect url
-   * and auth/google/callback is redirect url to server communicate with google
-   * @param req
-   * @return an object with status_code and data
-   */
-  @Get('google/callback')
-  @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(
-    @Req() req,
+  @Post('/google/login')
+  async loginWithGoolge(
+    @Body() googleLoginProvider: GoogleLoginProviderDto,
     @Res() res,
-  ): Promise<IResponseDataSuccess<AuthProvider>> {
-    const data = await this.authService.loginWithGoogle(req.user);
-    return this.responseSuccess(res, data);
+    s,
+  ): Promise<any> {
+    const userResponse = await this.authService.loginWithGoogle(
+      googleLoginProvider,
+    );
+    if (userResponse.statusCode === 200) {
+      return this.responseSuccess(res, userResponse.data);
+    }
+    return this.optionalResponse(
+      res,
+      userResponse.statusCode,
+      null,
+      userResponse.message,
+      false,
+    );
   }
 
-  /**
-   * Authenticate with google with endpoint /be/v1/google/login
-   */
-  @Get('facebook/login')
-  @UseGuards(FacebookAuthGuard)
+  @Post('/facebook/login')
   async loginWithFacebook(): Promise<void> {}
-
-  @Get('facebook/callback')
-  @UseGuards(FacebookAuthGuard)
-  async facebookAuthRedirect(
-    @Req() req,
-    @Res() res,
-  ): Promise<IResponseDataSuccess<AuthProvider>> {
-    const data = await this.authService.loginWithFacebook(req.user);
-    return this.responseSuccess(res, data);
-  }
 
   /**
    * @Describe When user click reset or forget passwrod button, this request will send to server. Place to receive is here.
@@ -118,7 +123,8 @@ export class AuthController extends BaseController {
     await this.authService.resetPasswordByEmail(fullUrl, email);
     return this.responseSuccess(
       res,
-      `request to reset password success, please visit to email to activate new password`,
+      {},
+      'Yêu cầu khôi phục tài khoản thành công, quý khách vui lòng truy cập vào email để cập nhật lại mật khẩu mới.',
     );
   }
 
@@ -134,7 +140,7 @@ export class AuthController extends BaseController {
     try {
       const { token, user_id } = req.query;
       await this.authService.restorePasswordByEmail(user_id, token);
-      res.status(200).render('restore-password');
+      res.render('restore-password');
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -158,7 +164,7 @@ export class AuthController extends BaseController {
 
     await this.authService.updatePasswordByEmail(user_id, token, password);
 
-    return this.responseSuccess(res, `updated`);
+    return this.responseSuccess(res, {}, `Cập nhật thành công.`);
   }
 
   /**

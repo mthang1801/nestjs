@@ -1,6 +1,6 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import { User } from '../entities/user.entity';
+import { UserEntity } from '../entities/user.entity';
 import { join } from 'path';
 import { PrimaryKeys } from '../../database/enums/index';
 @Injectable()
@@ -9,7 +9,7 @@ export class MailService {
 
   async sendUserConfirmation(
     originUrl: string,
-    user: User,
+    user: UserEntity,
     token: string,
   ): Promise<void> {
     const prefixApi = process.env.PREFIX_API_BE;

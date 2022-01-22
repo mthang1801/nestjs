@@ -1,6 +1,6 @@
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 
-export class AuthProvider {
+export class AuthProviderEntity {
   provider: string;
   provider_name: AuthProviderEnum;
   access_token: string;

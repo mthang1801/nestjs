@@ -10,7 +10,10 @@ import {
   databaseConfig,
   authConfig,
 } from '../../config/index.config';
+import { UsersProfilesModule } from './user-profiles.module';
 import { LoggerModule } from '../../logger/logger.module';
+import { StringModule } from './string.module';
+import { ObjectModule } from './object.module';
 @Module({
   imports: [
     ConfigModule.forRoot({

@@ -5,8 +5,11 @@ import {
   IResponseDataSuccess,
 } from '../app/interfaces/response.interface';
 export class BaseController {
-  private statusCode: number = 200;
+  private message: string = '';
+  private data: any = null;
+  private success: boolean = true;
   private res: any;
+  private statusCode: number = 200;
 
   constructor() {}
 
@@ -21,27 +24,26 @@ export class BaseController {
    * @param message string
    * @returns IResponseError
    */
-  private responseWithError(message: string): IResponseError {
+  private responseWithError(): IResponseError {
     const data = {
-      error: {
-        message,
-        statusCode: this.statusCode,
-      },
+      message: this.message,
+      success: this.success,
+      data: this.data,
     };
-    return this.res.status(this.statusCode).send(data);
+    return this.res.send(data);
   }
 
   /**
    * @param data any
    * @returns IResponseError
    */
-  private respond(data: any): IResponseDataSuccess<any> {
+  private respond(): IResponseDataSuccess<any> {
     let dataResponse = {
-      statusCode: this.statusCode,
+      success: this.success,
+      message: this.message,
+      data: typeof this.data !== 'object' ? { data: this.data } : this.data,
     };
-    if (data) {
-      dataResponse['data'] = data;
-    }
+
     return this.res.status(this.statusCode).send(dataResponse);
   }
 
@@ -56,8 +58,10 @@ export class BaseController {
     message: string = 'The request was invalid.',
   ): IResponseError {
     this.setStatusCode(400);
+    this.success = false;
+    this.message = message;
     this.res = res;
-    return this.responseWithError(message);
+    return this.responseWithError();
   }
 
   /**
@@ -68,33 +72,48 @@ export class BaseController {
    */
   public respondNotFound(res, message: string = 'Not Found'): IResponseError {
     this.setStatusCode(404);
+    this.success = false;
+    this.message = message;
     this.res = res;
-    return this.responseWithError(message);
+    return this.responseWithError();
   }
 
   public respondInternalError(res, message: string = 'Internal Server Error') {
     this.setStatusCode(500);
+    this.success = false;
+    this.message = message;
     this.res = res;
-    return this.responseWithError(message);
+    return this.responseWithError();
   }
 
   /**
    * @param res Response
    * @param data any
    */
-  public respondCreated(res, data = null): IResponseDataSuccess<any> {
+  public respondCreated(
+    res,
+    data = null,
+    message = '',
+  ): IResponseDataSuccess<any> {
     this.setStatusCode(201);
+    this.success = true;
+    this.data = data;
     this.res = res;
-
-    return this.respond(data);
+    this.message = message;
+    return this.respond();
   }
 
   /**
    * @param res
    * @returns void
    */
-  public respondNoContent(res): void {
-    return this.res.status(204).send({ code: 204 });
+  public respondNoContent(res): IResponseDataSuccess<any> {
+    this.success = true;
+    this.setStatusCode(204);
+    this.message = '';
+    this.data = {};
+    this.res = res;
+    return this.respond();
   }
 
   /**
@@ -103,9 +122,34 @@ export class BaseController {
    * @param data
    * @returns object with code and data
    */
-  public responseSuccess(res, data = null): IResponseDataSuccess<any> {
-    return res
-      .status(this.statusCode)
-      .send({ statusCode: this.statusCode, data });
+  public responseSuccess(
+    res,
+    data = null,
+    message = '',
+  ): IResponseDataSuccess<any> {
+    this.res = res;
+    this.setStatusCode(200);
+    this.message = message;
+    this.success = true;
+    if (typeof data !== 'object') {
+      this.data = { data };
+    }
+    this.data = data;
+    return this.respond();
+  }
+
+  public optionalResponse(
+    res,
+    statusCode = 200,
+    data: any = null,
+    message: string = '',
+    success: boolean = true,
+  ) {
+    this.res = res;
+    this.setStatusCode(statusCode);
+    this.data = data;
+    this.message = message;
+    this.success = success;
+    return this.respond();
   }
 }
