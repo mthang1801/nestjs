@@ -21,12 +21,15 @@ import { ObjectModule } from './object.module';
       envFilePath: '.env',
       load: [appConfig, databaseConfig, authConfig],
     }),
+    UsersProfilesModule,
     AuthModule,
     UsersModule,
     MailModule,
     DatabaseModule,
     LoggerModule,
     BannerModule,
+    StringModule,
+    ObjectModule,
   ],
 })
 export class AppModule {}

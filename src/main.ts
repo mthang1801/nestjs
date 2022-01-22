@@ -37,32 +37,36 @@ async function bootstrap() {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
     next();
   });
+
   // app.enableCors({
   //   allowedHeaders:"*",
   //   origin: "*"
   // });
 
-  // var whitelist = [
-  //   'http://localhost:3000',
-  //   'https://ddvdev.ntlogistics.vn/',
-  //   'https://ddvcmsdev.ntlogistics.vn/',
-  //   'http://localhost:5000',
-  // ];
-  // app.enableCors({
-  //   origin: function (origin, callback) {
-  //     if (whitelist.indexOf(origin) !== -1) {
-  //       console.log('allowed cors for:', origin);
-  //       callback(null, true);
-  //     } else {
-  //       console.log('blocked cors for:', origin);
-  //       callback(new Error('Not allowed by CORS'));
-  //     }
-  //   },
-  //   allowedHeaders:
-  //     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Observe',
-  //   methods: 'GET,PUT,POST,DELETE,UPDATE,OPTIONS,PATCH',
-  //   credentials: true,
-  // });
+  var whitelist = [
+    'http://localhost:3000',
+    'https://ddvdev.ntlogistics.vn/',
+    'https://ddvcmsdev.ntlogistics.vn/',
+    'http://localhost:5000',
+    'http://[::1]:5000',
+    'http://127.0.0.1:5000',
+  ];
+  app.enableCors({
+    origin: function (origin, callback) {
+      console.log(origin);
+      if (whitelist.indexOf(origin) !== -1 || !origin) {
+        console.log('allowed cors for:', origin);
+        callback(null, true);
+      } else {
+        console.log('blocked cors for:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    allowedHeaders:
+      'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Observe',
+    methods: 'GET,PUT,POST,DELETE,UPDATE,OPTIONS,PATCH',
+    credentials: true,
+  });
 
   await app.listen(PORT, async () =>
     console.log(`Application is running on: ${await app.getUrl()}`),

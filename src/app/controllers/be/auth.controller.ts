@@ -10,6 +10,7 @@ import {
   ValidationPipe,
   InternalServerErrorException,
   BadRequestException,
+  Next,
 } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
 import { AuthCredentialsDto } from '../../dto/auth/auth-credential.dto';
@@ -58,19 +59,27 @@ export class AuthController extends BaseController {
    * @returns
    */
   @Post('login')
-  async login(@Body() data: LoginDto, @Res() res): Promise<any> {
-    const dataResponse = await this.authService.login(data);
-
-    if (dataResponse.statusCode === 200 && dataResponse.success) {
-      return this.responseSuccess(res, dataResponse.data, dataResponse.message);
+  async login(@Body() data: LoginDto, @Res() res, @Next() next): Promise<any> {
+    try {
+      const error: any = new Error('Login failed');
+      error.statusCode = 403;
+      error.success = false;
+      throw error;
+    } catch (error) {
+      next(error);
     }
-    return this.optionalResponse(
-      res,
-      dataResponse.statusCode,
-      dataResponse.data,
-      dataResponse.message,
-      dataResponse.success,
-    );
+    // const dataResponse = await this.authService.login(data);
+
+    // if (dataResponse.statusCode === 200 && dataResponse.success) {
+    //   return this.responseSuccess(res, dataResponse.data, dataResponse.message);
+    // }
+    // return this.optionalResponse(
+    //   res,
+    //   dataResponse.statusCode,
+    //   dataResponse.data,
+    //   dataResponse.message,
+    //   dataResponse.success,
+    // );
   }
 
   /**
