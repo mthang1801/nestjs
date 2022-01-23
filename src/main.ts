@@ -38,10 +38,6 @@ async function bootstrap() {
     next();
   });
 
-  app.use((error, req, res, next) => {
-    console.log('hello');
-  });
-
   // app.enableCors({
   //   allowedHeaders:"*",
   //   origin: "*"

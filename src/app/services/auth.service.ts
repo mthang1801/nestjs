@@ -120,7 +120,7 @@ export class AuthService extends BaseService<
     if (!authProvider) {
       authProvider = await this.authRepository.create({
         user_id: userExists.user_id,
-        provider: providerData.google_id,
+        provider: providerData.id,
         provider_name: providerName,
         access_token: providerData.accessToken,
         created_date: convertToMySQLDateTime(),

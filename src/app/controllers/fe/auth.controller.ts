@@ -66,6 +66,11 @@ export class AuthController extends BaseController {
     return this.responseSuccess(res, userResponse);
   }
 
+  @Get()
+  async getAuth(@Res() res) {
+    res.render('home-test');
+  }
+
   /**
    *
    * @param AuthLoginProviderDto
@@ -78,7 +83,6 @@ export class AuthController extends BaseController {
     const userResponse = await this.authService.loginWithGoogle(
       AuthLoginProviderDto,
     );
-    console.log(userResponse);
     return this.responseSuccess(res, userResponse);
   }
 

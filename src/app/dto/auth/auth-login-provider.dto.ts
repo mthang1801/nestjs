@@ -2,7 +2,7 @@ import { IsNotEmpty } from 'class-validator';
 
 export class AuthLoginProviderDto {
   @IsNotEmpty()
-  google_id: string;
+  id: string;
 
   @IsNotEmpty()
   familyName: string;
