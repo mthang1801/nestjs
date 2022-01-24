@@ -1,7 +1,8 @@
 export enum Table {
   USERS = 'ddv_users',
-  PRODUCTS = 'products',
-  CATEGORIES = 'categories',
+  CATEGORIES = 'ddv_categories',
+  CATEGORY_DESCRIPTIONS = 'ddv_category_descriptions',
+  CATEGORY_VENDOR_PRODUCT_COUNT = 'ddv_category_vendor_product_count',
   USERS_AUTH = 'ddv_users_auth_external',
   USER_PROFILES = 'ddv_user_profiles',
   USER_GROUPS = 'ddv_usergroups',
