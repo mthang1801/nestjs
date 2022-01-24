@@ -14,6 +14,8 @@ import { UsersProfilesModule } from './user-profiles.module';
 import { LoggerModule } from '../../logger/logger.module';
 import { StringModule } from './string.module';
 import { ObjectModule } from './object.module';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from '../helpers/exeptions/allExeptionsFilter';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,6 +32,12 @@ import { ObjectModule } from './object.module';
     BannerModule,
     StringModule,
     ObjectModule,
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
   ],
 })
 export class AppModule {}

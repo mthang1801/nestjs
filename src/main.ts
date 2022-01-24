@@ -38,11 +38,6 @@ async function bootstrap() {
     next();
   });
 
-  // app.enableCors({
-  //   allowedHeaders:"*",
-  //   origin: "*"
-  // });
-
   const whitelist = configService.get<string[]>('whiteListCORS');
 
   app.enableCors({

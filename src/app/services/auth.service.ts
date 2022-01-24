@@ -85,7 +85,7 @@ export class AuthService extends BaseService<
     if (desaltHashPassword(password, user.salt) !== user.password) {
       throw new HttpException(
         'Tài khoản hoặc mật khẩu không đúng.',
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.UNAUTHORIZED,
       );
     }
     const dataResult = {
