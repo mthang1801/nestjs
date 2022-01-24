@@ -63,8 +63,10 @@ export class AuthController extends BaseController {
   }
 
   /**
-   *
+   * Login with Google provider
    * @param AuthLoginProviderDto
+   * @param res
+   * @returns
    */
   @Post('/google/login')
   async loginWithGoolge(
@@ -77,8 +79,22 @@ export class AuthController extends BaseController {
     return this.responseSuccess(res, userResponse);
   }
 
+  /**
+   * Login with Facebook provider
+   * @param AuthLoginProviderDto
+   * @param res
+   * @returns
+   */
   @Post('facebook/login')
-  async loginWithFacebook(): Promise<void> {}
+  async loginWithFacebook(
+    @Body() AuthLoginProviderDto: AuthLoginProviderDto,
+    @Res() res,
+  ): Promise<IResponse> {
+    const userResponse = await this.authService.loginWithFacebook(
+      AuthLoginProviderDto,
+    );
+    return this.responseSuccess(res, userResponse);
+  }
 
   /**
    * @Describe When user click reset or forget passwrod button, this request will send to server. Place to receive is here.

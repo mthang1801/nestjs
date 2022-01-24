@@ -3,8 +3,6 @@ import {
   Controller,
   Get,
   Put,
-  Patch,
-  Post,
   UseGuards,
   Req,
   Res,
@@ -23,7 +21,7 @@ export class UsersController extends BaseController {
     super();
   }
   @UseGuards(AuthGuard)
-  @Patch()
+  @Put()
   async updateUserInfo(
     @Body() userUpdateDto: UserUpdateDto,
     @Req() req,
@@ -53,4 +51,7 @@ export class UsersController extends BaseController {
     const user = await this.usersService.findById(req.params.id);
     return this.responseSuccess(res, { userData: user });
   }
+
+  @Put('/update-user-profile')
+  async updateUserProfile(@Req() req): Promise<void> {}
 }

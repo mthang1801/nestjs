@@ -7,8 +7,6 @@ import {
   UseGuards,
   Req,
   Res,
-  Response,
-  Patch,
 } from '@nestjs/common';
 import { UserUpdateDto } from '../../dto/update-user.dto';
 import { UsersService } from '../../services/users.service';
@@ -23,7 +21,7 @@ export class UsersController extends BaseController {
     super();
   }
   @UseGuards(AuthGuard)
-  @Patch()
+  @Put()
   async updateUserInfo(
     @Body() userUpdateDto: UserUpdateDto,
     @Req() req,

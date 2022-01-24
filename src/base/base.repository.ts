@@ -63,15 +63,10 @@ export class BaseRepositorty<T> {
    */
   async findOne(options: any): Promise<any> {
     console.log('=============== FIND ONE ================');
-    return new Promise(async (resolve, reject) => {
-      try {
-        const results = await this.find({ ...options, limit: 1 });
 
-        resolve(results[0]);
-      } catch (error) {
-        reject(error);
-      }
-    });
+    const results = await this.find({ ...options, limit: 1 });
+
+    return results[0];
   }
 
   /**
@@ -106,6 +101,7 @@ export class BaseRepositorty<T> {
         collection[cmd](options[cmd]);
       }
     }
+
     const results = await this.databaseService.executeQuery(collection.sql());
     return results[0];
   }
@@ -148,7 +144,9 @@ export class BaseRepositorty<T> {
 
     const queryString = `DELETE FROM ${this.table} WHERE ?`;
 
-    const res = await this.databaseService.executeQuery(queryString, [{ [PrimaryKeys[this.table]]: id },]);
+    const res = await this.databaseService.executeQuery(queryString, [
+      { [PrimaryKeys[this.table]]: id },
+    ]);
     if (res[0].affectedRows === 0) {
       throw new HttpException(
         `Not found id = ${id} in ${this.table} to delete`,

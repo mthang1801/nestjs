@@ -65,6 +65,7 @@ export class AuthService extends BaseService<
     const user = await this.userService.createUser({
       firstname,
       lastname,
+      user_login: 'SYSTEM',
       email,
       password: passwordHash,
       phone,
@@ -96,6 +97,8 @@ export class AuthService extends BaseService<
         HttpStatus.UNAUTHORIZED,
       );
     }
+
+    await this.userService.update(user.user_id, { user_login: 'SYSTEM' });
     const dataResult = {
       token: this.generateToken(user),
       userData: preprocessUserResult(user),
@@ -134,7 +137,9 @@ export class AuthService extends BaseService<
         created_date: convertToMySQLDateTime(),
       });
     }
-
+    await this.userService.update(userExists.user_id, {
+      user_login: providerName,
+    });
     return {
       token: this.generateToken(userExists),
       userData: preprocessUserResult(userExists),
@@ -147,6 +152,14 @@ export class AuthService extends BaseService<
     return this.loginWithAuthProvider(
       authLoginProviderDto,
       AuthProviderEnum.GOOGLE,
+    );
+  }
+  async loginWithFacebook(
+    authLoginProviderDto: AuthLoginProviderDto,
+  ): Promise<IResponseUserToken> {
+    return this.loginWithAuthProvider(
+      authLoginProviderDto,
+      AuthProviderEnum.FACEBOOK,
     );
   }
 

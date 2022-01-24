@@ -20,8 +20,8 @@ export class DatabaseCollection {
 
   constructor(table) {
     this.table = table;
-    this.stringSelect = 'SELECT t.* ';
-    this.alias = 't';
+    this.stringSelect = 'SELECT * ';
+    this.alias = '';
     this.arrayTable = [];
     this.stringJoin = '';
     this.arrayCondition = [];
@@ -32,8 +32,8 @@ export class DatabaseCollection {
   }
 
   reset(): void {
-    this.stringSelect = `SELECT ${this.alias}.* `;
-    this.alias = 't';
+    this.stringSelect = `SELECT ${this.alias ? `${this.alias}.*` : '*'} `;
+    this.alias = '';
     this.arrayTable = [];
     this.stringJoin = '';
     this.arrayCondition = [];

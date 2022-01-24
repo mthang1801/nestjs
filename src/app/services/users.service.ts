@@ -24,6 +24,7 @@ import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import { saltHashPassword } from '../../utils/cipherHelper';
 import { UserProfilesService } from '../services/user-profiles.service';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { JoinTable } from '../../database/enums/joinTable.enum';
 @Injectable()
 export class UsersService extends BaseService<
   UserEntity,
@@ -123,7 +124,16 @@ export class UsersService extends BaseService<
   async getMyInfo(id: string): Promise<UserEntity> {
     try {
       const user = await this.userRepository.findOne({
-        where: { [PrimaryKeys[this.table]]: id },
+        select: ['*'],
+        join: {
+          [JoinTable.leftJoin]: {
+            [Table.USER_PROFILES]: {
+              fieldJoin: `${Table.USER_PROFILES}.user_id`,
+              rootJoin: `${this.table}.user_id`,
+            },
+          },
+        },
+        where: { [`${this.table}.${PrimaryKeys[this.table]}`]: id },
       });
 
       return preprocessUserResult(user);
