@@ -32,8 +32,10 @@ export class BaseController {
    */
   private respond(): IResponse {
     let dataResponse = {
-      message: this.message,
+      statusCode: this.statusCode,
       data: typeof this.data !== 'object' ? { data: this.data } : this.data,
+      message: this.message,
+      timestamp: new Date().toLocaleString(),
     };
 
     return this.res.status(this.statusCode).send(dataResponse);

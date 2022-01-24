@@ -44,7 +44,15 @@ export class AuthService extends BaseService<
   }
 
   generateToken(user: UserEntity): string {
-    const payload = { sub: user[PrimaryKeys.ddv_users] };
+    const payload = {
+      sub: {
+        user_id: user.user_id,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        phone: user.phone,
+      },
+    };
     return this.jwtService.sign(payload);
   }
 

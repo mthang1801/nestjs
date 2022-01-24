@@ -5,26 +5,17 @@ import {
   Post,
   Req,
   Res,
-  UseGuards,
   UsePipes,
   ValidationPipe,
-  InternalServerErrorException,
   BadRequestException,
+  Patch,
 } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
 import { AuthCredentialsDto } from '../../dto/auth/auth-credential.dto';
 import { AuthUpdatePasswordDto } from '../../dto/auth/auth-update-password.dto';
-import {
-  IResponseUserToken,
-  IResponse,
-} from '../../interfaces/response.interface';
-import { IUser } from '../../interfaces/users.interface';
-import { GoogleAuthGuard } from '../../helpers/auth/guards/google-auth.guard';
-import { FacebookAuthGuard } from '../../helpers/auth/guards/facebook-auth.guards';
-import { AuthProviderEntity } from '../../entities/auth-provider.entity';
+import { IResponse } from '../../interfaces/response.interface';
 import { AuthLoginProviderDto } from '../../dto/auth/auth-login-provider.dto';
 import { LoginDto } from '../../dto/auth/auth-login.dto';
-import { Response } from 'express';
 import { BaseController } from '../../../base/base.controllers';
 import { RestorePasswordOTPDto } from '../../dto/auth/auth-restore-pwd-otp.dto';
 /**
@@ -136,7 +127,7 @@ export class AuthController extends BaseController {
    * @param res
    * @returns
    */
-  @Post('update-password-by-email')
+  @Patch('update-password-by-email')
   async updatePasswordByEmail(
     @Body() authRestoreDto: AuthUpdatePasswordDto,
     @Res() res,

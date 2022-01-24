@@ -8,6 +8,7 @@ import {
   Req,
   Res,
   Response,
+  Patch,
 } from '@nestjs/common';
 import { UserUpdateDto } from '../../dto/update-user.dto';
 import { JwtAuthGuard } from '../../helpers/auth/guards/jwt-auth.guard';
@@ -16,13 +17,14 @@ import { UserEntity } from '../../entities/user.entity';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
+import { AuthGuard } from '../../../middlewares/auth';
 @Controller('/be/v1/users')
 export class UsersController extends BaseController {
   constructor(private readonly usersService: UsersService) {
     super();
   }
-  @UseGuards(JwtAuthGuard)
-  @Put()
+  @UseGuards(AuthGuard)
+  @Patch()
   async updateUserInfo(
     @Body() userUpdateDto: UserUpdateDto,
     @Req() req,
@@ -37,8 +39,8 @@ export class UsersController extends BaseController {
     return this.responseSuccess(res, updatedUser);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
+  @UseGuards(AuthGuard)
   async getMyInfo(@Req() req, @Res() res): Promise<IResponse> {
     const user = await this.usersService.getMyInfo(req.user.user_id);
     return this.responseSuccess(res, user);
@@ -47,7 +49,7 @@ export class UsersController extends BaseController {
   async otp_demo(@Req() req, @Res() res): Promise<void> {
     res.render('otp-auth');
   }
-  @Get('/:id')
+  @Get('/find/:id')
   async getUserById(@Req() req, @Res() res): Promise<IResponse> {
     const user = await this.usersService.findById(req.params.id);
     return this.responseSuccess(res, { userData: user });

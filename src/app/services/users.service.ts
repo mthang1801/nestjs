@@ -79,7 +79,7 @@ export class UsersService extends BaseService<
     dataObj: ObjectLiteral,
   ): Promise<UserEntity> {
     const updatedUser = await this.userRepository.update(user_id, dataObj);
-
+    console.log(updatedUser);
     return preprocessUserResult(updatedUser);
   }
 
