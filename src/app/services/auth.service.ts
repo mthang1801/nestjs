@@ -20,6 +20,8 @@ import { AuthLoginProviderDto } from '../dto/auth/auth-login-provider.dto';
 import { UserProfilesService } from './user_profiles.service';
 import * as twilio from 'twilio';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { UserGroupLinksRepository } from '../repositories/user_groups.repository';
+import { UserGroupLinkEntity } from '../entities/user_groups';
 @Injectable()
 export class AuthService extends BaseService<
   AuthProviderEntity,
@@ -31,6 +33,7 @@ export class AuthService extends BaseService<
     private jwtService: JwtService,
     private userProfile: UserProfilesService,
     repository: AuthProviderRepository<AuthProviderEntity>,
+    private userGroupRepository: UserGroupLinksRepository<UserGroupLinkEntity>,
     table: Table,
   ) {
     super(repository, table);
@@ -67,7 +70,10 @@ export class AuthService extends BaseService<
       salt,
       created_at: convertToMySQLDateTime(),
     });
-
+    await this.userGroupRepository.create({
+      user_id: user.user_id,
+      usergroup_id: 3,
+    });
     return {
       token: this.generateToken(user),
       userData: preprocessUserResult(user),
@@ -94,6 +100,7 @@ export class AuthService extends BaseService<
     }
 
     await this.userService.update(user.user_id, { user_login: 'SYSTEM' });
+
     const dataResult = {
       token: this.generateToken(user),
       userData: preprocessUserResult(user),
@@ -116,6 +123,10 @@ export class AuthService extends BaseService<
         created_at: convertToMySQLDateTime(),
       });
       await this.userProfile.createUserProfile(userExists);
+      await this.userGroupRepository.create({
+        user_id: userExists.user_id,
+        usergroup_id: 3,
+      });
     }
 
     let authProvider: AuthProviderEntity = await this.authRepository.findOne({

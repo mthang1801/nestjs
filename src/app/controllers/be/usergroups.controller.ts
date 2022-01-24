@@ -9,7 +9,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { CreateUserGroupsDto } from '../../dto/usergroups/create-usergroups.dto';
-import { UsersService } from '../../services/users.service';
+import { UserGroupsService } from '../../services/user_groups.service';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
@@ -21,7 +21,7 @@ import { AuthGuard } from '../../../middlewares/fe.auth';
  */
 @Controller('/be/v1/usergroups')
 export class UsergroupsController extends BaseController {
-  constructor(private readonly usersService: UsersService) {
+  constructor(private readonly usersGroupService: UserGroupsService) {
     super();
   }
 
@@ -38,13 +38,5 @@ export class UsergroupsController extends BaseController {
     @Body() createUserGroupsDto: CreateUserGroupsDto,
     @Req() req,
     @Res() res,
-  ): Promise<IResponse> {
-    const { user_id } = req.user;
-    const updatedUser = await this.usersService.updateUser(
-      user_id,
-      createUserGroupsDto,
-    );
-
-    return this.responseSuccess(res, updatedUser);
-  }
+  ): Promise<void> {}
 }

@@ -15,6 +15,7 @@ import { StringModule } from './string.module';
 import { ObjectModule } from './object.module';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from '../helpers/exeptions/allExeptionsFilter';
+import { UserGroupsModule } from './user_groups.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,6 +31,7 @@ import { AllExceptionsFilter } from '../helpers/exeptions/allExeptionsFilter';
     BannerModule,
     StringModule,
     ObjectModule,
+    UserGroupsModule,
   ],
   providers: [
     {
