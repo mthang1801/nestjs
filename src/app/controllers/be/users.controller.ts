@@ -8,7 +8,7 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { UserUpdateDto } from '../../dto/update-user.dto';
+import { UserUpdateDto } from '../../dto/user/update-user.dto';
 import { UsersService } from '../../services/users.service';
 import { UserEntity } from '../../entities/user.entity';
 import { BaseController } from '../../../base/base.controllers';

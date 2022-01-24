@@ -7,7 +7,11 @@ import {
 import { BaseService } from '../../base/base.service';
 import { Banner } from '../entities/banner.entity';
 import { BannerRepository } from '../repositories/banner.repository';
-import { BannerCreateDTO, UpdateBannerDTO,createBannerImageDTO } from '../dto/banner.dto';
+import {
+  BannerCreateDTO,
+  UpdateBannerDTO,
+  createBannerImageDTO,
+} from '../dto/banner/banner.dto';
 import { BannerImagesService } from './banner_images.service';
 import { BannerDescriptionsService } from './banner_description.service';
 import { ImagesService } from './image.service';
@@ -24,8 +28,8 @@ import { convertToMySQLDateTime } from 'src/utils/helper';
 
 @Injectable()
 export class BannerService extends BaseService<
-Banner,
-BannerRepository<Banner>
+  Banner,
+  BannerRepository<Banner>
 > {
   constructor(
     repository: BannerRepository<Banner>,
@@ -49,7 +53,10 @@ BannerRepository<Banner>
             fieldJoin: 'banner_id',
             rootJoin: 'banner_id',
           },
-          ddv_images: { fieldJoin: 'image_id', rootJoin: 'ddv_banner_images.banner_image_id' },
+          ddv_images: {
+            fieldJoin: 'image_id',
+            rootJoin: 'ddv_banner_images.banner_image_id',
+          },
         },
       },
 
@@ -62,7 +69,7 @@ BannerRepository<Banner>
     const string = `t.banner_id`;
     const banner = await this.repository.find({
       select: ['*'],
-      where :{[string] : id},
+      where: { [string]: id },
       join: {
         [JoinTable.join]: {
           ddv_banner_images: { fieldJoin: 'banner_id', rootJoin: 'banner_id' },
@@ -70,13 +77,15 @@ BannerRepository<Banner>
             fieldJoin: 'banner_id',
             rootJoin: 'banner_id',
           },
-          ddv_images: { fieldJoin: 'image_id', rootJoin: 'ddv_banner_images.banner_image_id' },
+          ddv_images: {
+            fieldJoin: 'image_id',
+            rootJoin: 'ddv_banner_images.banner_image_id',
+          },
         },
       },
 
       skip: 0,
       limit: 30,
-      
     });
     return banner;
   }
@@ -138,12 +147,9 @@ BannerRepository<Banner>
       };
       Object.keys(imageTableData).forEach(
         (key) =>
-          imageTableData[key] === undefined &&
-          delete imageTableData[key],
+          imageTableData[key] === undefined && delete imageTableData[key],
       );
-      let _images = await this.imageService.Create(
-        imageTableData,
-      );
+      let _images = await this.imageService.Create(imageTableData);
       //===========================|Add to ddve_images_links|=============================
       const imageLinkTableData = {
         object_id: _banner.banner_id,
@@ -156,9 +162,7 @@ BannerRepository<Banner>
           imageLinkTableData[key] === undefined &&
           delete imageLinkTableData[key],
       );
-      let _images_link = await this.imageLinkService.Create(
-        imageLinkTableData,
-      );
+      let _images_link = await this.imageLinkService.Create(imageLinkTableData);
       //===========================|Add to ddve_banner_images|=============================
       const bannerImageTableData = {
         banner_id: _banner.banner_id,
@@ -172,20 +176,18 @@ BannerRepository<Banner>
       let _banner_image = await this.bannerImagesService.Create(
         bannerImageTableData,
       );
-      return 'Banner Added'
-
+      return 'Banner Added';
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
   async UpdateBanner(data: UpdateBannerDTO, id: string) {
-    const { url, image, banner, description, position, status, type } = data
+    const { url, image, banner, description, position, status, type } = data;
     //===================|Update ddve_banner table|===================
     const bannerTableData = {
       status: status,
       type: type,
       position: position,
-
     };
     Object.keys(bannerTableData).forEach(
       (key) =>
@@ -203,46 +205,51 @@ BannerRepository<Banner>
         bannerDescriptionTableData[key] === undefined &&
         delete bannerDescriptionTableData[key],
     );
-    let _banner_description = this.bannerDescriptionsService.update(parseInt(id), bannerDescriptionTableData);
+    let _banner_description = this.bannerDescriptionsService.update(
+      parseInt(id),
+      bannerDescriptionTableData,
+    );
 
     //===============|Get the image id then update the url|===============
     const imagebyBanner = await this.bannerImagesService.findById(parseInt(id));
-    console.log("banner_image_id");
+    console.log('banner_image_id');
     //===========================|Add to ddve_images |=============================
     const imageTableData = {
       image_path: image,
     };
     Object.keys(imageTableData).forEach(
-      (key) =>
-        imageTableData[key] === undefined &&
-        delete imageTableData[key],
+      (key) => imageTableData[key] === undefined && delete imageTableData[key],
     );
-    let _images =  this.imageService.update(imagebyBanner.banner_image_id, imageTableData,);
+    let _images = this.imageService.update(
+      imagebyBanner.banner_image_id,
+      imageTableData,
+    );
     //===========================|Add to ddve_images_links|=============================
     const imageLinkTableData = {
-
       position: position,
     };
     Object.keys(imageLinkTableData).forEach(
       (key) =>
-        imageLinkTableData[key] === undefined &&
-        delete imageLinkTableData[key],
+        imageLinkTableData[key] === undefined && delete imageLinkTableData[key],
     );
-    let _images_link =  this.imageLinkService.update(imagebyBanner.banner_image_id, imageLinkTableData,);
-    
+    let _images_link = this.imageLinkService.update(
+      imagebyBanner.banner_image_id,
+      imageLinkTableData,
+    );
+
     //=====
-    Promise.all([_banner, _banner_description,_images,_images_link]);
+    Promise.all([_banner, _banner_description, _images, _images_link]);
   }
-  async DeleteBanner(banner_id,images_id){
+  async DeleteBanner(banner_id, images_id) {
     //Check if banner_id match with images_id
-    let count = await this.bannerImagesService.find({where:{banner_id:banner_id, banner_image_id:images_id}})
-    if (count.length <=0) return `Khong ton tai`
-    let _BannerImages =  this.bannerImagesService.delete(banner_id);
+    let count = await this.bannerImagesService.find({
+      where: { banner_id: banner_id, banner_image_id: images_id },
+    });
+    if (count.length <= 0) return `Khong ton tai`;
+    let _BannerImages = this.bannerImagesService.delete(banner_id);
     let _image = this.imageService.delete(images_id);
     let _image_link = this.imageLinkService.delete(images_id);
-    Promise.all([_BannerImages,_image,_image_link]);
+    Promise.all([_BannerImages, _image, _image_link]);
   }
-  async createBannerImage(data :createBannerImageDTO){
-    
-  }
+  async createBannerImage(data: createBannerImageDTO) {}
 }

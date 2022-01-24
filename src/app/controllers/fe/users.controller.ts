@@ -8,13 +8,15 @@ import {
   Res,
   Response,
 } from '@nestjs/common';
-import { UserUpdateDto } from '../../dto/update-user.dto';
+import { UserUpdateDto } from '../../dto/user/update-user.dto';
+import { UserProfileDto } from '../../dto/user/update-user-profile.dto';
 import { UsersService } from '../../services/users.service';
 import { UserEntity } from '../../entities/user.entity';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
 import { AuthGuard } from '../../../middlewares/auth';
+
 @Controller('/fe/v1/users')
 export class UsersController extends BaseController {
   constructor(private readonly usersService: UsersService) {
@@ -53,5 +55,16 @@ export class UsersController extends BaseController {
   }
 
   @Put('/update-user-profile')
-  async updateUserProfile(@Req() req): Promise<void> {}
+  @UseGuards(AuthGuard)
+  async updateUserProfile(
+    @Body() userProfileDto: UserProfileDto,
+    @Req() req,
+    @Res() res,
+  ): Promise<IResponse> {
+    const updatedUserProfile = await this.usersService.updateProfile(
+      req.user.user_id,
+      userProfileDto,
+    );
+    return this.responseSuccess(res, { userProfile: updatedUserProfile });
+  }
 }

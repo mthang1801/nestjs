@@ -8,7 +8,10 @@ import {
 import { UserEntity } from '../entities/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from './mail.service';
-import { UserRepository } from '../repositories/user.repository';
+import {
+  UserRepository,
+  UserProfileRepository,
+} from '../repositories/user.repository';
 import { Table } from '../../database/enums/index';
 import {
   convertToMySQLDateTime,
@@ -25,6 +28,7 @@ import { saltHashPassword } from '../../utils/cipherHelper';
 import { UserProfilesService } from '../services/user-profiles.service';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { JoinTable } from '../../database/enums/joinTable.enum';
+import { UserProfileDto } from '../dto/user/update-user-profile.dto';
 @Injectable()
 export class UsersService extends BaseService<
   UserEntity,
@@ -35,9 +39,9 @@ export class UsersService extends BaseService<
     private readonly mailService: MailService,
     private readonly userProfileService: UserProfilesService,
     repository: UserRepository<UserEntity>,
-
     logger: LoggerService,
     table: Table,
+    private userProfileRepository: UserProfileRepository<UserProfileEntity>,
   ) {
     super(repository, logger, table);
     this.userRepository = repository;
@@ -227,5 +231,16 @@ export class UsersService extends BaseService<
       throw new BadRequestException({ message: 'OTP không chính xác' });
     }
     return true;
+  }
+
+  async updateProfile(
+    id: number,
+    userProfileDto: UserProfileDto,
+  ): Promise<UserProfileEntity> {
+    const updatedProfile = await this.userProfileRepository.update(
+      id,
+      userProfileDto,
+    );
+    return updatedProfile;
   }
 }

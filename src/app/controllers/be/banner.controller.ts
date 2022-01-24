@@ -11,9 +11,13 @@ import {
 } from '@nestjs/common';
 import { BannerService } from '../../services/banner.service';
 import { BaseController } from '../../../base/base.controllers';
-import {BannerCreateDTO,createBannerImageDTO,UpdateBannerDTO} from '../../dto/banner.dto'
+import {
+  BannerCreateDTO,
+  createBannerImageDTO,
+  UpdateBannerDTO,
+} from '../../dto/banner/banner.dto';
 @Controller('banner')
-export class BannerController extends BaseController{
+export class BannerController extends BaseController {
   constructor(private bannerService: BannerService) {
     super();
   }
@@ -29,34 +33,34 @@ export class BannerController extends BaseController{
   }
   @Get('/:id/images')
   getAllIamgesByBannerId(@Param('id') id): any {
-    return `this action return all images from banner`
+    return `this action return all images from banner`;
   }
 
   @Post()
   @UsePipes(ValidationPipe)
-
   createBanner(@Body() body: BannerCreateDTO): any {
-    const banner = this.bannerService.CreateBanner(body)
-    return banner
+    const banner = this.bannerService.CreateBanner(body);
+    return banner;
   }
   @Put('/:id')
   @UsePipes(ValidationPipe)
-
-  updateBannerbyId(@Body() body:UpdateBannerDTO, @Param('id') id): any {
-    const banner = this.bannerService.UpdateBanner(body,id)
-    return banner
+  updateBannerbyId(@Body() body: UpdateBannerDTO, @Param('id') id): any {
+    const banner = this.bannerService.UpdateBanner(body, id);
+    return banner;
   }
   @Delete('/:banner_id/images/:images_id')
-  deleteBannerById(@Param('banner_id') banner_id,@Param('images_id') images_id) : any{
-    const banner = this.bannerService.DeleteBanner(banner_id,images_id)
-    
-      return banner
+  deleteBannerById(
+    @Param('banner_id') banner_id,
+    @Param('images_id') images_id,
+  ): any {
+    const banner = this.bannerService.DeleteBanner(banner_id, images_id);
+
+    return banner;
   }
   @Post('/:id/createimages')
   @UsePipes(ValidationPipe)
-
   createBannerImage(@Body() body: createBannerImageDTO): any {
-    const banner = this.bannerService.createBannerImage(body)
-    return banner
+    const banner = this.bannerService.createBannerImage(body);
+    return banner;
   }
 }
