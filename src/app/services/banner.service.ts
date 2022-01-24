@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { BaseService } from '../../base/base.service';
 import { Banner } from '../entities/banner.entity';
 import { BannerRepository } from '../repositories/banner.repository';
@@ -16,14 +11,7 @@ import { BannerImagesService } from './banner_images.service';
 import { BannerDescriptionsService } from './banner_description.service';
 import { ImagesService } from './image.service';
 import { ImagesLinksService } from './image_link.service';
-import {
-  Table,
-  JoinTable,
-  SortBy,
-  LogicalOperator,
-  ComparisonOperator,
-} from '../../database/enums/index';
-import { LoggerService } from '../../logger/custom.logger';
+import { Table, JoinTable } from '../../database/enums/index';
 import { convertToMySQLDateTime } from 'src/utils/helper';
 
 @Injectable()
@@ -33,14 +21,13 @@ export class BannerService extends BaseService<
 > {
   constructor(
     repository: BannerRepository<Banner>,
-    logger: LoggerService,
     table: Table,
     private bannerImagesService: BannerImagesService,
     private imageService: ImagesService,
     private imageLinkService: ImagesLinksService,
     private bannerDescriptionsService: BannerDescriptionsService,
   ) {
-    super(repository, logger, table);
+    super(repository, table);
     this.table = Table.BANNER;
   }
   async getAllBanner() {

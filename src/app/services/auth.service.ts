@@ -12,15 +12,11 @@ import {
 import { AuthProviderRepository } from '../repositories/auth.repository';
 import { BaseService } from '../../base/base.service';
 import { AuthProviderEntity } from '../entities/auth-provider.entity';
-import { LoggerService } from '../../logger/custom.logger';
 import { Table } from '../../database/enums/tables.enum';
-
 import { IResponseUserToken } from '../interfaces/response.interface';
-
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 import { generateOTPDigits } from '../../utils/helper';
 import { AuthLoginProviderDto } from '../dto/auth/auth-login-provider.dto';
-
 import { UserProfilesService } from '../services/user-profiles.service';
 import * as twilio from 'twilio';
 import { HttpException, HttpStatus } from '@nestjs/common';
@@ -35,10 +31,9 @@ export class AuthService extends BaseService<
     private jwtService: JwtService,
     private userProfile: UserProfilesService,
     repository: AuthProviderRepository<AuthProviderEntity>,
-    logger: LoggerService,
     table: Table,
   ) {
-    super(repository, logger, table);
+    super(repository, table);
     this.authRepository = repository;
     this.table = Table.USERS_AUTH;
   }

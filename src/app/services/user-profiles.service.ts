@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Table } from '../../database/enums/tables.enum';
-import { LoggerService } from '../../logger/custom.logger';
 import { UserProfileEntity } from '../entities/user-profile.entity';
 import { UserProfileRepository } from '../repositories/user.repository';
 import { BaseService } from '../../base/base.service';
@@ -12,10 +11,9 @@ export class UserProfilesService extends BaseService<
 > {
   constructor(
     repository: UserProfileRepository<UserProfileEntity>,
-    logger: LoggerService,
     table: Table,
   ) {
-    super(repository, logger, table);
+    super(repository, table);
     this.table = Table.USER_PROFILES;
   }
 

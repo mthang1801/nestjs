@@ -17,33 +17,27 @@ export class MailService {
     user: UserEntity,
     token: string,
   ): Promise<boolean> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const prefixApi = this.configService.get<string>('apiBEPrefix');
-        const url = join(
-          originUrl,
-          prefixApi,
-          'auth',
-          `restore-password?token=${token}&${PrimaryKeys.ddv_users}=${
-            user[PrimaryKeys.ddv_users]
-          }`,
-        );
+    const prefixApi = this.configService.get<string>('apiBEPrefix');
+    const url = join(
+      originUrl,
+      prefixApi,
+      'auth',
+      `restore-password?token=${token}&${PrimaryKeys.ddv_users}=${
+        user[PrimaryKeys.ddv_users]
+      }`,
+    );
 
-        await this.mailerService.sendMail({
-          to: user.email,
-          // from: '"Support Team" <support@example.com>', // override default from
-          subject: 'Xác nhận khôi phục tài khoản',
-          template: 'confirmation', // `.hbs` extension is appended automatically
-          context: {
-            // ✏️ filling curly brackets with content
-            name: user.firstname + ' ' + user.lastname,
-            url,
-          },
-        });
-        resolve(true);
-      } catch (error) {
-        reject(error);
-      }
+    await this.mailerService.sendMail({
+      to: user.email,
+      // from: '"Support Team" <support@example.com>', // override default from
+      subject: 'Xác nhận khôi phục tài khoản',
+      template: 'confirmation', // `.hbs` extension is appended automatically
+      context: {
+        // ✏️ filling curly brackets with content
+        name: user.firstname + ' ' + user.lastname,
+        url,
+      },
     });
+    return true;
   }
 }

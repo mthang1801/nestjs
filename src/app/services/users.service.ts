@@ -17,10 +17,7 @@ import {
   convertToMySQLDateTime,
   preprocessUserResult,
 } from '../../utils/helper';
-import { Like } from '../../database/find-options/operators';
-import * as bcrypt from 'bcrypt';
 import { BaseService } from '../../base/base.service';
-import { LoggerService } from '../../logger/custom.logger';
 import { ObjectLiteral } from '../../common/ObjectLiteral';
 import { UserProfileEntity } from '../entities/user-profile.entity';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
@@ -39,11 +36,10 @@ export class UsersService extends BaseService<
     private readonly mailService: MailService,
     private readonly userProfileService: UserProfilesService,
     repository: UserRepository<UserEntity>,
-    logger: LoggerService,
     table: Table,
     private userProfileRepository: UserProfileRepository<UserProfileEntity>,
   ) {
-    super(repository, logger, table);
+    super(repository, table);
     this.userRepository = repository;
     this.table = Table.USERS;
   }
