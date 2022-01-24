@@ -148,7 +148,7 @@ export class BaseRepositorty<T> {
 
     const queryString = `DELETE FROM ${this.table} WHERE ?`;
 
-    const res = await this.databaseService.executeQuery(queryString, [{ id }]);
+    const res = await this.databaseService.executeQuery(queryString, [{ [PrimaryKeys[this.table]]: id },]);
     if (res[0].affectedRows === 0) {
       throw new HttpException(
         `Not found id = ${id} in ${this.table} to delete`,
