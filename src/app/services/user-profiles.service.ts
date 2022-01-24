@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Table } from '../../database/enums/tables.enum';
-import { UserProfileEntity } from '../entities/user-profile.entity';
+import { UserProfileEntity } from '../entities/user.entity';
 import { UserProfileRepository } from '../repositories/user.repository';
 import { BaseService } from '../../base/base.service';
 import { UserEntity } from '../entities/user.entity';

@@ -10,7 +10,7 @@ import * as jwt from 'jsonwebtoken';
 import { Reflector } from '@nestjs/core';
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private reflector: Reflector) {} //reflect roles of user
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {

@@ -19,7 +19,7 @@ import {
 } from '../../utils/helper';
 import { BaseService } from '../../base/base.service';
 import { ObjectLiteral } from '../../common/ObjectLiteral';
-import { UserProfileEntity } from '../entities/user-profile.entity';
+import { UserProfileEntity } from '../entities/user.entity';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import { saltHashPassword } from '../../utils/cipherHelper';
 import { UserProfilesService } from '../services/user-profiles.service';
