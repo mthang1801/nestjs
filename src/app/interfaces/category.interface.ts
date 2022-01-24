@@ -39,3 +39,8 @@ export interface ICategoryVendorProductCount {
   category_id: number;
   product_count: number;
 }
+
+export interface IJoinedCategory
+  extends ICategory,
+    ICategoryDescription,
+    ICategoryVendorProductCount {}

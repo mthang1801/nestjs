@@ -6,7 +6,7 @@ import {
 import { BaseRepositorty } from '../../base/base.repository';
 import { DatabaseService } from '../../database/database.service';
 import { Table } from '../../database/enums/tables.enum';
-import { CategoryVendorProductCount } from '../entities/category.entity';
+import { CategoryVendorProductCountEntity } from '../entities/category.entity';
 
 @Injectable()
 export class CategoryRepository<
@@ -30,8 +30,8 @@ export class CategoryDescriptionRepository<
 
 @Injectable()
 export class CategoryVendorProductCountRepository<
-  CategoryVendorProductCount,
-> extends BaseRepositorty<CategoryVendorProductCount> {
+  CategoryVendorProductCountEntity,
+> extends BaseRepositorty<CategoryVendorProductCountEntity> {
   constructor(databaseService: DatabaseService, table: Table) {
     super(databaseService, table);
     this.table = Table.CATEGORY_VENDOR_PRODUCT_COUNT;

@@ -43,14 +43,20 @@ export class BaseRepositorty<T> {
    * @param id
    * @returns
    */
-  async findById(id: number): Promise<T> {
+  async findById(id: number | any): Promise<T> {
     console.log('=============== Find By Id ================');
 
     const stringQuery = `SELECT * FROM ${this.table} WHERE ?`;
 
-    const rows = await this.databaseService.executeQuery(stringQuery, [
-      { [PrimaryKeys[this.table]]: id },
-    ]);
+    let rows;
+    if (typeof id === 'object') {
+      rows = await this.databaseService.executeQuery(stringQuery, [id]);
+    } else {
+      rows = await this.databaseService.executeQuery(stringQuery, [
+        { [PrimaryKeys[this.table]]: id },
+      ]);
+    }
+
     const result = rows[0];
 
     return result[0];
