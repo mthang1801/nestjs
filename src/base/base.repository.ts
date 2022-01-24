@@ -168,7 +168,7 @@ export class BaseRepositorty<T> {
     const queryString = `DELETE FROM ${this.table} WHERE ?`;
     try {
       const res = await this.databaseService.executeQuery(queryString, [
-        { id },
+        { [PrimaryKeys[this.table]]: id },
       ]);
       if (res[0].affectedRows === 0) {
         throw new NotFoundException({

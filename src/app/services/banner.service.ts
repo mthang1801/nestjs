@@ -7,7 +7,7 @@ import {
 import { BaseService } from '../../base/base.service';
 import { Banner } from '../entities/banner.entity';
 import { BannerRepository } from '../repositories/banner.repository';
-import { BannerCreateDTO, UpdateBannerDTO } from '../dto/banner-create.dto';
+import { BannerCreateDTO, UpdateBannerDTO,createBannerImageDTO } from '../dto/banner.dto';
 import { BannerImagesService } from './banner_images.service';
 import { BannerDescriptionsService } from './banner_description.service';
 import { ImagesService } from './Image.service';
@@ -228,9 +228,21 @@ BannerRepository<Banner>
         imageLinkTableData[key] === undefined &&
         delete imageLinkTableData[key],
     );
-    let _images_link = await this.imageLinkService.update(imagebyBanner.banner_image_id, imageLinkTableData,);
+    let _images_link =  this.imageLinkService.update(imagebyBanner.banner_image_id, imageLinkTableData,);
     
     //=====
     Promise.all([_banner, _banner_description,_images,_images_link]);
+  }
+  async DeleteBanner(banner_id,images_id){
+    //Check if banner_id match with images_id
+    let count = await this.bannerImagesService.find({where:{banner_id:banner_id, banner_image_id:images_id}})
+    if (count.length <=0) return `Khong ton tai`
+    let _BannerImages =  this.bannerImagesService.delete(banner_id);
+    let _image = this.imageService.delete(images_id);
+    let _image_link = this.imageLinkService.delete(images_id);
+    Promise.all([_BannerImages,_image,_image_link]);
+  }
+  async createBannerImage(data :createBannerImageDTO){
+    
   }
 }

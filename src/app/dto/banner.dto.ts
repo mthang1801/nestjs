@@ -43,4 +43,7 @@ export class UpdateBannerDTO {
     @Optional()
     type:string
 }
+export class createBannerImageDTO{
+    
+}
 

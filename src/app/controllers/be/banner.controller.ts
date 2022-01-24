@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { BannerService } from '../../services/banner.service';
 import { BaseController } from '../../../base/base.controllers';
-import {BannerCreateDTO} from '../../dto/banner-create.dto'
+import {BannerCreateDTO,createBannerImageDTO,UpdateBannerDTO} from '../../dto/banner.dto'
 @Controller('banner')
 export class BannerController extends BaseController{
   constructor(private bannerService: BannerService) {
@@ -27,6 +27,10 @@ export class BannerController extends BaseController{
     const banners = this.bannerService.getBannerById(id);
     return banners;
   }
+  @Get('/:id/images')
+  getAllIamgesByBannerId(@Param('id') id): any {
+    return `this action return all images from banner`
+  }
 
   @Post()
   @UsePipes(ValidationPipe)
@@ -38,12 +42,21 @@ export class BannerController extends BaseController{
   @Put('/:id')
   @UsePipes(ValidationPipe)
 
-  updateBannerbyId(@Body() body, @Param('id') id): any {
+  updateBannerbyId(@Body() body:UpdateBannerDTO, @Param('id') id): any {
     const banner = this.bannerService.UpdateBanner(body,id)
     return banner
   }
-  @Delete('/:id')
-  deleteBannerById(@Param('id') id) : any{
-      return `this action delete a banner`
+  @Delete('/:banner_id/images/:images_id')
+  deleteBannerById(@Param('banner_id') banner_id,@Param('images_id') images_id) : any{
+    const banner = this.bannerService.DeleteBanner(banner_id,images_id)
+    
+      return banner
+  }
+  @Post('/:id/createimages')
+  @UsePipes(ValidationPipe)
+
+  createBannerImage(@Body() body: createBannerImageDTO): any {
+    const banner = this.bannerService.createBannerImage(body)
+    return banner
   }
 }
