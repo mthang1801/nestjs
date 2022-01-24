@@ -1,10 +1,10 @@
 import { IsNotEmpty, IsOptional } from 'class-validator';
 
-export class CreateCategoryDto {
+export class CategoryDto {
   @IsOptional()
   parent_id: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   id_path: string;
 
   @IsOptional()
@@ -62,7 +62,7 @@ export class CreateCategoryDto {
   category_type: string;
 }
 
-export class CreateCategoryDescriptionDto {
+export class CategoryDescriptionDto {
   @IsNotEmpty()
   category_id: number;
 
