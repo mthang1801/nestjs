@@ -53,8 +53,8 @@ export class BannerService extends BaseService<
     return banner;
   }
   async getBannerById(id) {
-    const string = `t.banner_id`;
-    const banner = await this.repository.find({
+    const string = `${this.table}.banner_id`;
+    const banner = await this.repository.findOne({
       select: ['*'],
       where: { [string]: id },
       join: {

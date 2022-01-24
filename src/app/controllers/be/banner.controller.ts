@@ -16,7 +16,8 @@ import {
   createBannerImageDTO,
   UpdateBannerDTO,
 } from '../../dto/banner/banner.dto';
-@Controller('banner')
+import {} from '../../interfaces/response.interface';
+@Controller('/be/v1/banner')
 export class BannerController extends BaseController {
   constructor(private bannerService: BannerService) {
     super();
