@@ -12,15 +12,11 @@ import { ConfigService } from '@nestjs/config';
   providers: [
     {
       provide: 'DATABASE_POOL',
-      useFactory: async (configService: ConfigService) =>
-        DatabasePoolFactory(configService),
-      inject: [ConfigService],
+      useFactory: async () => DatabasePoolFactory(),
     },
     DatabaseService,
-    UserRepository,
-    String,
   ],
-  exports: [DatabaseService, UserRepository],
+  exports: [DatabaseService],
 })
 export class DatabaseModule implements OnApplicationShutdown {
   private readonly logger = new Logger(DatabaseModule.name);

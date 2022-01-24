@@ -5,82 +5,94 @@ import {
   NotFoundException,
   RequestTimeoutException,
 } from '@nestjs/common';
-import { User } from '../entities/user.entity';
+import { UserEntity } from '../entities/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from './mail.service';
 import { UserRepository } from '../repositories/user.repository';
 import { Table } from '../../database/enums/index';
-import { convertToMySQLDateTime } from '../../utils/helper';
+import {
+  convertToMySQLDateTime,
+  preprocessUserResult,
+} from '../../utils/helper';
 import { Like } from '../../database/find-options/operators';
 import * as bcrypt from 'bcrypt';
 import { BaseService } from '../../base/base.service';
 import { LoggerService } from '../../logger/custom.logger';
 import { ObjectLiteral } from '../../common/ObjectLiteral';
-import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
+import { UserProfileEntity } from '../entities/user-profile.entity';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
-import { UserAuthSocialMedia } from '../interfaces/users.interface';
 import { saltHashPassword } from '../../utils/cipherHelper';
+import { UserProfilesService } from '../services/user-profiles.service';
+import { HttpException, HttpStatus } from '@nestjs/common';
 @Injectable()
-export class UsersService extends BaseService<User, UserRepository<User>> {
+export class UsersService extends BaseService<
+  UserEntity,
+  UserRepository<UserEntity>
+> {
+  protected userRepository: UserRepository<UserEntity>;
   constructor(
     private readonly mailService: MailService,
-    repository: UserRepository<User>,
+    private readonly userProfileService: UserProfilesService,
+    repository: UserRepository<UserEntity>,
+
     logger: LoggerService,
     table: Table,
   ) {
     super(repository, logger, table);
+    this.userRepository = repository;
     this.table = Table.USERS;
   }
 
-  async createUser(registerData): Promise<User> {
-    try {
-      const checkUserExists = await this.repository.findOne({
-        where: [{ email: registerData.email }, { phone: registerData.phone }],
-      });
-      if (checkUserExists) {
-        throw new BadRequestException({
-          message: 'Địa chỉ email hoặc số điện thoại đã được đăng ký.',
-        });
-      }
-      let user = await this.repository.create(registerData);
-
-      return user;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
+  async createUser(registerData): Promise<UserEntity> {
+    const checkUserExists = await this.userRepository.findOne({
+      where: [{ email: registerData.email }, { phone: registerData.phone }],
+    });
+    if (checkUserExists) {
+      throw new HttpException(
+        'Địa chỉ email hoặc số điện thoại đã được đăng ký.',
+        HttpStatus.BAD_REQUEST,
+      );
     }
-  }
-
-  async create(dataObj: ObjectLiteral): Promise<User> {
-    let user = await this.repository.create(dataObj);
+    let user = await this.userRepository.create(registerData);
+    await this.userProfileService.createUserProfile(user);
     return user;
   }
 
-  async findById(id: number): Promise<User> {
-    const user = await this.repository.findById(id);
-
+  async create(dataObj: ObjectLiteral): Promise<UserEntity> {
+    let user = await this.userRepository.create(dataObj);
     return user;
   }
 
-  async updateUserInfo(user_id: number, dataObj: ObjectLiteral): Promise<User> {
-    const updatedUser = await this.repository.update(user_id, dataObj);
-
-    return updatedUser;
+  async findById(id: number): Promise<UserEntity> {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new HttpException(
+        'Không tìm thấy người dùng.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return preprocessUserResult(user);
   }
 
-  async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<User> {
-    try {
-      const user = await this.repository.findOne({ where: dataObj });
-      return user;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
+  async updateUser(
+    user_id: number,
+    dataObj: ObjectLiteral,
+  ): Promise<UserEntity> {
+    const updatedUser = await this.userRepository.update(user_id, dataObj);
+
+    return preprocessUserResult(updatedUser);
+  }
+
+  async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<UserEntity> {
+    const user = await this.userRepository.findOne({ where: dataObj });
+    return user;
   }
 
   async resetPasswordByEmail(
     originUrl: string,
     email: string,
   ): Promise<boolean> {
-    const user: any = await this.repository.findOne({
+    const user: any = await this.userRepository.findOne({
       where: { email },
     });
     if (!user) {
@@ -90,7 +102,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     try {
       const verifyToken = uuidv4();
 
-      const updatedUser = await this.repository.update(user.user_id, {
+      const updatedUser = await this.userRepository.update(user.user_id, {
         verify_token: verifyToken,
         verify_token_exp: convertToMySQLDateTime(
           new Date(Date.now() + 2 * 3600 * 1000),
@@ -108,59 +120,23 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async getMyInfo(id: string): Promise<User> {
+  async getMyInfo(id: string): Promise<UserEntity> {
     try {
-      const user = await this.repository.findOne({
+      const user = await this.userRepository.findOne({
         where: { [PrimaryKeys[this.table]]: id },
       });
 
-      // const test = await this.repository.find({
-      //   select: ['*'],
-      //   join: {
-      //     alias: 'user',
-      //     [JoinTable.leftJoin]: {
-      //       orders: { fieldJoin: 'customer_id', rootJoin: 'id' },
-      //       orderItem: {
-      //         fieldJoin: 'orderItem.orderId',
-      //         rootJoin: 'orders.order_id',
-      //       },
-      //       products: {
-      //         fieldJoin: 'products.product_id',
-      //         rootJoin: 'orderItem.productId',
-      //       },
-      //     },
-      //   },
-      //   where: [
-      //     { firstName: Like('Mai văn'), lastName: 'Quốc' },
-      //     { firstName: [Like('Mai'), 'Nguyễn'], lastName: 'Bê' },
-      //     { firstName: 'Mai văn', lastName: 'Thắng' },
-      //     { firstName: 'Quang' },
-      //   ],
-      //   // where: {
-      //   //   firstName: [Like('Mai'), 'Nguyễn'],
-      //   //   lastName: Like('Thắng'),
-      //   //   country: Like('VietNam'),
-      //   //   email: 'mthang1801@gmail.com',
-      //   // },
-      //   orderBy: [
-      //     { field: 'orderItem.id', sort_by: SortBy.ASC },
-      //     { field: 'product.price', sort_by: SortBy.DESC },
-      //     { field: 'product.id', sort_by: SortBy.ASC },
-      //     { field: 'product.quantity', sort_by: SortBy.DESC },
-      //   ],
-      //   skip: 0,
-      //   limit: 30,
-      // });
-      // console.log(test);
-
-      return user;
+      return preprocessUserResult(user);
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
 
-  async restorePasswordByEmail(user_id: string, token: string): Promise<User> {
-    const checkUser: any = await this.repository.findOne({
+  async restorePasswordByEmail(
+    user_id: string,
+    token: string,
+  ): Promise<UserEntity> {
+    const checkUser: any = await this.userRepository.findOne({
       where: { user_id, verify_token: token },
     });
 
@@ -187,7 +163,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     newPassword: string,
   ): Promise<boolean> {
     try {
-      const user: any = await this.repository.findOne({
+      const user: any = await this.userRepository.findOne({
         where: {
           user_id,
           verify_token: token,
@@ -205,7 +181,7 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
       }
       const { passwordHash, salt } = saltHashPassword(newPassword);
 
-      await this.repository.update(user_id, {
+      await this.userRepository.update(user_id, {
         password: passwordHash,
         salt,
         verify_token: '',
@@ -216,8 +192,8 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
     }
   }
 
-  async updateUserOTP(user_id: number, otp: number): Promise<User> {
-    const updatedUser = this.repository.update(user_id, {
+  async updateUserOTP(user_id: number, otp: number): Promise<UserEntity> {
+    const updatedUser = this.userRepository.update(user_id, {
       otp,
       otp_incorrect_times: 0,
     });
@@ -225,25 +201,21 @@ export class UsersService extends BaseService<User, UserRepository<User>> {
   }
 
   async restorePasswordByOTP(user_id: number, otp: number): Promise<boolean> {
-    try {
-      const user = await this.repository.findById(user_id);
+    const user = await this.userRepository.findById(user_id);
 
-      if (user.otp_incorrect_times > 2) {
-        throw new BadRequestException({
-          message: 'Số lần nhập mã OTP vượt quá giới hạn',
-        });
-      }
-      if (user.otp !== otp) {
-        const otp_incorrect_times = user.otp_incorrect_times + 1;
-        await this.repository.update(user.user_id, {
-          otp_incorrect_times,
-        });
-
-        throw new BadRequestException({ message: 'OTP không chính xác' });
-      }
-      return true;
-    } catch (error) {
-      throw new InternalServerErrorException(error);
+    if (user.otp_incorrect_times > 2) {
+      throw new BadRequestException({
+        message: 'Số lần nhập mã OTP vượt quá giới hạn',
+      });
     }
+    if (user.otp !== otp) {
+      const otp_incorrect_times = user.otp_incorrect_times + 1;
+      await this.userRepository.update(user.user_id, {
+        otp_incorrect_times,
+      });
+
+      throw new BadRequestException({ message: 'OTP không chính xác' });
+    }
+    return true;
   }
 }

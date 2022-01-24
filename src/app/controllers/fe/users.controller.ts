@@ -9,46 +9,47 @@ import {
   Res,
   Response,
 } from '@nestjs/common';
-import { UserInfoUpdateDto } from '../../dto/update-userinfo.dto';
+import { UserUpdateDto } from '../../dto/update-user.dto';
 import { JwtAuthGuard } from '../../helpers/auth/guards/jwt-auth.guard';
 import { UsersService } from '../../services/users.service';
-import { User } from '../../entities/user.entity';
-
+import { UserEntity } from '../../entities/user.entity';
+import { BaseController } from '../../../base/base.controllers';
+import { IUser } from '../../interfaces/users.interface';
+import { IResponse } from '../../interfaces/response.interface';
 @Controller('/fe/v1/users')
-export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+export class UsersController extends BaseController {
+  constructor(private readonly usersService: UsersService) {
+    super();
+  }
   @UseGuards(JwtAuthGuard)
   @Put()
   async updateUserInfo(
-    @Body() userInfoUpdateDto: UserInfoUpdateDto,
+    @Body() userUpdateDto: UserUpdateDto,
     @Req() req,
     @Res() res,
-  ): Promise<{ status_code: number; data: User }> {
+  ): Promise<IResponse> {
     const { user_id } = req.user;
-    const updatedUser = await this.usersService.updateUserInfo(
+    const updatedUser = await this.usersService.updateUser(
       user_id,
-      userInfoUpdateDto,
+      userUpdateDto,
     );
 
-    return res.status(200).send({ status_code: 200, data: updatedUser });
+    return this.responseSuccess(res, updatedUser);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getMyInfo(
-    @Req() req,
-    @Res() res,
-  ): Promise<{ status_code: string; data: User }> {
+  async getMyInfo(@Req() req, @Res() res): Promise<IResponse> {
     const user = await this.usersService.getMyInfo(req.user.user_id);
-    return res.status(200).send({ status_code: 200, data: user });
+    return this.responseSuccess(res, user);
   }
-
+  @Get('/otp')
+  async otp_demo(@Req() req, @Res() res): Promise<void> {
+    res.render('otp-auth');
+  }
   @Get('/:id')
-  async getUserById(
-    @Req() req,
-    @Res() res,
-  ): Promise<{ status_code: string; data: User }> {
+  async getUserById(@Req() req, @Res() res): Promise<IResponse> {
     const user = await this.usersService.findById(req.params.id);
-    return res.status(200).send({ status_code: 200, data: user });
+    return this.responseSuccess(res, { userData: user });
   }
 }

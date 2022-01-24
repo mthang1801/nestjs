@@ -1,13 +1,13 @@
-export interface IResponseDataSuccess<T> {
-  code: number;
-  data: T | T[];
+import { IUser } from './users.interface';
+
+export interface IResponse {
+  code?: number;
+  statusCode?: number;
+  data?: any;
+  message?: string;
 }
 
-export interface IResponseError {
-  code: number;
-  message: string;
-}
-
-export interface IResponseErrorResponse {
-  error: IResponseError;
+export interface IResponseUserToken {
+  token: string;
+  userData: IUser;
 }

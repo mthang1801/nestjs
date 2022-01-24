@@ -1,13 +1,8 @@
-import {
-  BadRequestException,
-  ConsoleLogger,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { DatabaseCollection } from '../database/database.collection';
 import { Table, PrimaryKeys } from '../database/enums/index';
+import { HttpStatus } from '@nestjs/common';
 
 @Injectable()
 export class BaseRepositorty<T> {
@@ -27,23 +22,20 @@ export class BaseRepositorty<T> {
     console.log('=============== create ================');
 
     if (Array.isArray(params) || typeof params !== 'object') {
-      throw new BadRequestException({
-        message: 'Tham số truyền vào phải là Object',
-      });
+      throw new HttpException(
+        'Tham số truyền vào phải là Object',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     let sql = `INSERT INTO ${this.table} SET ?`;
 
-    try {
-      await this.databaseService.executeQuery(sql, params);
-      let filters = [];
-      for (let [key, val] of Object.entries(params)) {
-        filters.push({ [key]: val });
-      }
-
-      return await this.findOne({ where: params });
-    } catch (error) {
-      throw new BadRequestException(error);
+    await this.databaseService.executeQuery(sql, params);
+    let filters = [];
+    for (let [key, val] of Object.entries(params)) {
+      filters.push({ [key]: val });
     }
+
+    return this.findOne({ where: params });
   }
 
   /**
@@ -56,18 +48,12 @@ export class BaseRepositorty<T> {
 
     const stringQuery = `SELECT * FROM ${this.table} WHERE ?`;
 
-    try {
-      const rows = await this.databaseService.executeQuery(stringQuery, [
-        { [PrimaryKeys[this.table]]: id },
-      ]);
-      const result = rows[0];
-      if (!result.length) {
-        throw new NotFoundException();
-      }
-      return result[0];
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+    const rows = await this.databaseService.executeQuery(stringQuery, [
+      { [PrimaryKeys[this.table]]: id },
+    ]);
+    const result = rows[0];
+
+    return result[0];
   }
 
   /**
@@ -77,12 +63,15 @@ export class BaseRepositorty<T> {
    */
   async findOne(options: any): Promise<any> {
     console.log('=============== FIND ONE ================');
-    try {
-      const results = await this.find({ ...options, limit: 1 });
-      return results[0];
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return new Promise(async (resolve, reject) => {
+      try {
+        const results = await this.find({ ...options, limit: 1 });
+
+        resolve(results[0]);
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   /**
@@ -92,7 +81,6 @@ export class BaseRepositorty<T> {
    */
   async find(options: any): Promise<any[]> {
     console.log('=============== FIND ================');
-    console.log(options);
     const optionKeys = Object.keys(options);
     const orderCmds = [
       'select',
@@ -118,13 +106,8 @@ export class BaseRepositorty<T> {
         collection[cmd](options[cmd]);
       }
     }
-
-    try {
-      const results = await this.databaseService.executeQuery(collection.sql());
-      return results[0];
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    const results = await this.databaseService.executeQuery(collection.sql());
+    return results[0];
   }
 
   /**
@@ -135,10 +118,12 @@ export class BaseRepositorty<T> {
    */
   async update(id: number, params: any): Promise<T> {
     console.log('=============== UPDATE BY ID ================');
+
     if (typeof params !== 'object') {
-      throw new BadRequestException({
-        message: 'Tham số truyền vào không thể nhận dạng key/value.',
-      });
+      throw new HttpException(
+        'Tham số truyền vào không đúng định dạng',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     let sql = `UPDATE ${this.table} SET `;
     Object.entries(params).forEach(([key, val], i) => {
@@ -152,32 +137,24 @@ export class BaseRepositorty<T> {
     });
 
     sql += ` WHERE ${PrimaryKeys[this.table]} = '${id}'`;
-    try {
-      await this.databaseService.executeQuery(sql);
-      const updatedUser = await this.findById(id);
-      console.log(updatedUser);
-      return updatedUser;
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+
+    await this.databaseService.executeQuery(sql);
+    const updatedUser = await this.findById(id);
+    return updatedUser;
   }
 
   async delete(id: number): Promise<boolean> {
     console.log('=============== DELETE BY ID ================');
 
     const queryString = `DELETE FROM ${this.table} WHERE ?`;
-    try {
-      const res = await this.databaseService.executeQuery(queryString, [
-        { [PrimaryKeys[this.table]]: id },
-      ]);
-      if (res[0].affectedRows === 0) {
-        throw new NotFoundException({
-          message: `Not found id = ${id} in ${this.table} to delete`,
-        });
-      }
-      return true;
-    } catch (error) {
-      throw new BadRequestException(error);
+
+    const res = await this.databaseService.executeQuery(queryString, [{ id }]);
+    if (res[0].affectedRows === 0) {
+      throw new HttpException(
+        `Not found id = ${id} in ${this.table} to delete`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
+    return true;
   }
 }

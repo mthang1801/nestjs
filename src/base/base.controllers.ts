@@ -1,12 +1,9 @@
-import { Get, Injectable, NestMiddleware } from '@nestjs/common';
-import { Response } from 'express';
-import {
-  IResponseError,
-  IResponseDataSuccess,
-} from '../app/interfaces/response.interface';
+import { IResponse } from '../app/interfaces/response.interface';
 export class BaseController {
-  private statusCode: number = 200;
+  private message: string | string[] = '';
+  private data: any = null;
   private res: any;
+  private statusCode: number = 200;
 
   constructor() {}
 
@@ -21,27 +18,24 @@ export class BaseController {
    * @param message string
    * @returns IResponseError
    */
-  private responseWithError(message: string): IResponseError {
+  private responseWithError(): IResponse {
     const data = {
-      error: {
-        message,
-        statusCode: this.statusCode,
-      },
+      message: this.message,
+      data: this.data,
     };
-    return this.res.status(this.statusCode).send(data);
+    return this.res.send(data);
   }
 
   /**
    * @param data any
    * @returns IResponseError
    */
-  private respond(data: any): IResponseDataSuccess<any> {
+  private respond(): IResponse {
     let dataResponse = {
-      statusCode: this.statusCode,
+      message: this.message,
+      data: typeof this.data !== 'object' ? { data: this.data } : this.data,
     };
-    if (data) {
-      dataResponse['data'] = data;
-    }
+
     return this.res.status(this.statusCode).send(dataResponse);
   }
 
@@ -54,10 +48,11 @@ export class BaseController {
   public respondBadRequest(
     res,
     message: string = 'The request was invalid.',
-  ): IResponseError {
+  ): IResponse {
     this.setStatusCode(400);
+    this.message = message;
     this.res = res;
-    return this.responseWithError(message);
+    return this.responseWithError();
   }
 
   /**
@@ -66,35 +61,41 @@ export class BaseController {
    * @param message string
    * @returns
    */
-  public respondNotFound(res, message: string = 'Not Found'): IResponseError {
+  public respondNotFound(res, message: string = 'Not Found'): IResponse {
     this.setStatusCode(404);
+    this.message = message;
     this.res = res;
-    return this.responseWithError(message);
+    return this.responseWithError();
   }
 
   public respondInternalError(res, message: string = 'Internal Server Error') {
     this.setStatusCode(500);
+    this.message = message;
     this.res = res;
-    return this.responseWithError(message);
+    return this.responseWithError();
   }
 
   /**
    * @param res Response
    * @param data any
    */
-  public respondCreated(res, data = null): IResponseDataSuccess<any> {
+  public respondCreated(res, data = null): IResponse {
     this.setStatusCode(201);
+    this.data = data;
     this.res = res;
-
-    return this.respond(data);
+    return this.respond();
   }
 
   /**
    * @param res
    * @returns void
    */
-  public respondNoContent(res): void {
-    return this.res.status(204).send({ code: 204 });
+  public respondNoContent(res): IResponse {
+    this.setStatusCode(204);
+    this.message = '';
+    this.data = {};
+    this.res = res;
+    return this.respond();
   }
 
   /**
@@ -103,9 +104,44 @@ export class BaseController {
    * @param data
    * @returns object with code and data
    */
-  public responseSuccess(res, data = null): IResponseDataSuccess<any> {
-    return res
-      .status(this.statusCode)
-      .send({ statusCode: this.statusCode, data });
+  public responseSuccess(res, data = null, message: string = ''): IResponse {
+    this.res = res;
+    this.setStatusCode(200);
+    this.message = message;
+    if (typeof data !== 'object') {
+      this.data = { data };
+    }
+    this.data = data;
+    return this.respond();
+  }
+  /**
+   *
+   * @param res Response
+   * @param satatusCode number
+   * @param message string | string[]
+   * @returns success : false, statusCode and message
+   */
+  public responseFail(
+    res,
+    satatusCode: number = 500,
+    message: string | string[] = '',
+  ) {
+    this.res = res;
+    this.setStatusCode(satatusCode);
+    this.message = message;
+    return this.respond();
+  }
+
+  public optionalResponse(
+    res,
+    statusCode = 200,
+    message: string = '',
+    data: any = null,
+  ) {
+    this.res = res;
+    this.setStatusCode(statusCode);
+    this.data = data;
+    this.message = message;
+    return this.respond();
   }
 }

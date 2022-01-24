@@ -23,9 +23,6 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
   }
 
   findById(id: number): Promise<T> {
-    this.logger.warn(
-      'Đừng thay đổi field id thành tên khác, (tạm thời chưa update)',
-    );
     return this.repository.findById(id);
   }
 
@@ -43,5 +40,41 @@ export abstract class BaseService<T, R extends AbstractRepository<T>>
 
   create(params): Promise<T> {
     return this.repository.create(params);
+  }
+
+  responseSuccess(data: any = null, message: string = '') {
+    return {
+      statusCode: 200,
+      message,
+      data,
+    };
+  }
+
+  responseError(statusCode: number = 500, message: string | string[] = '') {
+    return {
+      statusCode,
+      message,
+      data: null,
+    };
+  }
+
+  errorNotFound(message: string = '') {
+    return {
+      statusCode: 404,
+      message,
+      data: null,
+    };
+  }
+
+  optionalResponse(
+    statusCode: number = 200,
+    message: string = '',
+    data: any = null,
+  ) {
+    return {
+      statusCode,
+      data,
+      message,
+    };
   }
 }
