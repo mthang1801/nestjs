@@ -17,7 +17,7 @@ import { IResponseUserToken } from '../interfaces/response.interface';
 import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
 import { generateOTPDigits } from '../../utils/helper';
 import { AuthLoginProviderDto } from '../dto/auth/auth-login-provider.dto';
-import { UserProfilesService } from '../services/user-profiles.service';
+import { UserProfilesService } from './user_profiles.service';
 import * as twilio from 'twilio';
 import { HttpException, HttpStatus } from '@nestjs/common';
 @Injectable()
@@ -84,7 +84,7 @@ export class AuthService extends BaseService<
       : await this.userService.findOne({ email });
 
     if (!user) {
-      throw new NotFoundException({ message: 'Người dùng không tồn tại' });
+      throw new NotFoundException('Người dùng không tồn tại');
     }
     if (desaltHashPassword(password, user.salt) !== user.password) {
       throw new HttpException(

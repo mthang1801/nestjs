@@ -8,9 +8,13 @@ import {
 import { Observable } from 'rxjs';
 import * as jwt from 'jsonwebtoken';
 import { Reflector } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private reflector: Reflector) {} //reflect roles of user
+  constructor(
+    private reflector: Reflector,
+    private readonly configService: ConfigService,
+  ) {} //reflect roles of user
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
@@ -20,14 +24,17 @@ export class AuthGuard implements CanActivate {
     console.log(authoriazationToken);
     if (!authoriazationToken) return false;
     const token = authoriazationToken.split(' ').slice(-1)[0];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const decoded = jwt.verify(
+      token,
+      this.configService.get<string>('jwtSecretKey'),
+    );
     const user = decoded?.sub;
     if (!user) {
       throw new HttpException('Token không hợp lệ.', HttpStatus.UNAUTHORIZED);
     }
 
     if (+decoded['exp'] * 1000 - Date.now() < 0) {
-      throw new HttpException('Token hết hạn.', HttpStatus.UNAUTHORIZED);
+      throw new HttpException('Token hết hạn.', 408);
     }
     req.user = user;
 

@@ -22,7 +22,7 @@ import { ObjectLiteral } from '../../common/ObjectLiteral';
 import { UserProfileEntity } from '../entities/user.entity';
 import { PrimaryKeys } from '../../database/enums/primary-keys.enum';
 import { saltHashPassword } from '../../utils/cipherHelper';
-import { UserProfilesService } from '../services/user-profiles.service';
+import { UserProfilesService } from './user_profiles.service';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { JoinTable } from '../../database/enums/joinTable.enum';
 import { UserProfileDto } from '../dto/user/update-user-profile.dto';

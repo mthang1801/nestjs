@@ -15,7 +15,7 @@ import { UserEntity } from '../../entities/user.entity';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
-import { AuthGuard } from '../../../middlewares/auth';
+import { AuthGuard } from '../../../middlewares/fe.auth';
 
 @Controller('/fe/v1/users')
 export class UsersController extends BaseController {

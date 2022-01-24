@@ -8,7 +8,7 @@ import {
   UserRepository,
   UserProfileRepository,
 } from '../repositories/user.repository';
-import { UserProfilesService } from '../services/user-profiles.service';
+import { UserProfilesService } from '../services/user_profiles.service';
 @Module({
   imports: [MailModule],
   exports: [UsersService],

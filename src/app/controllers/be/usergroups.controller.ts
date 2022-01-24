@@ -13,7 +13,7 @@ import { UsersService } from '../../services/users.service';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
-import { AuthGuard } from '../../../middlewares/auth';
+import { AuthGuard } from '../../../middlewares/fe.auth';
 
 /**
  * User groups controllers

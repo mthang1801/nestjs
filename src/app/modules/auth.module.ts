@@ -6,7 +6,7 @@ import { UsersModule } from './users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthProviderRepository } from '../repositories/auth.repository';
-import { UserProfilesService } from '../services/user-profiles.service';
+import { UserProfilesService } from '../services/user_profiles.service';
 import { UserProfileRepository } from '../repositories/user.repository';
 @Module({
   imports: [

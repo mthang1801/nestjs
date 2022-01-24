@@ -18,7 +18,7 @@ import {
   UpdateBannerDTO,
 } from '../../dto/banner/banner.dto';
 import {} from '../../interfaces/response.interface';
-import { AuthGuard } from '../../../middlewares/auth';
+import { AuthGuard } from '../../../middlewares/fe.auth';
 @Controller('/be/v1/banner')
 export class BannerController extends BaseController {
   constructor(private bannerService: BannerService) {
