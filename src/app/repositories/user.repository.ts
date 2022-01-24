@@ -10,3 +10,13 @@ export class UserRepository<UserEntity> extends BaseRepositorty<UserEntity> {
     this.table = Table.USERS;
   }
 }
+
+@Injectable()
+export class UserProfileRepository<
+  UserProfileEntity,
+> extends BaseRepositorty<UserProfileEntity> {
+  constructor(databaseService: DatabaseService, table: Table) {
+    super(databaseService, table);
+    this.table = Table.USER_PROFILES;
+  }
+}

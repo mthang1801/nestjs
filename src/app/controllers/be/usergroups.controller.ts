@@ -9,11 +9,11 @@ import {
   Res,
 } from '@nestjs/common';
 import { CreateUserGroupsDto } from '../../dto/usergroups/create-usergroups.dto';
-import { JwtAuthGuard } from '../../helpers/auth/guards/jwt-auth.guard';
 import { UsersService } from '../../services/users.service';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
+import { AuthGuard } from '../../../middlewares/auth';
 
 /**
  * User groups controllers
@@ -32,7 +32,7 @@ export class UsergroupsController extends BaseController {
    * @param res
    * @returns
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard)
   @Post()
   async create(
     @Body() createUserGroupsDto: CreateUserGroupsDto,

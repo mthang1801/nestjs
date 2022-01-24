@@ -2,27 +2,22 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { UsersController as UsersControllerBe } from '../controllers/be/users.controller';
 import { UsersController as UsersControllerFe } from '../controllers/fe/users.controller';
-import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from '../helpers/auth/strategies/jwt.strategy';
 import { MailModule } from './mail.module';
 import { ConfigService, ConfigModule } from '@nestjs/config';
-import { UsersProfilesModule } from './user-profiles.module';
-import { UserRepository } from '../repositories/user.repository';
+import {
+  UserRepository,
+  UserProfileRepository,
+} from '../repositories/user.repository';
+import { UserProfilesService } from '../services/user-profiles.service';
 @Module({
-  imports: [
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('jwtSecretKey'),
-        signOptions: { expiresIn: configService.get<string>('jwtExpiresIn') },
-      }),
-      inject: [ConfigService],
-    }),
-    MailModule,
-    UsersProfilesModule,
-  ],
+  imports: [MailModule],
   exports: [UsersService],
-  providers: [UsersService, JwtStrategy, UserRepository],
+  providers: [
+    UsersService,
+    UserProfilesService,
+    UserRepository,
+    UserProfileRepository,
+  ],
   controllers: [UsersControllerBe, UsersControllerFe],
 })
 export class UsersModule {}

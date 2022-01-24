@@ -11,7 +11,6 @@ import {
   Patch,
 } from '@nestjs/common';
 import { UserUpdateDto } from '../../dto/update-user.dto';
-import { JwtAuthGuard } from '../../helpers/auth/guards/jwt-auth.guard';
 import { UsersService } from '../../services/users.service';
 import { UserEntity } from '../../entities/user.entity';
 import { BaseController } from '../../../base/base.controllers';

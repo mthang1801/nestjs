@@ -4,16 +4,13 @@ import { AuthController as AuthControllerBe } from '../controllers/be/auth.contr
 import { AuthController as AuthControllerFe } from '../controllers/fe/auth.controller';
 import { UsersModule } from './users.module';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from '../helpers/auth/strategies/jwt.strategy';
-import { GoogleStrategy } from '../helpers/auth/strategies/google.strategy';
-import { FacebookStrategy } from '../helpers/auth/strategies/facebook.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthProviderRepository } from '../repositories/auth.repository';
-import { UsersProfilesModule } from './user-profiles.module';
+import { UserProfilesService } from '../services/user-profiles.service';
+import { UserProfileRepository } from '../repositories/user.repository';
 @Module({
   imports: [
     UsersModule,
-    UsersProfilesModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -25,10 +22,9 @@ import { UsersProfilesModule } from './user-profiles.module';
   ],
   providers: [
     AuthService,
-    JwtStrategy,
-    GoogleStrategy,
-    FacebookStrategy,
     AuthProviderRepository,
+    UserProfilesService,
+    UserProfileRepository,
   ],
   exports: [AuthService],
   controllers: [AuthControllerBe, AuthControllerFe],

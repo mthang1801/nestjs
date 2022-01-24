@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Table } from '../../database/enums/tables.enum';
 import { LoggerService } from '../../logger/custom.logger';
 import { UserProfileEntity } from '../entities/user-profile.entity';
-import { UserProfileRepository } from '../repositories/user-profiles.repository';
+import { UserProfileRepository } from '../repositories/user.repository';
 import { BaseService } from '../../base/base.service';
 import { UserEntity } from '../entities/user.entity';
 @Injectable()

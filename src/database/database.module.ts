@@ -12,7 +12,9 @@ import { ConfigService } from '@nestjs/config';
   providers: [
     {
       provide: 'DATABASE_POOL',
-      useFactory: async () => DatabasePoolFactory(),
+      useFactory: async (configService: ConfigService) =>
+        DatabasePoolFactory(configService),
+      inject: [ConfigService],
     },
     DatabaseService,
   ],
