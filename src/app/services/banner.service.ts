@@ -10,7 +10,7 @@ import { BannerRepository } from '../repositories/banner.repository';
 import { BannerCreateDTO, UpdateBannerDTO,createBannerImageDTO } from '../dto/banner.dto';
 import { BannerImagesService } from './banner_images.service';
 import { BannerDescriptionsService } from './banner_description.service';
-import { ImagesService } from './Image.service';
+import { ImagesService } from './image.service';
 import { ImagesLinksService } from './image_link.service';
 import {
   Table,

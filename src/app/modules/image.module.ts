@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ImagesLinksRepository, ImagesRepository } from '../repositories/image.repository';
-import { ImagesService } from '../services/Image.service';
+import { ImagesService } from '../services/image.service';
 import { ImagesLinksService } from '../services/image_link.service';
 
 @Module({
