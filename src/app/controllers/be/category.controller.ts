@@ -113,6 +113,17 @@ export class CategoryController extends BaseController {
     return this.respondCreated(res, createdCategoryDescription);
   }
 
+  @Get('description')
+  async fetchCategoryDescription(
+    @Query('skip') skip: number,
+    @Query('limit') limit: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const listCategoryDesc =
+      await this.categoryService.fetchCategoryDescriptionList(skip, limit);
+    return this.responseSuccess(res, listCategoryDesc);
+  }
+
   /**
    * Update category description by category_id in ddv_category_descriptions
    * @param updateCategoryDescriptionDto

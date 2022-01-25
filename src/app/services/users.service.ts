@@ -48,7 +48,12 @@ export class UsersService extends BaseService<
     const checkUserExists = await this.userRepository.findOne({
       where: [{ email: registerData.email }, { phone: registerData.phone }],
     });
-    if (checkUserExists) {
+
+    if (
+      (typeof checkUserExists === 'object' &&
+        Object.entries(checkUserExists).length) ||
+      (typeof checkUserExists !== 'object' && checkUserExists)
+    ) {
       throw new HttpException(
         'Địa chỉ email hoặc số điện thoại đã được đăng ký.',
         HttpStatus.BAD_REQUEST,
