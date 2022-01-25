@@ -17,10 +17,14 @@ export const generateOTPDigits = () =>
 export const preprocessDatabaseBeforeResponse = (data) => {
   let dataObject = { ...data };
   if (dataObject['created_at']) {
-    dataObject['created_at'] = convertToMySQLDateTime(dataObject['created_at']);
+    dataObject['created_at'] = convertToMySQLDateTime(
+      new Date(dataObject['created_at']),
+    );
   }
   if (dataObject['updated_at']) {
-    dataObject['updated_at'] = convertToMySQLDateTime(dataObject['updated_at']);
+    dataObject['updated_at'] = convertToMySQLDateTime(
+      new Date(dataObject['updated_at']),
+    );
   }
   return dataObject;
 };

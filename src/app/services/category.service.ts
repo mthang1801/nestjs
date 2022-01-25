@@ -27,21 +27,13 @@ import {
 } from '../dto/category/update-category.dto';
 
 @Injectable()
-export class CategoryService extends BaseService<
-  CategoryEntity,
-  CategoryRepository<CategoryEntity>
-> {
-  protected categoryRepository: CategoryRepository<CategoryEntity>;
+export class CategoryService {
+  private categoriesTable: Table = Table.CATEGORIES;
   constructor(
-    repository: CategoryRepository<CategoryEntity>,
-    table: Table,
     private categoryDescriptionRepo: CategoryDescriptionRepository<CategoryDescriptionEntity>,
-    private categoryVendorProductCount: CategoryVendorProductCountRepository<CategoryVendorProductCountEntity>,
-  ) {
-    super(repository, table);
-    this.table = Table.CATEGORIES;
-    this.categoryRepository = repository;
-  }
+    private categoryRepository: CategoryRepository<CategoryEntity>,
+    private categoryVendorProductCountRepo: CategoryVendorProductCountRepository<CategoryVendorProductCountEntity>,
+  ) {}
 
   async createCategory(categoryDto: CategoryDto): Promise<CategoryEntity> {
     const newCategory = await this.categoryRepository.create({
@@ -68,7 +60,7 @@ export class CategoryService extends BaseService<
     id: number,
     updateCategoryVendorProductCount: UpdateCategoryVendorProductCountDto,
   ): Promise<CategoryVendorProductCountEntity> {
-    await this.categoryVendorProductCount.update(id, {
+    await this.categoryVendorProductCountRepo.update(id, {
       ...updateCategoryVendorProductCount,
       updated_at: convertToMySQLDateTime(),
     });
@@ -112,27 +104,32 @@ export class CategoryService extends BaseService<
     skip: number,
     limit: number,
   ): Promise<CategoryVendorProductCountEntity[]> {
-    const categoriesVendorList = await this.categoryVendorProductCount.find({
-      select: [
-        '*',
-        `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.product_count`,
-        `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.created_at`,
-        `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.updated_at`,
-      ],
-      join: {
-        [JoinTable.innerJoin]: {
-          ddv_categories: { fieldJoin: 'category_id', rootJoin: 'category_id' },
+    const categoriesVendorList = await this.categoryVendorProductCountRepo.find(
+      {
+        select: [
+          '*',
+          `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.product_count`,
+          `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.created_at`,
+          `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.updated_at`,
+        ],
+        join: {
+          [JoinTable.innerJoin]: {
+            ddv_categories: {
+              fieldJoin: 'category_id',
+              rootJoin: 'category_id',
+            },
+          },
         },
+        orderBy: [
+          {
+            field: `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.created_at`,
+            sort_by: SortBy.DESC,
+          },
+        ],
+        skip,
+        limit,
       },
-      orderBy: [
-        {
-          field: `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.created_at`,
-          sort_by: SortBy.DESC,
-        },
-      ],
-      skip,
-      limit,
-    });
+    );
     return categoriesVendorList;
   }
 
@@ -158,7 +155,7 @@ export class CategoryService extends BaseService<
   async createCategoryVendorProductCount(
     createCategoryVendorProductCountDto: CreateCategoryVendorProductCountDto,
   ): Promise<CategoryVendorProductCountEntity> {
-    const newCategoryVendor = await this.categoryVendorProductCount.create({
+    const newCategoryVendor = await this.categoryVendorProductCountRepo.create({
       ...createCategoryVendorProductCountDto,
       created_at: convertToMySQLDateTime(),
       updated_at: convertToMySQLDateTime(),
@@ -230,7 +227,7 @@ export class CategoryService extends BaseService<
   async findCategoryVendorProductCountById(
     id: number,
   ): Promise<CategoryVendorProductCountEntity> {
-    const categoryVendor = await this.categoryVendorProductCount.findOne({
+    const categoryVendor = await this.categoryVendorProductCountRepo.findOne({
       select: [
         '*',
         `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.product_count`,
@@ -254,7 +251,7 @@ export class CategoryService extends BaseService<
   async findCategoryVendorProductCountByCompanyId(
     id: number,
   ): Promise<CategoryVendorProductCountEntity> {
-    const categoryVendor = await this.categoryVendorProductCount.findOne({
+    const categoryVendor = await this.categoryVendorProductCountRepo.findOne({
       select: [
         '*',
         `${Table.CATEGORY_VENDOR_PRODUCT_COUNT}.created_at`,
@@ -273,5 +270,22 @@ export class CategoryService extends BaseService<
     });
 
     return categoryVendor;
+  }
+
+  async deleteCategory(id: number): Promise<boolean> {
+    await this.categoryRepository.delete(id);
+    await this.categoryDescriptionRepo.delete(id);
+    await this.categoryVendorProductCountRepo.delete(id);
+    return true;
+  }
+
+  async deleteCategoryDescription(id: number): Promise<boolean> {
+    await this.categoryDescriptionRepo.delete(id);
+    return true;
+  }
+
+  async deleteCategoryVendorProductCount(id: number): Promise<boolean> {
+    await this.categoryVendorProductCountRepo.delete(id);
+    return true;
   }
 }
