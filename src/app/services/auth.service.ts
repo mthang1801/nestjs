@@ -90,11 +90,13 @@ export class AuthService extends BaseService<
       : await this.userService.findOne({ email });
 
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại');
+      throw new NotFoundException('User not exists');
     }
     if (desaltHashPassword(password, user.salt) !== user.password) {
       throw new HttpException(
-        'Tài khoản hoặc mật khẩu không đúng.',
+        phone
+          ? 'Phone or password is incorrect'
+          : 'Email or password is incorrect',
         HttpStatus.UNAUTHORIZED,
       );
     }
