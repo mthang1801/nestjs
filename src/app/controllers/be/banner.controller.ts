@@ -9,15 +9,18 @@ import {
   UsePipes,
   ValidationPipe,
   UseGuards,
+  Res
 } from '@nestjs/common';
 import { BannerService } from '../../services/banner.service';
 import { BaseController } from '../../../base/base.controllers';
+import { IResponse } from '../../interfaces/response.interface';
+
 import {
   BannerCreateDTO,
   createBannerImageDTO,
   UpdateBannerDTO,
 } from '../../dto/banner/banner.dto';
-import {} from '../../interfaces/response.interface';
+import { } from '../../interfaces/response.interface';
 import { AuthGuard } from '../../../middlewares/fe.auth';
 @Controller('/be/v1/banner')
 export class BannerController extends BaseController {
@@ -26,54 +29,56 @@ export class BannerController extends BaseController {
   }
 
   @Get()
-  getAllBanners(): any {
-    const banners = this.bannerService.getAllBanner();
-    return banners;
+  async getAllBanners(@Res() res,
+  ): Promise<IResponse> {
+    const banners = await this.bannerService.getAllBanner();
+    return this.responseSuccess(res, banners);
   }
 
   @Get('/:id')
-  getAllBannersById(@Param('id') id): any {
-    const banners = this.bannerService.getBannerById(id);
-    return banners;
+  async getAllBannersById(@Res() res,@Param('id') id): Promise<IResponse> {
+    const banners = await this.bannerService.getBannerById(id);
+    return this.responseSuccess(res, banners);
   }
 
   @Get('/:id/images')
-  getAllIamgesByBannerId(@Param('id') id): any {
-    return `this action return all images from banner`;
+  async getAllIamgesByBannerId(@Res() res,@Param('id') id): Promise<IResponse> {
+    const banners = await this.bannerService.getAllIamgesByBannerId(id);
+    return this.responseSuccess(res, banners);
   }
 
   @Post()
   @UsePipes(ValidationPipe)
   @UseGuards(AuthGuard)
-  createBanner(@Body() body: BannerCreateDTO): any {
-    const banner = this.bannerService.CreateBanner(body);
-    return banner;
+  async createBanner(@Res() res,@Body() body: BannerCreateDTO): Promise<IResponse> {
+    const banner = await this.bannerService.CreateBanner(body);
+    return this.respondCreated(res, banner);
   }
 
   @Put('/:id')
   @UsePipes(ValidationPipe)
   @UseGuards(AuthGuard)
-  updateBannerbyId(@Body() body: UpdateBannerDTO, @Param('id') id): any {
-    const banner = this.bannerService.UpdateBanner(body, id);
-    return banner;
+  async updateBannerbyId(@Res() res,@Body() body: UpdateBannerDTO, @Param('id') id): Promise<IResponse> {
+    const banner = await this.bannerService.UpdateBanner(body, id);
+    return this.respondCreated(res, banner);
   }
 
   @Delete('/:banner_id/images/:images_id')
   @UseGuards(AuthGuard)
-  deleteBannerById(
+  async deleteBannerById(@Res() res,
     @Param('banner_id') banner_id,
     @Param('images_id') images_id,
-  ): any {
-    const banner = this.bannerService.DeleteBanner(banner_id, images_id);
+  ): Promise<IResponse> {
+    const banner = await this.bannerService.DeleteBanner(banner_id, images_id);
 
-    return banner;
+    return this.respondCreated(res, banner);
   }
 
   @Post('/:id/createimages')
   @UsePipes(ValidationPipe)
-  @UseGuards(AuthGuard)
-  createBannerImage(@Body() body: createBannerImageDTO): any {
-    const banner = this.bannerService.createBannerImage(body);
-    return banner;
+  // @UseGuards(AuthGuard)
+  async createBannerImage(@Res() res,@Body() body: createBannerImageDTO,@Param('id') id): Promise<IResponse> {
+    const banner = await this.bannerService.createBannerImage(body,id);
+    return this.respondCreated(res, banner);
   }
 }
