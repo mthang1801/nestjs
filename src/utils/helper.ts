@@ -15,6 +15,9 @@ export const generateOTPDigits = () =>
   Math.floor(100000 + Math.random() * 900000);
 
 export const preprocessDatabaseBeforeResponse = (data) => {
+  if (!data || (typeof data === 'object' && !Object.entries(data).length)) {
+    return null;
+  }
   let dataObject = { ...data };
   if (dataObject['created_at']) {
     dataObject['created_at'] = convertToMySQLDateTime(

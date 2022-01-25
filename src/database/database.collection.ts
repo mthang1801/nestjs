@@ -271,7 +271,7 @@ export class DatabaseCollection {
   where(objFields: any): void {
     if (typeof objFields !== 'object') {
       throw new BadRequestException({
-        message: 'Truy vấn where không hợp lệ.',
+        message: 'SQL syntax is invalid.',
       });
     }
     // Array is considered as OR operator, so we will connect with orAndWhere each other

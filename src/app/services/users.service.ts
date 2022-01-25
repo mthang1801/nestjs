@@ -41,13 +41,9 @@ export class UsersService {
       where: [{ email: registerData.email }, { phone: registerData.phone }],
     });
 
-    if (
-      (typeof checkUserExists === 'object' &&
-        Object.entries(checkUserExists).length) ||
-      (typeof checkUserExists !== 'object' && checkUserExists)
-    ) {
+    if (!checkUserExists) {
       throw new HttpException(
-        'Địa chỉ email hoặc số điện thoại đã được đăng ký.',
+        'Phone number has not been registered.',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -64,10 +60,7 @@ export class UsersService {
   async findById(id: number): Promise<UserEntity> {
     const user = await this.userRepository.findById(id);
     if (!user) {
-      throw new HttpException(
-        'Không tìm thấy người dùng.',
-        HttpStatus.NOT_FOUND,
-      );
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return preprocessUserResult(user);
   }
