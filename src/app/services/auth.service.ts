@@ -89,7 +89,10 @@ export class AuthService extends BaseService<
       ? await this.userService.findOne({ phone })
       : await this.userService.findOne({ email });
 
-    if (!user) {
+    if (
+      (typeof user === 'object' && !Object.entries(user).length) ||
+      (typeof user !== 'object' && !user)
+    ) {
       throw new NotFoundException('User not exists');
     }
     if (desaltHashPassword(password, user.salt) !== user.password) {
@@ -117,7 +120,10 @@ export class AuthService extends BaseService<
     let userExists: UserEntity = await this.userService.findOne({
       email: providerData.email,
     });
-    if (!userExists) {
+    if (
+      (typeof userExists === 'object' && !Object.entries(userExists).length) ||
+      (typeof userExists !== 'object' && !userExists)
+    ) {
       userExists = await this.userService.create({
         firstname: providerData.givenName,
         lastname: providerData.familyName,
@@ -136,7 +142,11 @@ export class AuthService extends BaseService<
       provider_name: providerName,
     });
 
-    if (!authProvider) {
+    if (
+      (typeof !authProvider === 'object' &&
+        !Object.entries(!authProvider).length) ||
+      (typeof !authProvider !== 'object' && !!authProvider)
+    ) {
       authProvider = await this.authRepository.create({
         user_id: userExists.user_id,
         provider: providerData.id,
