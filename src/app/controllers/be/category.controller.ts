@@ -8,6 +8,7 @@ import {
   Res,
   Put,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import { BaseController } from '../../../base/base.controllers';
 import { CategoryService } from '../../services/category.service';
@@ -269,5 +270,50 @@ export class CategoryController extends BaseController {
   ): Promise<IResponse> {
     let category = await this.categoryService.findCategoryById(id);
     return this.responseSuccess(res, category);
+  }
+
+  /**
+   * Delete category by category_id in ddv_categories table, then delete record in  ddv_category_vendor_product_count and ddv_category_descriptions table
+   * @param id
+   * @param res
+   * @returns
+   */
+  @Delete('/:id')
+  async deleteCategory(
+    @Param('id') id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    await this.categoryService.deleteCategory(id);
+    return this.responseSuccess(res, null, 'Deleted');
+  }
+
+  /**
+   * Delete category description in ddv_category_descriptions
+   * @param id
+   * @param res
+   * @returns
+   */
+  @Delete('description/:id')
+  async deleteCategoryDescription(
+    @Param('id') id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    await this.categoryService.deleteCategoryDescription(id);
+    return this.responseSuccess(res, null, 'Deleted');
+  }
+
+  /**
+   * Delete record by category_id in ddv_category_vendor_product_count
+   * @param id
+   * @param res
+   * @returns
+   */
+  @Delete('vendor-product-count/:id')
+  async deleteCategoryVendorProductCount(
+    @Param('id') id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    await this.categoryService.deleteCategoryVendorProductCount(id);
+    return this.responseSuccess(res, null, 'Deleted');
   }
 }

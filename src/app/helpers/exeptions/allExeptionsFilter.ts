@@ -22,7 +22,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const responseBody = {
       statusCode: httpStatus,
-      message: exception.response,
+      message:
+        exception.response?.message ||
+        exception?.response ||
+        exception?.sqlMessage,
       timestamp: new Date().toLocaleString(),
       path: httpAdapter.getRequestUrl(ctx.getRequest()),
     };

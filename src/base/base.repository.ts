@@ -3,6 +3,7 @@ import { DatabaseService } from '../database/database.service';
 import { DatabaseCollection } from '../database/database.collection';
 import { Table, PrimaryKeys } from '../database/enums/index';
 import { HttpStatus } from '@nestjs/common';
+import { preprocessDatabaseBeforeResponse } from '../utils/helper';
 
 @Injectable()
 export class BaseRepositorty<T> {
@@ -27,9 +28,13 @@ export class BaseRepositorty<T> {
         HttpStatus.BAD_REQUEST,
       );
     }
-    let sql = `INSERT INTO ${this.table} SET ?`;
+    let sql = `INSERT INTO ${this.table} SET ? ;`;
 
     await this.databaseService.executeQuery(sql, params);
+    const res = await this.databaseService.executeQuery(
+      'SELECT LAST_INSERT_ID();',
+    );
+    console.log(res);
     let filters = [];
     for (let [key, val] of Object.entries(params)) {
       filters.push({ [key]: val });
@@ -59,7 +64,7 @@ export class BaseRepositorty<T> {
 
     const result = rows[0];
 
-    return result[0];
+    return preprocessDatabaseBeforeResponse(result[0]);
   }
 
   /**
@@ -72,7 +77,7 @@ export class BaseRepositorty<T> {
 
     const results = await this.find({ ...options, limit: 1 });
 
-    return results[0];
+    return preprocessDatabaseBeforeResponse(results[0]);
   }
 
   /**
@@ -108,8 +113,13 @@ export class BaseRepositorty<T> {
       }
     }
 
-    const results = await this.databaseService.executeQuery(collection.sql());
-    return results[0];
+    const res = await this.databaseService.executeQuery(collection.sql());
+    let results: any[] = [];
+
+    for (let result of res[0]) {
+      results.push(preprocessDatabaseBeforeResponse(result));
+    }
+    return results;
   }
 
   /**
@@ -145,14 +155,19 @@ export class BaseRepositorty<T> {
     return updatedUser;
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: number | any): Promise<boolean> {
     console.log('=============== DELETE BY ID ================');
 
     const queryString = `DELETE FROM ${this.table} WHERE ?`;
+    let res;
+    if (typeof id === 'object') {
+      res = await this.databaseService.executeQuery(queryString, [id]);
+    } else {
+      res = await this.databaseService.executeQuery(queryString, [
+        { [PrimaryKeys[this.table]]: id },
+      ]);
+    }
 
-    const res = await this.databaseService.executeQuery(queryString, [
-      { [PrimaryKeys[this.table]]: id },
-    ]);
     if (res[0].affectedRows === 0) {
       throw new HttpException(
         `Not found id = ${id} in ${this.table} to delete`,
