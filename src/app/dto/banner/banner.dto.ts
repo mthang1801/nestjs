@@ -44,6 +44,19 @@ export class UpdateBannerDTO {
     type:string
 }
 export class createBannerImageDTO{
+   
     
+
+    @IsOptional()
+    position: number;
+    @IsNotEmpty()
+    image_url: string;
+   
+    @Optional()
+    image_x: number
+    @Optional()
+    image_y: number
+    @Optional()
+    is_high_res: string
 }
 

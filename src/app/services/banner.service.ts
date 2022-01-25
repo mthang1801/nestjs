@@ -16,8 +16,8 @@ import { convertToMySQLDateTime } from 'src/utils/helper';
 
 @Injectable()
 export class BannerService extends BaseService<
-  Banner,
-  BannerRepository<Banner>
+Banner,
+BannerRepository<Banner>
 > {
   constructor(
     repository: BannerRepository<Banner>,
@@ -238,5 +238,80 @@ export class BannerService extends BaseService<
     let _image_link = this.imageLinkService.delete(images_id);
     Promise.all([_BannerImages, _image, _image_link]);
   }
-  async createBannerImage(data: createBannerImageDTO) {}
+  async createBannerImage(data: createBannerImageDTO, id) {
+    try {
+      const {
+
+        position,
+        image_url,
+        image_x,
+        image_y,
+        is_high_res,
+      } = data;
+      const imageTableData = {
+        image_path: image_url,
+        image_x: image_x,
+        image_y: image_y,
+        is_high_res: is_high_res,
+      };
+      Object.keys(imageTableData).forEach(
+        (key) =>
+          imageTableData[key] === undefined && delete imageTableData[key],
+      );
+      let _images = await this.imageService.Create(imageTableData);
+      const imageLinkTableData = {
+        object_id: id,
+        object_type: 'banners',
+        image_id: _images.image_id,
+        position: position,
+      };
+      Object.keys(imageLinkTableData).forEach(
+        (key) =>
+          imageLinkTableData[key] === undefined &&
+          delete imageLinkTableData[key],
+      );
+      let _images_link = await this.imageLinkService.Create(imageLinkTableData);
+      //===========================|Add to ddve_banner_images|=============================
+      const bannerImageTableData = {
+        banner_id: id,
+        banner_image_id: _images.image_id,
+      };
+      Object.keys(bannerImageTableData).forEach(
+        (key) =>
+          bannerImageTableData[key] === undefined &&
+          delete bannerImageTableData[key],
+      );
+      let _banner_image = await this.bannerImagesService.Create(
+        bannerImageTableData,
+      );
+      return 'Banner Added';
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+
+  async getAllIamgesByBannerId(id) {
+    const string = `ddv_banner_images.banner_id`;
+
+    const image = await this.bannerImagesService.find({
+      select: ['*'],
+      join: {
+        [JoinTable.join]: {
+          ddv_images_links: { fieldJoin: 'ddv_images_links.object_id', rootJoin: 'ddv_banner_images.banner_id' },
+
+          ddv_images: {
+            fieldJoin: ' ddv_images.image_id',
+            rootJoin: 'ddv_banner_images.banner_image_id',
+          },
+        },
+      },
+      where: { [string]: id },
+
+      skip: 0,
+      limit: 30,
+    });
+    return image
+
+  }
 }
