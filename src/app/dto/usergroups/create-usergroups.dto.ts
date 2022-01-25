@@ -15,7 +15,7 @@ export class CreateUserGroupsDto {
 
   @IsString()
   @IsOptional()
-  birthday: string;
+  birthday: Date;
 
   @IsString()
   @IsOptional()

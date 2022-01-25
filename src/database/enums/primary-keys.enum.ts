@@ -10,4 +10,8 @@ export enum PrimaryKeys {
   ddv_categories = 'category_id',
   ddv_category_descriptions = 'category_id',
   ddv_category_vendor_product_count = 'category_id',
+  ddv_usergroup_descriptions = 'usergroup_id',
+  ddv_usergroup_links = 'link_id',
+  ddv_usergroup_privileges = 'usergroup_id',
+  ddv_usergroups = 'ddv_usergroups',
 }

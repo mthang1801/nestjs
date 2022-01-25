@@ -14,7 +14,7 @@ import { BaseService } from '../../base/base.service';
 import { AuthProviderEntity } from '../entities/auth-provider.entity';
 import { Table } from '../../database/enums/tables.enum';
 import { IResponseUserToken } from '../interfaces/response.interface';
-import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
+import { AuthProviderEnum } from '../helpers/enums/auth_provider.enum';
 import { generateOTPDigits } from '../../utils/helper';
 import { AuthLoginProviderDto } from '../dto/auth/auth-login-provider.dto';
 import { UserProfilesService } from './user_profiles.service';
@@ -22,24 +22,16 @@ import * as twilio from 'twilio';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { UserGroupLinksRepository } from '../repositories/user_groups.repository';
 import { UserGroupLinkEntity } from '../entities/user_groups';
+import { UserGroupIdEnum } from '../helpers/enums/user_groups.enum';
 @Injectable()
-export class AuthService extends BaseService<
-  AuthProviderEntity,
-  AuthProviderRepository<AuthProviderEntity>
-> {
-  protected authRepository: AuthProviderRepository<AuthProviderEntity>;
+export class AuthService {
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
     private userProfile: UserProfilesService,
-    repository: AuthProviderRepository<AuthProviderEntity>,
+    private authRepository: AuthProviderRepository<AuthProviderEntity>,
     private userGroupRepository: UserGroupLinksRepository<UserGroupLinkEntity>,
-    table: Table,
-  ) {
-    super(repository, table);
-    this.authRepository = repository;
-    this.table = Table.USERS_AUTH;
-  }
+  ) {}
 
   generateToken(user: UserEntity): string {
     const payload = {
@@ -63,7 +55,7 @@ export class AuthService extends BaseService<
     const user = await this.userService.createUser({
       firstname,
       lastname,
-      user_login: 'SYSTEM',
+      user_login: AuthProviderEnum.SYSTEM,
       email,
       password: passwordHash,
       phone,
@@ -104,7 +96,9 @@ export class AuthService extends BaseService<
       );
     }
 
-    await this.userService.update(user.user_id, { user_login: 'SYSTEM' });
+    await this.userService.updateUser(user.user_id, {
+      user_login: AuthProviderEnum.SYSTEM,
+    });
 
     const dataResult = {
       token: this.generateToken(user),
@@ -133,19 +127,21 @@ export class AuthService extends BaseService<
       await this.userProfile.createUserProfile(userExists);
       await this.userGroupRepository.create({
         user_id: userExists.user_id,
-        usergroup_id: 3,
+        usergroup_id: UserGroupIdEnum.Wholesale,
       });
     }
 
     let authProvider: AuthProviderEntity = await this.authRepository.findOne({
-      user_id: userExists.user_id,
-      provider_name: providerName,
+      where: {
+        user_id: userExists.user_id,
+        provider_name: providerName,
+      },
     });
 
     if (
-      (typeof !authProvider === 'object' &&
-        !Object.entries(!authProvider).length) ||
-      (typeof !authProvider !== 'object' && !!authProvider)
+      (typeof authProvider === 'object' &&
+        !Object.entries(authProvider).length) ||
+      (typeof authProvider !== 'object' && !authProvider)
     ) {
       authProvider = await this.authRepository.create({
         user_id: userExists.user_id,
@@ -155,7 +151,7 @@ export class AuthService extends BaseService<
         created_date: convertToMySQLDateTime(),
       });
     }
-    await this.userService.update(userExists.user_id, {
+    await this.userService.updateUser(userExists.user_id, {
       user_login: providerName,
     });
     return {

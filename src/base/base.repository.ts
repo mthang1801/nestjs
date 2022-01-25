@@ -38,8 +38,7 @@ export class BaseRepositorty<T> {
     for (let [key, val] of Object.entries(params)) {
       filters.push({ [key]: val });
     }
-    return this.findById(res[0][0]["LAST_INSERT_ID()"])
-    return this.findOne({ where: params });
+    return this.findById(res[0][0]['LAST_INSERT_ID()']);
   }
 
   /**
@@ -150,7 +149,7 @@ export class BaseRepositorty<T> {
     sql += ` WHERE ${PrimaryKeys[this.table]} = '${id}'`;
 
     await this.databaseService.executeQuery(sql);
-    
+
     const updatedUser = await this.findById(id);
     return updatedUser;
   }

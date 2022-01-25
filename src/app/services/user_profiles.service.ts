@@ -5,17 +5,9 @@ import { UserProfileRepository } from '../repositories/user.repository';
 import { BaseService } from '../../base/base.service';
 import { UserEntity } from '../entities/user.entity';
 @Injectable()
-export class UserProfilesService extends BaseService<
-  UserProfileEntity,
-  UserProfileRepository<UserProfileEntity>
-> {
-  constructor(
-    repository: UserProfileRepository<UserProfileEntity>,
-    table: Table,
-  ) {
-    super(repository, table);
-    this.table = Table.USER_PROFILES;
-  }
+export class UserProfilesService {
+  private table: Table = Table.USER_PROFILES;
+  constructor(private repository: UserProfileRepository<UserProfileEntity>) {}
 
   async createUserProfile(user: UserEntity): Promise<UserProfileEntity> {
     const userProfile = {

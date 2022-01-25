@@ -9,6 +9,7 @@ import {
   ValidationPipe,
   BadRequestException,
   Patch,
+  Put,
 } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
 import { AuthCredentialsDto } from '../../dto/auth/auth-credential.dto';
@@ -123,12 +124,12 @@ export class AuthController extends BaseController {
    * @param req
    * @param res
    */
-  @Get('restore-password')
+  @Get('forgot-password')
   async restorePasswordByEmail(@Req() req, @Res() res): Promise<void> {
     try {
       const { token, user_id } = req.query;
       await this.authService.restorePasswordByEmail(user_id, token);
-      res.render('restore-password');
+      res.render('forgot-password-form');
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -143,7 +144,7 @@ export class AuthController extends BaseController {
    * @param res
    * @returns
    */
-  @Patch('update-password-by-email')
+  @Put('update-password-by-email')
   async updatePasswordByEmail(
     @Body() authRestoreDto: AuthUpdatePasswordDto,
     @Res() res,

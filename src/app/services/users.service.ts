@@ -27,22 +27,14 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { JoinTable } from '../../database/enums/joinTable.enum';
 import { UserProfileDto } from '../dto/user/update-user-profile.dto';
 @Injectable()
-export class UsersService extends BaseService<
-  UserEntity,
-  UserRepository<UserEntity>
-> {
-  protected userRepository: UserRepository<UserEntity>;
+export class UsersService {
+  private table: Table = Table.USERS;
   constructor(
     private readonly mailService: MailService,
     private readonly userProfileService: UserProfilesService,
-    repository: UserRepository<UserEntity>,
-    table: Table,
+    private userRepository: UserRepository<UserEntity>,
     private userProfileRepository: UserProfileRepository<UserProfileEntity>,
-  ) {
-    super(repository, table);
-    this.userRepository = repository;
-    this.table = Table.USERS;
-  }
+  ) {}
 
   async createUser(registerData): Promise<UserEntity> {
     const checkUserExists = await this.userRepository.findOne({
