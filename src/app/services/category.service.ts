@@ -144,6 +144,36 @@ export class CategoryService {
     return newCategoryDescription;
   }
 
+  async fetchCategoryDescriptionList(
+    skip: number,
+    limit: number,
+  ): Promise<CategoryDescriptionEntity[]> {
+    const categoriesDescription = await this.categoryDescriptionRepo.find({
+      select: [
+        '*',
+        `${Table.CATEGORY_DESCRIPTIONS}.created_at`,
+        `${Table.CATEGORY_DESCRIPTIONS}.updated_at`,
+      ],
+      join: {
+        [JoinTable.innerJoin]: {
+          ddv_categories: {
+            fieldJoin: 'category_id',
+            rootJoin: 'category_id',
+          },
+        },
+      },
+      orderBy: [
+        {
+          field: `${Table.CATEGORY_DESCRIPTIONS}.updated_at`,
+          sort_by: SortBy.DESC,
+        },
+      ],
+      skip,
+      limit,
+    });
+    return categoriesDescription;
+  }
+
   async updateCategoryDescription(
     id: number,
     updateCategoryDescriptionDto: UpdateCategoryDescriptionDto,
