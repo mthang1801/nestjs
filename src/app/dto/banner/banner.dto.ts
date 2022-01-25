@@ -1,4 +1,3 @@
-import { Optional } from '@nestjs/common';
 import { IsOptional, IsEmail, IsNotEmpty, Matches } from 'class-validator';
 
 export class BannerCreateDTO {
@@ -18,45 +17,44 @@ export class BannerCreateDTO {
     banner: string;
     @IsOptional()
     description: string;
-    @Optional()
+    @IsOptional()
     url: string;
-    @Optional()
+    @IsOptional()
     image_x: number
-    @Optional()
+    @IsOptional()
     image_y: number
-    @Optional()
+    @IsOptional()
     is_high_res: string
 }
 export class UpdateBannerDTO {
-    @Optional()
+    @IsOptional()
     url : string;
-    @Optional()
+    @IsOptional()
     image: string
-    @Optional()
+    @IsOptional()
     banner :string
-    @Optional()
+    @IsOptional()
     description:string
-    @Optional()
+    @IsOptional()
     position: number
-    @Optional()
+    @IsOptional()
     status:string
-    @Optional()
+    @IsOptional()
     type:string
 }
 export class createBannerImageDTO{
    
     
-
     @IsOptional()
     position: number;
     @IsNotEmpty()
     image_url: string;
    
-    @Optional()
+    @IsOptional()
     image_x: number
-    @Optional()
+    @IsOptional()
     image_y: number
-    @Optional()
+    @IsOptional()
     is_high_res: string
 }
 

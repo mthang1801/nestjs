@@ -35,14 +35,14 @@ BannerRepository<Banner>
       select: ['*'],
       join: {
         [JoinTable.join]: {
-          ddv_banner_images: { fieldJoin: 'banner_id', rootJoin: 'banner_id' },
+          ddv_images_links: { fieldJoin: 'object_id', rootJoin: 'banner_id' },
           ddv_banner_descriptions: {
             fieldJoin: 'banner_id',
             rootJoin: 'banner_id',
           },
           ddv_images: {
             fieldJoin: 'image_id',
-            rootJoin: 'ddv_banner_images.banner_image_id',
+            rootJoin: 'ddv_images_links.image_id',
           },
         },
       },
@@ -59,14 +59,14 @@ BannerRepository<Banner>
       where: { [string]: id },
       join: {
         [JoinTable.join]: {
-          ddv_banner_images: { fieldJoin: 'banner_id', rootJoin: 'banner_id' },
+          ddv_images_links: { fieldJoin: 'object_id', rootJoin: 'banner_id' },
           ddv_banner_descriptions: {
             fieldJoin: 'banner_id',
             rootJoin: 'banner_id',
           },
           ddv_images: {
             fieldJoin: 'image_id',
-            rootJoin: 'ddv_banner_images.banner_image_id',
+            rootJoin: 'ddv_images_links.image_id',
           },
         },
       },
@@ -151,18 +151,18 @@ BannerRepository<Banner>
       );
       let _images_link = await this.imageLinkService.Create(imageLinkTableData);
       //===========================|Add to ddve_banner_images|=============================
-      const bannerImageTableData = {
-        banner_id: _banner.banner_id,
-        banner_image_id: _images.image_id,
-      };
-      Object.keys(bannerImageTableData).forEach(
-        (key) =>
-          bannerImageTableData[key] === undefined &&
-          delete bannerImageTableData[key],
-      );
-      let _banner_image = await this.bannerImagesService.Create(
-        bannerImageTableData,
-      );
+      // const bannerImageTableData = {
+      //   banner_id: _banner.banner_id,
+      //   banner_image_id: _images.image_id,
+      // };
+      // Object.keys(bannerImageTableData).forEach(
+      //   (key) =>
+      //     bannerImageTableData[key] === undefined &&
+      //     delete bannerImageTableData[key],
+      // );
+      // let _banner_image = await this.bannerImagesService.Create(
+      //   bannerImageTableData,
+      // );
       return 'Banner Added';
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -198,8 +198,8 @@ BannerRepository<Banner>
     );
 
     //===============|Get the image id then update the url|===============
-    const imagebyBanner = await this.bannerImagesService.findById(parseInt(id));
-    console.log('banner_image_id');
+    const imagebyBanner = await this.imageLinkService.findOne({where:{object_id:parseInt(id)}});
+    console.log(imagebyBanner)
     //===========================|Add to ddve_images |=============================
     const imageTableData = {
       image_path: image,
@@ -208,7 +208,7 @@ BannerRepository<Banner>
       (key) => imageTableData[key] === undefined && delete imageTableData[key],
     );
     let _images = this.imageService.update(
-      imagebyBanner.banner_image_id,
+      imagebyBanner.image_id,
       imageTableData,
     );
     //===========================|Add to ddve_images_links|=============================
@@ -220,7 +220,7 @@ BannerRepository<Banner>
         imageLinkTableData[key] === undefined && delete imageLinkTableData[key],
     );
     let _images_link = this.imageLinkService.update(
-      imagebyBanner.banner_image_id,
+      imagebyBanner.image_id,
       imageLinkTableData,
     );
 
@@ -233,10 +233,9 @@ BannerRepository<Banner>
       where: { banner_id: banner_id, banner_image_id: images_id },
     });
     if (count.length <= 0) return `Khong ton tai`;
-    let _BannerImages = this.bannerImagesService.delete(banner_id);
     let _image = this.imageService.delete(images_id);
     let _image_link = this.imageLinkService.delete(images_id);
-    Promise.all([_BannerImages, _image, _image_link]);
+    Promise.all([ _image, _image_link]);
   }
   async createBannerImage(data: createBannerImageDTO, id) {
     try {
@@ -272,18 +271,18 @@ BannerRepository<Banner>
       );
       let _images_link = await this.imageLinkService.Create(imageLinkTableData);
       //===========================|Add to ddve_banner_images|=============================
-      const bannerImageTableData = {
-        banner_id: id,
-        banner_image_id: _images.image_id,
-      };
-      Object.keys(bannerImageTableData).forEach(
-        (key) =>
-          bannerImageTableData[key] === undefined &&
-          delete bannerImageTableData[key],
-      );
-      let _banner_image = await this.bannerImagesService.Create(
-        bannerImageTableData,
-      );
+      // const bannerImageTableData = {
+      //   banner_id: id,
+      //   banner_image_id: _images.image_id,
+      // };
+      // Object.keys(bannerImageTableData).forEach(
+      //   (key) =>
+      //     bannerImageTableData[key] === undefined &&
+      //     delete bannerImageTableData[key],
+      // );
+      // let _banner_image = await this.bannerImagesService.Create(
+      //   bannerImageTableData,
+      // );
       return 'Banner Added';
     } catch (error) {
       throw new InternalServerErrorException(error.message);
