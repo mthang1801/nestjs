@@ -91,13 +91,13 @@ export class AuthService {
       : await this.userService.findOne({ email });
 
     if (!user) {
-      throw new NotFoundException('User not exists');
+      throw new NotFoundException('Người dùng không tồn tại.');
     }
     if (desaltHashPassword(password, user.salt) !== user.password) {
       throw new HttpException(
         phone
-          ? 'Phone or password is incorrect'
-          : 'Email or password is incorrect',
+          ? 'Số điện thoại hoặc mật khẩu không đúng.'
+          : 'Địa chỉ email hoặc mật khẩu không đúng',
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -106,11 +106,28 @@ export class AuthService {
       user_login: AuthProviderEnum.SYSTEM,
     });
 
+    user['image'] = await this.getUserImage(user.user_id);
+
     const dataResult = {
       token: this.generateToken(user),
       userData: preprocessUserResult(user),
     };
+
     return dataResult;
+  }
+
+  async getUserImage(user_id: number): Promise<ImagesEntity> {
+    const imageLinks = await this.imageLinksRepository.findOne({
+      where: {
+        object_id: user_id,
+        object_type: ImageObjectType.USER,
+      },
+    });
+    if (imageLinks) {
+      const image = await this.imagesRepository.findById(imageLinks.image_id);
+      return image;
+    }
+    return null;
   }
 
   async loginWithAuthProvider(

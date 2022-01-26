@@ -32,6 +32,7 @@ import {
 } from '../repositories/image.repository';
 import { ImagesLinksEntity, ImagesEntity } from '../entities/image.entity';
 import { ImageObjectType } from '../helpers/enums/image_types.enum';
+import { AuthProviderEntity } from '../entities/auth-provider.entity';
 @Injectable()
 export class UsersService {
   private table: Table = Table.USERS;
@@ -49,9 +50,9 @@ export class UsersService {
       where: [{ email: registerData.email }, { phone: registerData.phone }],
     });
 
-    if (!checkUserExists) {
+    if (checkUserExists) {
       throw new HttpException(
-        'Phone number has not been registered.',
+        'Số điện thoại hoặc email đã được sử dụng.',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -68,18 +69,12 @@ export class UsersService {
   async findById(id: number): Promise<UserEntity> {
     const user: UserEntity = await this.userRepository.findById(id);
     if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'Người dùng không tồn tại.',
+        HttpStatus.NOT_FOUND,
+      );
     }
-    const imageLinks = await this.imageLinksRepository.findOne({
-      object_id: user.user_id,
-      object_type: ImageObjectType.USER,
-    });
-    if (imageLinks) {
-      const image = await this.imagesRepository.findById(imageLinks.image_id);
-      if (image) {
-        user['image'] = image;
-      }
-    }
+    user['image'] = await this.getUserImage(user.user_id);
     return preprocessUserResult(user);
   }
 
@@ -88,13 +83,28 @@ export class UsersService {
     dataObj: ObjectLiteral,
   ): Promise<UserEntity> {
     const updatedUser = await this.userRepository.update(user_id, dataObj);
-    console.log(updatedUser);
+    updatedUser['image'] = await this.getUserImage(updatedUser.user_id);
     return preprocessUserResult(updatedUser);
   }
 
   async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<UserEntity> {
     const user = await this.userRepository.findOne({ where: dataObj });
+    user['image'] = await this.getUserImage(user.user_id);
     return user;
+  }
+
+  async getUserImage(user_id: number): Promise<ImagesEntity> {
+    const imageLinks = await this.imageLinksRepository.findOne({
+      where: {
+        object_id: user_id,
+        object_type: ImageObjectType.USER,
+      },
+    });
+    if (imageLinks) {
+      const image = await this.imagesRepository.findById(imageLinks.image_id);
+      return image;
+    }
+    return null;
   }
 
   async resetPasswordByEmail(
@@ -105,7 +115,10 @@ export class UsersService {
       where: { email },
     });
     if (!user) {
-      throw new NotFoundException();
+      throw new HttpException(
+        'Người dùng không tồn tại.',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     try {
@@ -130,24 +143,20 @@ export class UsersService {
   }
 
   async getMyInfo(id: string): Promise<UserEntity> {
-    try {
-      const user = await this.userRepository.findOne({
-        select: ['*'],
-        join: {
-          [JoinTable.leftJoin]: {
-            [Table.USER_PROFILES]: {
-              fieldJoin: `${Table.USER_PROFILES}.user_id`,
-              rootJoin: `${this.table}.user_id`,
-            },
+    const user = await this.userRepository.findOne({
+      select: ['*'],
+      join: {
+        [JoinTable.leftJoin]: {
+          [Table.USER_PROFILES]: {
+            fieldJoin: `${Table.USER_PROFILES}.user_id`,
+            rootJoin: `${this.table}.user_id`,
           },
         },
-        where: { [`${this.table}.${PrimaryKeys[this.table]}`]: id },
-      });
-
-      return preprocessUserResult(user);
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
+      },
+      where: { [`${this.table}.${PrimaryKeys[this.table]}`]: id },
+    });
+    user['image'] = await this.getUserImage(user.user_id);
+    return preprocessUserResult(user);
   }
 
   async restorePasswordByEmail(
@@ -159,7 +168,10 @@ export class UsersService {
     });
 
     if (!checkUser) {
-      throw new NotFoundException();
+      throw new HttpException(
+        'Người dùng không tồn tại.',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     if (
@@ -167,10 +179,7 @@ export class UsersService {
         new Date(checkUser.verify_token_exp).getTime() * 7 * 3600 * 1000,
       ) < new Date()
     ) {
-      throw new RequestTimeoutException({
-        status_code: 400,
-        message: 'Token đã hết hạn.',
-      });
+      throw new HttpException('Token hết hạn.', HttpStatus.GATEWAY_TIMEOUT);
     }
     return checkUser;
   }
@@ -180,34 +189,34 @@ export class UsersService {
     token: string,
     newPassword: string,
   ): Promise<boolean> {
-    try {
-      const user: any = await this.userRepository.findOne({
-        where: {
-          user_id,
-          verify_token: token,
-        },
-      });
+    const user: any = await this.userRepository.findOne({
+      where: {
+        user_id,
+        verify_token: token,
+      },
+    });
 
-      if (new Date(user.verify_token_exp) < new Date()) {
-        throw new RequestTimeoutException({
-          message: 'Token đã hết hiệu lực, cập nhật thất bại.',
-        });
-      }
-
-      if (!user) {
-        throw new NotFoundException();
-      }
-      const { passwordHash, salt } = saltHashPassword(newPassword);
-
-      await this.userRepository.update(user_id, {
-        password: passwordHash,
-        salt,
-        verify_token: '',
-      });
-      return true;
-    } catch (error) {
-      throw new InternalServerErrorException();
+    if (
+      new Date(new Date(user.verify_token_exp).getTime() * 7 * 3600 * 1000) <
+      new Date()
+    ) {
+      throw new HttpException(
+        'Token đã hết hiệu lực, cập nhật thất bại.',
+        HttpStatus.GATEWAY_TIMEOUT,
+      );
     }
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+    const { passwordHash, salt } = saltHashPassword(newPassword);
+
+    await this.userRepository.update(user_id, {
+      password: passwordHash,
+      salt,
+      verify_token: '',
+    });
+    return true;
   }
 
   async updateUserOTP(user_id: number, otp: number): Promise<UserEntity> {
@@ -232,7 +241,7 @@ export class UsersService {
         otp_incorrect_times,
       });
 
-      throw new BadRequestException({ message: 'OTP không chính xác' });
+      throw new BadRequestException('OTP không chính xác');
     }
     return true;
   }
@@ -245,6 +254,7 @@ export class UsersService {
       id,
       userProfileDto,
     );
+    updatedProfile['image'] = await this.getUserImage(updatedProfile.user_id);
     return updatedProfile;
   }
 }
