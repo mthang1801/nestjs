@@ -14,6 +14,7 @@ import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
 import { AuthGuard } from '../../../middlewares/be.auth';
+import { Roles } from 'src/app/helpers/decorators/roles.decorator';
 
 /**
  * User groups controllers
@@ -32,16 +33,18 @@ export class UsergroupsController extends BaseController {
    * @param res
    * @returns
    */
-  @UseGuards(AuthGuard)
+
   @Post()
+  @UseGuards(AuthGuard)
+  @Roles('admin')
   async create(
     @Body() createUserGroupsDto: CreateUserGroupsDto,
     @Req() req,
     @Res() res,
-  ): Promise<IResponse> {
-    const user = await this.usersGroupService.createUserGroups(
-      createUserGroupsDto,
-    );
-    return this.respondCreated(res, user);
+  ): Promise<void> {
+    // const user = await this.usersGroupService.createUserGroups(
+    //   createUserGroupsDto,
+    // );
+    // return this.respondCreated(res, user);
   }
 }

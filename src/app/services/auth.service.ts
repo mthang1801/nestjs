@@ -71,10 +71,6 @@ export class AuthService {
       salt,
       created_at: convertToMySQLDateTime(),
     });
-    await this.userGroupRepository.create({
-      user_id: user.user_id,
-      usergroup_id: 3,
-    });
     return {
       token: this.generateToken(user),
       userData: preprocessUserResult(user),
@@ -108,6 +104,11 @@ export class AuthService {
 
     user['image'] = await this.getUserImage(user.user_id);
 
+    const userGroup = await this.userGroupRepository.findOne({
+      user_id: user.user_id,
+    });
+    console.log(110, userGroup);
+
     const dataResult = {
       token: this.generateToken(user),
       userData: preprocessUserResult(user),
@@ -138,6 +139,8 @@ export class AuthService {
     let userExists: UserEntity = await this.userService.findOne({
       email: providerData.email,
     });
+
+    console.log(143, userExists);
 
     if (!userExists) {
       userExists = await this.userService.create({

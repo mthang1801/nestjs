@@ -44,6 +44,9 @@ export class AuthGuard implements CanActivate {
     }
     req.user = user;
 
+    const roles = this.reflector.get<string>('roles', context.getHandler());
+    console.log(roles);
+
     // const roles = this.reflector.getAllAndMerge<string[]>('roles', [
     //   context.getHandler(),
     //   context.getClass(),

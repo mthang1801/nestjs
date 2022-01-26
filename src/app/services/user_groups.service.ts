@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { BaseService } from '../../base/base.service';
 import {
   UserGroupsRepository,
@@ -39,25 +39,4 @@ export class UserGroupsService {
     private userGroupLinksRepo: UserGroupLinksRepository<UserGroupLinkEntity>,
     private userRepo: UserRepository<UserEntity>,
   ) {}
-
-  async createUserGroups(
-    createUserGroupsDto: CreateUserGroupsDto,
-  ): Promise<any> {
-    const newUserItem = {
-      ...createUserGroupsDto,
-      birthday: formatDate(createUserGroupsDto.birthday),
-      user_login: AuthProviderEnum.SYSTEM,
-      created_at: convertToMySQLDateTime(),
-    };
-    const newUser = await this.userRepo.create(newUserItem);
-    const userGroupLinkItem = {
-      user_id: newUser.user_id,
-      usergroup_id: UserGroupIdEnum.Wholesale,
-      status: UserStatusEnum.Active,
-    };
-    const userGroupLink = await this.userGroupLinksRepo.create(
-      userGroupLinkItem,
-    );
-    return { userData: newUser, userGroupLink: userGroupLink };
-  }
 }

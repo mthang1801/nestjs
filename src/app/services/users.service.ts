@@ -89,7 +89,6 @@ export class UsersService {
 
   async findOne(dataObj: ObjectLiteral | ObjectLiteral[]): Promise<UserEntity> {
     const user = await this.userRepository.findOne({ where: dataObj });
-    user['image'] = await this.getUserImage(user.user_id);
     return user;
   }
 
