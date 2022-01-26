@@ -8,13 +8,17 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { CreateUserGroupsDto } from '../../dto/usergroups/create-usergroups.dto';
+import {
+  CreateUserGroupsDto,
+  CreateUserGroupDescriptionDto,
+} from '../../dto/usergroups/create-usergroups.dto';
 import { UserGroupsService } from '../../services/user_groups.service';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
 import { AuthGuard } from '../../../middlewares/be.auth';
 import { Roles } from 'src/app/helpers/decorators/roles.decorator';
+import { Response } from 'express';
 
 /**
  * User groups controllers
@@ -37,14 +41,22 @@ export class UsergroupsController extends BaseController {
   @Post()
   @UseGuards(AuthGuard)
   @Roles('admin')
-  async create(
-    @Body() createUserGroupsDto: CreateUserGroupsDto,
-    @Req() req,
-    @Res() res,
-  ): Promise<void> {
-    // const user = await this.usersGroupService.createUserGroups(
-    //   createUserGroupsDto,
-    // );
-    // return this.respondCreated(res, user);
+  async createUserGroup(
+    @Body() data: CreateUserGroupsDto,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const newUserGroup = await this.usersGroupService.createUserGroup(data);
+    return this.respondCreated(res, newUserGroup);
+  }
+
+  @Post('/description')
+  @UseGuards(AuthGuard)
+  async createUserGroupDescription(
+    @Body() data: CreateUserGroupDescriptionDto,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const newUserGroupDesc =
+      await this.usersGroupService.createUserGroupDescription(data);
+    return this.respondCreated(res, newUserGroupDesc);
   }
 }

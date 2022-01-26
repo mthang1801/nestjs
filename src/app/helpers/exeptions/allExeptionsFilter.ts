@@ -23,7 +23,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception.response?.message ||
       exception?.response ||
       exception?.sqlMessage;
-
+    console.log(message);
     if (httpStatus === 500) {
       message = 'Hệ thống đang xảy ra lỗi, vui lòng quay lại sau.';
     }

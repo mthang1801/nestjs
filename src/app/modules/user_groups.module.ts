@@ -6,7 +6,7 @@ import {
   UserGroupDescriptionsRepository,
   UserGroupPrivilegesRepository,
 } from '../repositories/user_groups.repository';
-import { UsergroupsController } from '../controllers/be/usergroups.controller';
+import { UsergroupsController } from '../controllers/be/user_groups.controller';
 import { UserRepository } from '../repositories/user.repository';
 
 @Module({

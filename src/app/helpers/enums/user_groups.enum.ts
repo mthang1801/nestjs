@@ -4,7 +4,7 @@ export enum UserGroupIdEnum {
   'Vendor' = 5,
 }
 
-export enum UserStatusEnum {
+export enum StatusEnum {
   'Active' = 'A',
   'Deactive' = 'D',
 }

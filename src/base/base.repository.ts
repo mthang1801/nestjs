@@ -28,16 +28,13 @@ export class BaseRepositorty<T> {
         HttpStatus.BAD_REQUEST,
       );
     }
-    let sql = `INSERT INTO ${this.table} SET ? ;`;
+    let sql = `INSERT INTO ${this.table} SET ? `;
 
     await this.databaseService.executeQuery(sql, params);
     const res = await this.databaseService.executeQuery(
       'SELECT LAST_INSERT_ID();',
     );
-    let filters = [];
-    for (let [key, val] of Object.entries(params)) {
-      filters.push({ [key]: val });
-    }
+
     return this.findById(res[0][0]['LAST_INSERT_ID()']);
   }
 
@@ -55,6 +52,7 @@ export class BaseRepositorty<T> {
     if (typeof id === 'object') {
       rows = await this.databaseService.executeQuery(stringQuery, [id]);
     } else {
+      console.log({ [PrimaryKeys[this.table]]: id });
       rows = await this.databaseService.executeQuery(stringQuery, [
         { [PrimaryKeys[this.table]]: id },
       ]);
