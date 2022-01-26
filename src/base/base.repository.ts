@@ -126,15 +126,16 @@ export class BaseRepositorty<T> {
    * @param params object<any> with
    * @returns
    */
-  async update(id: number, params: any): Promise<T> {
-    console.log('=============== UPDATE BY ID ================');
-
+  async update(id: number | any, params: any): Promise<T> {
+    console.log('=============== UPDATE ================');
+    console.log(131, id);
     if (typeof params !== 'object') {
       throw new HttpException(
         'The injected argument is invalid',
         HttpStatus.BAD_REQUEST,
       );
     }
+
     let sql = `UPDATE ${this.table} SET `;
     Object.entries(params).forEach(([key, val], i) => {
       if (i === 0) {
@@ -145,12 +146,27 @@ export class BaseRepositorty<T> {
           typeof val === 'number' ? `, ${key} = ${val}` : `, ${key} = '${val}'`;
       }
     });
-
-    sql += ` WHERE ${PrimaryKeys[this.table]} = '${id}'`;
+    sql += ' WHERE ';
+    if (typeof id === 'object') {
+      Object.entries(id).forEach(([key, val], i) => {
+        if (i === 0) {
+          sql +=
+            typeof val === 'number' ? `${key} = ${val}` : `${key} = '${val}'`;
+        } else {
+          sql +=
+            typeof val === 'number'
+              ? ` AND ${key} = ${val}`
+              : ` AND ${key} = '${val}'`;
+        }
+      });
+    } else {
+      sql += ` ${PrimaryKeys[this.table]} = '${id}'`;
+    }
 
     await this.databaseService.executeQuery(sql);
 
-    const updatedUser = await this.findById(id);
+    const updatedUser =
+      typeof id === 'object' ? await this.findOne(id) : await this.findById(id);
     return updatedUser;
   }
 

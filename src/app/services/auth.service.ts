@@ -138,15 +138,28 @@ export class AuthService {
         provider: providerData.id,
         provider_name: providerName,
         access_token: providerData.accessToken,
+        extra_data: providerData.extra_data,
         created_date: convertToMySQLDateTime(),
       });
+    } else {
+      authProvider = await this.authRepository.update(
+        { user_id: authProvider.user_id, provider_name: providerName },
+        {
+          access_token: providerData.accessToken,
+          extra_data: providerData.extra_data,
+        },
+      );
     }
     await this.userService.updateUser(userExists.user_id, {
       user_login: providerName,
     });
+    const userData = {
+      ...preprocessUserResult(userExists),
+      authProvider: { ...authProvider },
+    };
     return {
       token: this.generateToken(userExists),
-      userData: preprocessUserResult(userExists),
+      userData,
     };
   }
 
