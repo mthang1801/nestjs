@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { BaseService } from '../../base/base.service';
 import { orderStatus } from '../entities/orderStatus.entity';
 import { OrderStatusRepository } from '../repositories/order_status.repository';
-import { orderStatusCreateDTO } from '../dto/orderStatus/orderStatus.dto';
+import { orderStatusCreateDTO, } from '../dto/orderStatus/orderStatus.dto';
 import { OrderStatusDataService } from './order_status_data.service';
 import { OrderStatusDescriptionService } from './order_status_description.service';
 import { Table, JoinTable } from '../../database/enums/index';

@@ -13,4 +13,6 @@ export enum PrimaryKeys {
   ddv_statuses = 'status_id',
   ddv_status_descriptions = 'status_id',
   ddv_status_data = 'status_id',
+  ddv_payment_descriptions = 'payment_id',
+  ddv_payments = 'payment_id',
 }

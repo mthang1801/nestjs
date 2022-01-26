@@ -5,6 +5,7 @@ import { UsersModule } from './users.module';
 import { MailModule } from './mail.module';
 import { BannerModule } from './banner.module';
 import { OrderStatusModule } from './order_status.module';
+import { PaymentModule } from './payment.module';
 import { DatabaseModule } from '../../database/database.module';
 import {
   appConfig,
@@ -36,6 +37,7 @@ import {CategoryModule} from "./category.module"
     UserGroupsModule,
     CategoryModule,
     OrderStatusModule,
+    PaymentModule,
   ],
   providers: [
     {

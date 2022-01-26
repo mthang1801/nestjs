@@ -15,7 +15,7 @@ import { BaseController } from '../../../base/base.controllers';
 import { IResponse } from '../../interfaces/response.interface';
 import { OrderStatusService } from 'src/app/services/order_status.service';
 import { AuthGuard } from '../../../middlewares/fe.auth';
-import { orderStatusCreateDTO } from 'src/app/dto/orderStatus/orderStatus.dto';
+import { orderStatusCreateDTO,orderStatusUpdateDTO } from 'src/app/dto/orderStatus/orderStatus.dto';
 @UseGuards(AuthGuard)
 @Controller('/be/v1/order-status')
 export class OrderStatusController extends BaseController {
@@ -44,7 +44,7 @@ export class OrderStatusController extends BaseController {
     }
     @Put('/:id')
     @UsePipes(ValidationPipe)
-    async UpdateOrderStatus(@Res() res,@Body() body:orderStatusCreateDTO,@Param('id') id): Promise<IResponse>{
+    async UpdateOrderStatus(@Res() res,@Body() body:orderStatusUpdateDTO,@Param('id') id): Promise<IResponse>{
         const order = await this.orderStatusService.UpdateOrderStatus(id,body)
         if (order ==="422") return this.optionalResponse(res,422,"Status and Type duplicated")
         return this.responseSuccess(res, order);
