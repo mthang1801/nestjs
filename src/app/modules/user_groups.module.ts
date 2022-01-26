@@ -7,6 +7,7 @@ import {
   UserGroupPrivilegesRepository,
 } from '../repositories/user_groups.repository';
 import { UsergroupsController } from '../controllers/be/usergroups.controller';
+import { UserRepository } from '../repositories/user.repository';
 
 @Module({
   providers: [
@@ -15,6 +16,7 @@ import { UsergroupsController } from '../controllers/be/usergroups.controller';
     UserGroupLinksRepository,
     UserGroupDescriptionsRepository,
     UserGroupPrivilegesRepository,
+    UserRepository,
   ],
   exports: [
     UserGroupsService,

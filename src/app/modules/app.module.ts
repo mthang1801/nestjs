@@ -18,7 +18,8 @@ import { ObjectModule } from './object.module';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from '../helpers/exeptions/allExeptionsFilter';
 import { UserGroupsModule } from './user_groups.module';
-import {CategoryModule} from "./category.module"
+import { CategoryModule } from './category.module';
+import { ImageModule } from './image.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -38,6 +39,7 @@ import {CategoryModule} from "./category.module"
     CategoryModule,
     OrderStatusModule,
     PaymentModule,
+    ImageModule,
   ],
   providers: [
     {

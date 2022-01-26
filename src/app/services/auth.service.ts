@@ -14,7 +14,7 @@ import { BaseService } from '../../base/base.service';
 import { AuthProviderEntity } from '../entities/auth-provider.entity';
 import { Table } from '../../database/enums/tables.enum';
 import { IResponseUserToken } from '../interfaces/response.interface';
-import { AuthProviderEnum } from '../helpers/enums/auth-provider.enum';
+import { AuthProviderEnum } from '../helpers/enums/auth_provider.enum';
 import { generateOTPDigits } from '../../utils/helper';
 import { AuthLoginProviderDto } from '../dto/auth/auth-login-provider.dto';
 import { UserProfilesService } from './user_profiles.service';
@@ -22,24 +22,25 @@ import * as twilio from 'twilio';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { UserGroupLinksRepository } from '../repositories/user_groups.repository';
 import { UserGroupLinkEntity } from '../entities/user_groups';
+import { UserGroupIdEnum } from '../helpers/enums/user_groups.enum';
+import { ImagesService } from './image.service';
+import {
+  ImagesLinksRepository,
+  ImagesRepository,
+} from '../repositories/image.repository';
+import { ImagesEntity, ImagesLinksEntity } from '../entities/image.entity';
+import { ImageObjectType } from '../helpers/enums/image_types.enum';
 @Injectable()
-export class AuthService extends BaseService<
-  AuthProviderEntity,
-  AuthProviderRepository<AuthProviderEntity>
-> {
-  protected authRepository: AuthProviderRepository<AuthProviderEntity>;
+export class AuthService {
   constructor(
     private userService: UsersService,
     private jwtService: JwtService,
     private userProfile: UserProfilesService,
-    repository: AuthProviderRepository<AuthProviderEntity>,
+    private authRepository: AuthProviderRepository<AuthProviderEntity>,
     private userGroupRepository: UserGroupLinksRepository<UserGroupLinkEntity>,
-    table: Table,
-  ) {
-    super(repository, table);
-    this.authRepository = repository;
-    this.table = Table.USERS_AUTH;
-  }
+    private imageLinksRepository: ImagesLinksRepository<ImagesLinksEntity>,
+    private imagesRepository: ImagesRepository<ImagesEntity>,
+  ) {}
 
   generateToken(user: UserEntity): string {
     const payload = {
@@ -63,7 +64,7 @@ export class AuthService extends BaseService<
     const user = await this.userService.createUser({
       firstname,
       lastname,
-      user_login: 'SYSTEM',
+      user_login: AuthProviderEnum.SYSTEM,
       email,
       password: passwordHash,
       phone,
@@ -89,41 +90,56 @@ export class AuthService extends BaseService<
       ? await this.userService.findOne({ phone })
       : await this.userService.findOne({ email });
 
-    if (
-      (typeof user === 'object' && !Object.entries(user).length) ||
-      (typeof user !== 'object' && !user)
-    ) {
-      throw new NotFoundException('User not exists');
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại.');
     }
     if (desaltHashPassword(password, user.salt) !== user.password) {
       throw new HttpException(
         phone
-          ? 'Phone or password is incorrect'
-          : 'Email or password is incorrect',
+          ? 'Số điện thoại hoặc mật khẩu không đúng.'
+          : 'Địa chỉ email hoặc mật khẩu không đúng',
         HttpStatus.UNAUTHORIZED,
       );
     }
 
-    await this.userService.update(user.user_id, { user_login: 'SYSTEM' });
+    await this.userService.updateUser(user.user_id, {
+      user_login: AuthProviderEnum.SYSTEM,
+    });
+
+    user['image'] = await this.getUserImage(user.user_id);
 
     const dataResult = {
       token: this.generateToken(user),
       userData: preprocessUserResult(user),
     };
+
     return dataResult;
+  }
+
+  async getUserImage(user_id: number): Promise<ImagesEntity> {
+    const imageLinks = await this.imageLinksRepository.findOne({
+      where: {
+        object_id: user_id,
+        object_type: ImageObjectType.USER,
+      },
+    });
+    if (imageLinks) {
+      const image = await this.imagesRepository.findById(imageLinks.image_id);
+      return image;
+    }
+    return null;
   }
 
   async loginWithAuthProvider(
     providerData: AuthLoginProviderDto,
     providerName: AuthProviderEnum,
   ): Promise<IResponseUserToken> {
+    // Check if user has been existings or not
     let userExists: UserEntity = await this.userService.findOne({
       email: providerData.email,
     });
-    if (
-      (typeof userExists === 'object' && !Object.entries(userExists).length) ||
-      (typeof userExists !== 'object' && !userExists)
-    ) {
+
+    if (!userExists) {
       userExists = await this.userService.create({
         firstname: providerData.givenName,
         lastname: providerData.familyName,
@@ -133,34 +149,70 @@ export class AuthService extends BaseService<
       await this.userProfile.createUserProfile(userExists);
       await this.userGroupRepository.create({
         user_id: userExists.user_id,
-        usergroup_id: 3,
+        usergroup_id: UserGroupIdEnum.Wholesale,
       });
     }
-
+    // Create image at ddv_images and ddv_image_links
+    let userImageLink = await this.imageLinksRepository.findOne({
+      where: {
+        object_id: userExists.user_id,
+        object_type: ImageObjectType.USER,
+      },
+    });
+    let userImage;
+    if (!userImageLink) {
+      const userImage = await this.imagesRepository.create({
+        image_path: providerData.imageUrl,
+      });
+      if (userImage) {
+        userImageLink = await this.imageLinksRepository.create({
+          object_id: userExists.user_id,
+          object_type: ImageObjectType.USER,
+          image_id: userImage.image_id,
+        });
+      }
+    } else {
+      userImage = await this.imagesRepository.findById(userImageLink.image_id);
+    }
+    userExists['image'] = userImage;
+    // Create or update at ddv_users_auth_external table
     let authProvider: AuthProviderEntity = await this.authRepository.findOne({
-      user_id: userExists.user_id,
-      provider_name: providerName,
+      where: {
+        user_id: userExists.user_id,
+        provider_name: providerName,
+      },
     });
 
-    if (
-      (typeof !authProvider === 'object' &&
-        !Object.entries(!authProvider).length) ||
-      (typeof !authProvider !== 'object' && !!authProvider)
-    ) {
+    if (!authProvider) {
       authProvider = await this.authRepository.create({
         user_id: userExists.user_id,
         provider: providerData.id,
         provider_name: providerName,
         access_token: providerData.accessToken,
+        extra_data: providerData.extra_data,
         created_date: convertToMySQLDateTime(),
       });
+    } else {
+      authProvider = await this.authRepository.update(
+        { user_id: authProvider.user_id, provider_name: providerName },
+        {
+          access_token: providerData.accessToken,
+          extra_data: providerData.extra_data,
+        },
+      );
     }
-    await this.userService.update(userExists.user_id, {
+
+    //Update current provider at ddv_users
+    await this.userService.updateUser(userExists.user_id, {
       user_login: providerName,
     });
+    const userData = {
+      ...preprocessUserResult(userExists),
+      authProvider: { ...authProvider },
+    };
     return {
       token: this.generateToken(userExists),
-      userData: preprocessUserResult(userExists),
+      userData,
     };
   }
 
@@ -210,12 +262,14 @@ export class AuthService extends BaseService<
       );
     }
     const newOTP = generateOTPDigits();
+
     await this.userService.updateUserOTP(user.user_id, newOTP);
 
     const client = twilio(
       'ACf45884c1ecedeb6821c81156065d8610',
       '08fa4d62968cbff2e9c017ccb3a16219',
     );
+
     await client.messages.create({
       body: `Mã OTP để xác nhận khôi phục mật khẩu là ${newOTP}, mã có hiệu lực trong vòng 90 giây, nhằm đảm bảo tài khoản được an toàn, quý khách vui lòng không chia sẽ mã này cho bất kỳ ai.`,
       from: '+16075368673',

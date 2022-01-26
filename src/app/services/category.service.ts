@@ -179,7 +179,11 @@ export class CategoryService {
     updateCategoryDescriptionDto: UpdateCategoryDescriptionDto,
   ): Promise<CategoryDescriptionEntity> {
     await this.categoryDescriptionRepo.update(id, updateCategoryDescriptionDto);
-    return this.findCategoryDescriptionById(id);
+    const updatedCategoryDescription = await this.findCategoryDescriptionById(
+      id,
+    );
+
+    return updatedCategoryDescription;
   }
 
   async createCategoryVendorProductCount(

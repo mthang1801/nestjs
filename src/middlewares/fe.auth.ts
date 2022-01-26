@@ -22,7 +22,10 @@ export class AuthGuard implements CanActivate {
 
     const authoriazationToken = req.headers?.authorization;
     if (!authoriazationToken) {
-      throw new HttpException('Unauthorized access.', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'Yêu cầu truy cập bị từ chối.',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     const token = authoriazationToken.split(' ').slice(-1)[0];
     const decoded = jwt.verify(
@@ -33,11 +36,11 @@ export class AuthGuard implements CanActivate {
     const user = decoded?.sub;
 
     if (!user) {
-      throw new HttpException('Token is invalid.', HttpStatus.UNAUTHORIZED);
+      throw new HttpException('Token không hợp lệ.', HttpStatus.UNAUTHORIZED);
     }
 
     if (+decoded['exp'] * 1000 - Date.now() < 0) {
-      throw new HttpException('Token has been expired.', 408);
+      throw new HttpException('Token đã hết hạn.', 408);
     }
     req.user = user;
 

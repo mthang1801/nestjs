@@ -13,7 +13,7 @@ import { UserGroupsService } from '../../services/user_groups.service';
 import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
-import { AuthGuard } from '../../../middlewares/fe.auth';
+import { AuthGuard } from '../../../middlewares/be.auth';
 
 /**
  * User groups controllers
@@ -38,5 +38,10 @@ export class UsergroupsController extends BaseController {
     @Body() createUserGroupsDto: CreateUserGroupsDto,
     @Req() req,
     @Res() res,
-  ): Promise<void> {}
+  ): Promise<IResponse> {
+    const user = await this.usersGroupService.createUserGroups(
+      createUserGroupsDto,
+    );
+    return this.respondCreated(res, user);
+  }
 }
