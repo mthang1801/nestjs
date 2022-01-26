@@ -24,7 +24,7 @@ export class BaseRepositorty<T> {
 
     if (Array.isArray(params) || typeof params !== 'object') {
       throw new HttpException(
-        'The injected argument need to be an Object',
+        'Tham số truyền vào phải là một Object',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -131,7 +131,7 @@ export class BaseRepositorty<T> {
 
     if (typeof params !== 'object') {
       throw new HttpException(
-        'The injected argument is invalid',
+        'Tham số truyền vào không hợp lệ.',
         HttpStatus.BAD_REQUEST,
       );
     }

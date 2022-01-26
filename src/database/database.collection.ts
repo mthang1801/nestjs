@@ -270,9 +270,7 @@ export class DatabaseCollection {
 
   where(objFields: any): void {
     if (typeof objFields !== 'object') {
-      throw new BadRequestException({
-        message: 'SQL syntax is invalid.',
-      });
+      throw new BadRequestException('Cú pháp truy vấn SQL không hợp lệ.');
     }
     // Array is considered as OR operator, so we will connect with orAndWhere each other
     if (Array.isArray(objFields)) {

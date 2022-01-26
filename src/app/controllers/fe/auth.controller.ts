@@ -126,13 +126,9 @@ export class AuthController extends BaseController {
    */
   @Get('forgot-password')
   async restorePasswordByEmail(@Req() req, @Res() res): Promise<void> {
-    try {
-      const { token, user_id } = req.query;
-      await this.authService.restorePasswordByEmail(user_id, token);
-      res.render('forgot-password-form');
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+    const { token, user_id } = req.query;
+    await this.authService.restorePasswordByEmail(user_id, token);
+    res.render('forgot-password-form');
   }
 
   /**

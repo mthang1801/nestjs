@@ -174,11 +174,7 @@ export class UsersService {
       );
     }
 
-    if (
-      new Date(
-        new Date(checkUser.verify_token_exp).getTime() * 7 * 3600 * 1000,
-      ) < new Date()
-    ) {
+    if (new Date(checkUser.verify_token_exp).getTime() < new Date().getTime()) {
       throw new HttpException('Token hết hạn.', HttpStatus.GATEWAY_TIMEOUT);
     }
     return checkUser;
@@ -196,19 +192,17 @@ export class UsersService {
       },
     });
 
-    if (
-      new Date(new Date(user.verify_token_exp).getTime() * 7 * 3600 * 1000) <
-      new Date()
-    ) {
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    if (new Date(user.verify_token_exp).getTime() < new Date().getTime()) {
       throw new HttpException(
         'Token đã hết hiệu lực, cập nhật thất bại.',
         HttpStatus.GATEWAY_TIMEOUT,
       );
     }
 
-    if (!user) {
-      throw new NotFoundException();
-    }
     const { passwordHash, salt } = saltHashPassword(newPassword);
 
     await this.userRepository.update(user_id, {
@@ -231,9 +225,7 @@ export class UsersService {
     const user = await this.userRepository.findById(user_id);
 
     if (user.otp_incorrect_times > 2) {
-      throw new BadRequestException({
-        message: 'Số lần nhập mã OTP vượt quá giới hạn',
-      });
+      throw new BadRequestException('Số lần nhập mã OTP vượt quá giới hạn');
     }
     if (user.otp !== otp) {
       const otp_incorrect_times = user.otp_incorrect_times + 1;

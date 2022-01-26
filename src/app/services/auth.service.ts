@@ -262,12 +262,14 @@ export class AuthService {
       );
     }
     const newOTP = generateOTPDigits();
+
     await this.userService.updateUserOTP(user.user_id, newOTP);
 
     const client = twilio(
       'ACf45884c1ecedeb6821c81156065d8610',
       '08fa4d62968cbff2e9c017ccb3a16219',
     );
+
     await client.messages.create({
       body: `Mã OTP để xác nhận khôi phục mật khẩu là ${newOTP}, mã có hiệu lực trong vòng 90 giây, nhằm đảm bảo tài khoản được an toàn, quý khách vui lòng không chia sẽ mã này cho bất kỳ ai.`,
       from: '+16075368673',
