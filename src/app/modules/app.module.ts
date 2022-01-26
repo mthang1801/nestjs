@@ -4,6 +4,8 @@ import { AuthModule } from './auth.module';
 import { UsersModule } from './users.module';
 import { MailModule } from './mail.module';
 import { BannerModule } from './banner.module';
+import { OrderStatusModule } from './order_status.module';
+import { PaymentModule } from './payment.module';
 import { DatabaseModule } from '../../database/database.module';
 import {
   appConfig,
@@ -35,6 +37,8 @@ import { ImageModule } from './image.module';
     ObjectModule,
     UserGroupsModule,
     CategoryModule,
+    OrderStatusModule,
+    PaymentModule,
     ImageModule,
   ],
   providers: [

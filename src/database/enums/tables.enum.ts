@@ -14,4 +14,9 @@ export enum Table {
   BANNER_DESCRIPTIONS = 'ddv_banner_descriptions',
   IMAGE = 'ddv_images',
   IMAGE_LINK = 'ddv_images_links',
+  ORDER_STATUS = 'ddv_statuses',
+  ORDER_STATUS_DESCRIPTION = 'ddv_status_descriptions',
+  ORDER_STATUS_DATA = 'ddv_status_data',
+  PAYMENT_DESCRIPTION = 'ddv_payment_descriptions',
+  PAYMENT = 'ddv_payments',
 }
