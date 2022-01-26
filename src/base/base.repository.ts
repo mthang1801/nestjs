@@ -128,7 +128,7 @@ export class BaseRepositorty<T> {
    */
   async update(id: number | any, params: any): Promise<T> {
     console.log('=============== UPDATE ================');
-    console.log(131, id);
+
     if (typeof params !== 'object') {
       throw new HttpException(
         'The injected argument is invalid',

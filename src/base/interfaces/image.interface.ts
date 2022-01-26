@@ -1,4 +1,4 @@
-export class ImagesEntity {
+export interface IImages {
   image_id: number;
   image_path: string;
   image_x: number;
@@ -6,7 +6,7 @@ export class ImagesEntity {
   is_high_res: string;
 }
 
-export class ImagesLinksEntity {
+export interface IImagesLinks {
   object_id: number;
   object_type: string;
   image_id: number;

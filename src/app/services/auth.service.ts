@@ -23,6 +23,13 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { UserGroupLinksRepository } from '../repositories/user_groups.repository';
 import { UserGroupLinkEntity } from '../entities/user_groups';
 import { UserGroupIdEnum } from '../helpers/enums/user_groups.enum';
+import { ImagesService } from './image.service';
+import {
+  ImagesLinksRepository,
+  ImagesRepository,
+} from '../repositories/image.repository';
+import { ImagesEntity, ImagesLinksEntity } from '../entities/image.entity';
+import { ImageObjectType } from '../helpers/enums/image_types.enum';
 @Injectable()
 export class AuthService {
   constructor(
@@ -31,6 +38,8 @@ export class AuthService {
     private userProfile: UserProfilesService,
     private authRepository: AuthProviderRepository<AuthProviderEntity>,
     private userGroupRepository: UserGroupLinksRepository<UserGroupLinkEntity>,
+    private imageLinksRepository: ImagesLinksRepository<ImagesLinksEntity>,
+    private imagesRepository: ImagesRepository<ImagesEntity>,
   ) {}
 
   generateToken(user: UserEntity): string {
@@ -108,9 +117,11 @@ export class AuthService {
     providerData: AuthLoginProviderDto,
     providerName: AuthProviderEnum,
   ): Promise<IResponseUserToken> {
+    // Check if user has been existings or not
     let userExists: UserEntity = await this.userService.findOne({
       email: providerData.email,
     });
+
     if (!userExists) {
       userExists = await this.userService.create({
         firstname: providerData.givenName,
@@ -124,7 +135,30 @@ export class AuthService {
         usergroup_id: UserGroupIdEnum.Wholesale,
       });
     }
-
+    // Create image at ddv_images and ddv_image_links
+    let userImageLink = await this.imageLinksRepository.findOne({
+      where: {
+        object_id: userExists.user_id,
+        object_type: ImageObjectType.USER,
+      },
+    });
+    let userImage;
+    if (!userImageLink) {
+      const userImage = await this.imagesRepository.create({
+        image_path: providerData.imageUrl,
+      });
+      if (userImage) {
+        userImageLink = await this.imageLinksRepository.create({
+          object_id: userExists.user_id,
+          object_type: ImageObjectType.USER,
+          image_id: userImage.image_id,
+        });
+      }
+    } else {
+      userImage = await this.imagesRepository.findById(userImageLink.image_id);
+    }
+    userExists['image'] = userImage;
+    // Create or update at ddv_users_auth_external table
     let authProvider: AuthProviderEntity = await this.authRepository.findOne({
       where: {
         user_id: userExists.user_id,
@@ -150,6 +184,8 @@ export class AuthService {
         },
       );
     }
+
+    //Update current provider at ddv_users
     await this.userService.updateUser(userExists.user_id, {
       user_login: providerName,
     });

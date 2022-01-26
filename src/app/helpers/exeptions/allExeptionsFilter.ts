@@ -27,7 +27,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         exception?.response ||
         exception?.sqlMessage,
       timestamp: new Date().toLocaleString(),
-      path: httpAdapter.getRequestUrl(ctx.getRequest()),
+      // path: httpAdapter.getRequestUrl(ctx.getRequest()),
     };
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }

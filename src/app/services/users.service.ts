@@ -26,6 +26,12 @@ import { UserProfilesService } from './user_profiles.service';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { JoinTable } from '../../database/enums/joinTable.enum';
 import { UserProfileDto } from '../dto/user/update-user-profile.dto';
+import {
+  ImagesLinksRepository,
+  ImagesRepository,
+} from '../repositories/image.repository';
+import { ImagesLinksEntity, ImagesEntity } from '../entities/image.entity';
+import { ImageObjectType } from '../helpers/enums/image_types.enum';
 @Injectable()
 export class UsersService {
   private table: Table = Table.USERS;
@@ -34,6 +40,8 @@ export class UsersService {
     private readonly userProfileService: UserProfilesService,
     private userRepository: UserRepository<UserEntity>,
     private userProfileRepository: UserProfileRepository<UserProfileEntity>,
+    private imageLinksRepository: ImagesLinksRepository<ImagesLinksEntity>,
+    private imagesRepository: ImagesRepository<ImagesEntity>,
   ) {}
 
   async createUser(registerData): Promise<UserEntity> {
@@ -58,9 +66,19 @@ export class UsersService {
   }
 
   async findById(id: number): Promise<UserEntity> {
-    const user = await this.userRepository.findById(id);
+    const user: UserEntity = await this.userRepository.findById(id);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    const imageLinks = await this.imageLinksRepository.findOne({
+      object_id: user.user_id,
+      object_type: ImageObjectType.USER,
+    });
+    if (imageLinks) {
+      const image = await this.imagesRepository.findById(imageLinks.image_id);
+      if (image) {
+        user['image'] = image;
+      }
     }
     return preprocessUserResult(user);
   }
