@@ -119,6 +119,19 @@ export class BaseController {
     return this.respond();
   }
   /**
+   * @description return result when request with DELETE method success without content, data
+   * @param res
+   * @param data
+   * @returns object with code and data
+   */
+  public responseSuccessNoContent(res): IResponse {
+    this.res = res;
+    this.setStatusCode(204);
+    this.data = null;
+    return this.respond();
+  }
+
+  /**
    *
    * @param res Response
    * @param satatusCode number

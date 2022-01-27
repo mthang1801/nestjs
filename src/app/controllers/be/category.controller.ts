@@ -75,6 +75,56 @@ export class CategoryController extends BaseController {
   }
 
   /**
+   * Get by id in ddv_categories table
+   * @param id
+   * @param res
+   * @returns
+   */
+  @Get('/search/:category_id')
+  async getCategoryById(
+    @Param('category_id') category_id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    let category = await this.categoryService.findCategoryById(category_id);
+    return this.responseSuccess(res, category);
+  }
+
+  /**
+   * get by company id in ddv_categories table
+   * @param company_id
+   * @param res
+   * @returns
+   */
+  @Get('/company/:company_id')
+  async getCategoryByCompanyId(
+    @Param('company_id') company_id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const category = await this.categoryService.findCategoryByCompanyId(
+      company_id,
+    );
+
+    return this.responseSuccess(res, category);
+  }
+
+  /**
+   * Delete category by category_id in ddv_categories table, then delete record in  ddv_category_vendor_product_count and ddv_category_descriptions table
+   * @param id
+   * @param res
+   * @returns
+   */
+  @Delete('/delete/:category_id')
+  async deleteCategory(
+    @Param('category_id') category_id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const boolRes = await this.categoryService.deleteCategory(category_id);
+    return boolRes
+      ? this.responseSuccessNoContent(res)
+      : this.respondNotFound(res, `Không tìm thấy id ${category_id} để xoá.`);
+  }
+
+  /**
    * Update records by category_id in ddv_categories table
    * @param categoryDto
    * @param id
@@ -110,6 +160,25 @@ export class CategoryController extends BaseController {
         categoryDescriptionDto,
       );
     return this.respondCreated(res, createdCategoryDescription);
+  }
+
+  /**
+   * Get by category_id in ddv_category_descriptions table
+   * @param category_id
+   * @param res
+   * @returns
+   */
+  @Get('description/search/:category_id')
+  async getCategoryDescriptionByCategoryId(
+    @Param('category_id') category_id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const categoryDescription =
+      await this.categoryService.findCategoryDescriptionByCategoryId(
+        category_id,
+      );
+
+    return this.responseSuccess(res, categoryDescription);
   }
 
   /**
@@ -149,6 +218,25 @@ export class CategoryController extends BaseController {
   }
 
   /**
+   * Delete category description in ddv_category_descriptions
+   * @param id
+   * @param res
+   * @returns
+   */
+  @Delete('description/delete/:category_id')
+  async deleteCategoryDescription(
+    @Param('category_id') category_id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const boolRes = await this.categoryService.deleteCategoryDescription(
+      category_id,
+    );
+    return boolRes
+      ? this.responseSuccessNoContent(res)
+      : this.respondNotFound(res, `Không tìm thấy id ${category_id} để xoá.`);
+  }
+
+  /**
    * Create new record in ddv_category_vendor_product_count table
    * @param createCategoryVendorProductCountDto
    * @param res
@@ -164,43 +252,6 @@ export class CategoryController extends BaseController {
     const createdCategoryVendor =
       await this.categoryService.createCategoryVendorProductCount(data);
     return this.respondCreated(res, createdCategoryVendor);
-  }
-
-  /**
-   * get by company id in ddv_categories table
-   * @param company_id
-   * @param res
-   * @returns
-   */
-  @Get('/company/:company_id')
-  async getCategoryByCompanyId(
-    @Param('company_id') company_id: number,
-    @Res() res: Response,
-  ): Promise<IResponse> {
-    const category = await this.categoryService.findCategoryByCompanyId(
-      company_id,
-    );
-
-    return this.responseSuccess(res, category);
-  }
-
-  /**
-   * Get by category_id in ddv_category_descriptions table
-   * @param category_id
-   * @param res
-   * @returns
-   */
-  @Get('description/:category_id')
-  async getCategoryDescriptionByCategoryId(
-    @Param('category_id') category_id: number,
-    @Res() res: Response,
-  ): Promise<IResponse> {
-    const categoryDescription =
-      await this.categoryService.findCategoryDescriptionByCategoryId(
-        category_id,
-      );
-
-    return this.responseSuccess(res, categoryDescription);
   }
 
   /**
@@ -228,7 +279,7 @@ export class CategoryController extends BaseController {
    * @param res
    * @returns
    */
-  @Get('vendor-product-count/:category_id')
+  @Get('vendor-product-count/search/:category_id')
   async getCategoryVendorProductCountById(
     @Param('category_id') category_id: number,
     @Res() res: Response,
@@ -239,19 +290,6 @@ export class CategoryController extends BaseController {
       );
 
     return this.responseSuccess(res, categoryVendor);
-  }
-
-  @Put('vendor-product-count')
-  @UseGuards(AuthGuard)
-  async updateCategoryVendorProductCount(
-    @Body()
-    data: UpdateCategoryVendorProductCountDto,
-
-    @Res() res: Response,
-  ) {
-    const updatedCategoryVendor =
-      await this.categoryService.updateCategoryVendorProductCount(data);
-    return this.responseSuccess(res, updatedCategoryVendor);
   }
 
   /**
@@ -273,40 +311,17 @@ export class CategoryController extends BaseController {
     return this.responseSuccess(res, categoryVendor);
   }
 
-  /**
-   * Get by id in ddv_categories table
-   * @param id
-   * @param res
-   * @returns
-   */
-  @Get('/:category_id')
-  async getCategoryById(
-    @Param('category_id') category_id: number,
-    @Res() res: Response,
-  ): Promise<IResponse> {
-    let category = await this.categoryService.findCategoryById(category_id);
-    return this.responseSuccess(res, category);
-  }
+  @Put('vendor-product-count')
+  @UseGuards(AuthGuard)
+  async updateCategoryVendorProductCount(
+    @Body()
+    data: UpdateCategoryVendorProductCountDto,
 
-  /**
-   * Delete category description in ddv_category_descriptions
-   * @param id
-   * @param res
-   * @returns
-   */
-  @Delete('description/:category_id')
-  async deleteCategoryDescription(
-    @Param('category_id') category_id: number,
     @Res() res: Response,
-  ): Promise<IResponse> {
-    const boolRes = await this.categoryService.deleteCategoryDescription(
-      category_id,
-    );
-    return this.responseSuccess(
-      res,
-      null,
-      boolRes ? 'Xoá thành công' : 'Không tìm thấy trường phù hợp để xoá.',
-    );
+  ) {
+    const updatedCategoryVendor =
+      await this.categoryService.updateCategoryVendorProductCount(data);
+    return this.responseSuccess(res, updatedCategoryVendor);
   }
 
   /**
@@ -315,7 +330,7 @@ export class CategoryController extends BaseController {
    * @param res
    * @returns
    */
-  @Delete('vendor-product-count')
+  @Delete('vendor-product-count/delete')
   async deleteCategoryVendorProductCount(
     @Query('category_id') category_id: number,
     @Query('company_id') company_id: number,
@@ -325,29 +340,11 @@ export class CategoryController extends BaseController {
       category_id,
       company_id,
     );
-    return this.responseSuccess(
-      res,
-      null,
-      boolRes ? 'Xoá thành công' : 'Không tìm thấy trường phù hợp để xoá.',
-    );
-  }
-
-  /**
-   * Delete category by category_id in ddv_categories table, then delete record in  ddv_category_vendor_product_count and ddv_category_descriptions table
-   * @param id
-   * @param res
-   * @returns
-   */
-  @Delete('/:category_id')
-  async deleteCategory(
-    @Param('category_id') category_id: number,
-    @Res() res: Response,
-  ): Promise<IResponse> {
-    const boolRes = await this.categoryService.deleteCategory(category_id);
-    return this.responseSuccess(
-      res,
-      null,
-      boolRes ? 'Xoá thành công' : 'Không tìm thấy trường phù hợp để xoá.',
-    );
+    return boolRes
+      ? this.responseSuccessNoContent(res)
+      : this.respondNotFound(
+          res,
+          `Không tìm thấy category_id ${category_id} và company_id ${company_id} để xoá.`,
+        );
   }
 }

@@ -314,22 +314,22 @@ export class CategoryService {
   async deleteCategory(category_id: number): Promise<boolean> {
     let res = true;
     res = (await this.categoryRepository.delete(category_id)) && res;
-    res = (await this.categoryDescriptionRepo.delete(category_id)) && res;
-    res =
-      (await this.categoryVendorProductCountRepo.delete({ category_id })) &&
-      res;
-    return true;
+    await this.categoryDescriptionRepo.delete(category_id);
+
+    await this.categoryVendorProductCountRepo.delete({ category_id });
+
+    return res;
   }
 
   async deleteCategoryDescription(category_id: number): Promise<boolean> {
-    return await this.categoryDescriptionRepo.delete(category_id);
+    return this.categoryDescriptionRepo.delete(category_id);
   }
 
   async deleteCategoryVendorProductCount(
     category_id: number,
     company_id: number,
   ): Promise<boolean> {
-    return await this.categoryVendorProductCountRepo.delete({
+    return this.categoryVendorProductCountRepo.delete({
       category_id,
       company_id,
     });
