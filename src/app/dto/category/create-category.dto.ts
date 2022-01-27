@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsOptional } from 'class-validator';
 
-export class CategoryDto {
+export class CreateCategoryDto {
   @IsOptional()
   parent_id: number;
 

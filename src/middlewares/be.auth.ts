@@ -27,6 +27,7 @@ export class AuthGuard implements CanActivate {
         HttpStatus.UNAUTHORIZED,
       );
     }
+    console.log(authoriazationToken);
     const token = authoriazationToken.split(' ').slice(-1)[0];
     const decoded = jwt.verify(
       token,

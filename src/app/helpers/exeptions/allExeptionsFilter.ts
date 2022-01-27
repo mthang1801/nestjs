@@ -23,10 +23,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception.response?.message ||
       exception?.response ||
       exception?.sqlMessage;
-    console.log(message);
+    console.log(exception, exception.name, exception.code);
     if (httpStatus === 500) {
       message = 'Hệ thống đang xảy ra lỗi, vui lòng quay lại sau.';
     }
+    switch (exception.name) {
+      case 'TokenExpiredError':
+        message = 'Token đã hết hạn.';
+        break;
+      case 'ETIMEDOUT':
+        message = 'Thời gian request quá lâu.';
+        break;
+      case 'Error':
+        message =
+          exception.response?.message ||
+          exception?.response ||
+          exception.sqlMessage;
+        break;
+    }
+
     const responseBody = {
       statusCode: httpStatus,
       message,

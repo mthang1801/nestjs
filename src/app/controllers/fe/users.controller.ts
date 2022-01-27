@@ -38,8 +38,8 @@ export class UsersController extends BaseController {
     return this.responseSuccess(res, updatedUser);
   }
 
-  @UseGuards(AuthGuard)
   @Get()
+  @UseGuards(AuthGuard)
   async getMyInfo(@Req() req, @Res() res): Promise<IResponse> {
     const user = await this.usersService.getMyInfo(req.user.user_id);
     return this.responseSuccess(res, user);

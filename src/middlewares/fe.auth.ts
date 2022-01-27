@@ -27,21 +27,23 @@ export class AuthGuard implements CanActivate {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    const token = authoriazationToken.split(' ').slice(-1)[0];
+
+    const token = authoriazationToken.split(' ').slice(-1)[0].trim();
+
     const decoded = jwt.verify(
       token,
       this.configService.get<string>('jwtSecretKey'),
     );
 
+    if (!decoded || +decoded['exp'] * 1000 - Date.now() < 0) {
+      throw new HttpException('Token không hợp lệ hoặc đã hết hạn.', 408);
+    }
     const user = decoded?.sub;
-
+    console.log(user);
     if (!user) {
       throw new HttpException('Token không hợp lệ.', HttpStatus.UNAUTHORIZED);
     }
 
-    if (+decoded['exp'] * 1000 - Date.now() < 0) {
-      throw new HttpException('Token đã hết hạn.', 408);
-    }
     req.user = user;
 
     // const roles = this.reflector.getAllAndMerge<string[]>('roles', [

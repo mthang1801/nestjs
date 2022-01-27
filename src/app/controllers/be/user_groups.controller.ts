@@ -40,7 +40,6 @@ export class UsergroupsController extends BaseController {
 
   @Post()
   @UseGuards(AuthGuard)
-  @Roles('admin')
   async createUserGroup(
     @Body() data: CreateUserGroupsDto,
     @Res() res: Response,

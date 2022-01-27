@@ -4,7 +4,15 @@ import { DatabaseCollection } from '../database/database.collection';
 import { Table, PrimaryKeys } from '../database/enums/index';
 import { HttpStatus } from '@nestjs/common';
 import { preprocessDatabaseBeforeResponse } from '../utils/helper';
-
+const orderCmds = [
+  'select',
+  'from',
+  'join',
+  'where',
+  'skip',
+  'limit',
+  'orderBy',
+];
 @Injectable()
 export class BaseRepositorty<T> {
   constructor(
@@ -35,6 +43,10 @@ export class BaseRepositorty<T> {
       'SELECT LAST_INSERT_ID();',
     );
 
+    console.log(res[0][0]['LAST_INSERT_ID()']);
+    if (res[0][0]['LAST_INSERT_ID()'] === 0) {
+      return this.findOne({ where: params });
+    }
     return this.findById(res[0][0]['LAST_INSERT_ID()']);
   }
 
@@ -70,8 +82,15 @@ export class BaseRepositorty<T> {
    */
   async findOne(options: any): Promise<any> {
     console.log('=============== FIND ONE ================');
+    if (typeof options !== 'object') {
+      throw new HttpException(
+        'Trường đưa vào phải là Object',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    let results;
 
-    const results = await this.find({ ...options, limit: 1 });
+    results = await this.find({ ...options, limit: 1 });
 
     return preprocessDatabaseBeforeResponse(results[0]);
   }
@@ -84,15 +103,6 @@ export class BaseRepositorty<T> {
   async find(options: any): Promise<any[]> {
     console.log('=============== FIND ================');
     const optionKeys = Object.keys(options);
-    const orderCmds = [
-      'select',
-      'from',
-      'join',
-      'where',
-      'skip',
-      'limit',
-      'orderBy',
-    ];
 
     const collection = new DatabaseCollection(this.table);
     for (let cmd of orderCmds) {
@@ -168,24 +178,48 @@ export class BaseRepositorty<T> {
     return updatedUser;
   }
 
-  async delete(id: number | any): Promise<boolean> {
-    console.log('=============== DELETE BY ID ================');
+  async delete(option: number | any): Promise<boolean> {
+    console.log('=============== DELETE BY option ================');
 
-    const queryString = `DELETE FROM ${this.table} WHERE ?`;
+    let queryString = `DELETE FROM ${this.table} WHERE `;
     let res;
-    if (typeof id === 'object') {
-      res = await this.databaseService.executeQuery(queryString, [id]);
+    if (typeof option === 'object') {
+      if (Array.isArray(option)) {
+        for (let i = 0; i < option.length; i++) {
+          if (typeof option[i] !== 'object') {
+            throw new HttpException(
+              'Sai cú pháp truy vấn',
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+          Object.entries(option).forEach(([key, val], i) => {
+            if (i === 0) {
+              queryString += `${key} = ${val}`;
+            } else {
+              queryString += ` OR ${key} = ${val}`;
+            }
+          });
+        }
+      } else {
+        Object.entries(option).forEach(([key, val], i) => {
+          if (i === 0) {
+            queryString += `${key} = ${val}`;
+          } else {
+            queryString += ` AND ${key} = ${val}`;
+          }
+        });
+      }
+      res = await this.databaseService.executeQuery(queryString, [option]);
     } else {
+      queryString += ` ? `;
       res = await this.databaseService.executeQuery(queryString, [
-        { [PrimaryKeys[this.table]]: id },
+        { [PrimaryKeys[this.table]]: option },
       ]);
     }
+    console.log(res[0].affectedRows);
 
     if (res[0].affectedRows === 0) {
-      throw new HttpException(
-        `Not found id = ${id} in ${this.table} to delete`,
-        HttpStatus.BAD_REQUEST,
-      );
+      return false;
     }
     return true;
   }
