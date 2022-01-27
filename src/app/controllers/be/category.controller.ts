@@ -137,18 +137,14 @@ export class CategoryController extends BaseController {
    * @param res
    * @returns
    */
-  @Put('description/:company_id')
+  @Put('description')
   @UseGuards(AuthGuard)
   async updateCategoryDescription(
-    @Body() updateCategoryDescriptionDto: UpdateCategoryDescriptionDto,
-    @Param('company_id') company_id: number,
+    @Body() data: UpdateCategoryDescriptionDto,
     @Res() res: Response,
   ): Promise<IResponse> {
     const updatedCategoryDescription =
-      await this.categoryService.updateCategoryDescription(
-        company_id,
-        updateCategoryDescriptionDto,
-      );
+      await this.categoryService.updateCategoryDescription(data);
     return this.responseSuccess(res, updatedCategoryDescription);
   }
 
@@ -264,13 +260,15 @@ export class CategoryController extends BaseController {
    * @param res
    * @returns
    */
-  @Get('vendor-product-count/company/:id')
+  @Get('vendor-product-count/company/:company_id')
   async getCategoryVendorProductCountByCompanyId(
-    @Param('id') id: number,
+    @Param('company_id') company_id: number,
     @Res() res: Response,
   ): Promise<IResponse> {
     const categoryVendor =
-      await this.categoryService.findCategoryVendorProductCountByCompanyId(id);
+      await this.categoryService.findCategoryVendorProductCountByCompanyId(
+        company_id,
+      );
 
     return this.responseSuccess(res, categoryVendor);
   }

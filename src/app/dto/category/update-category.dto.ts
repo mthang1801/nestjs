@@ -66,7 +66,7 @@ export class UpdateCategoryDto {
 }
 
 export class UpdateCategoryDescriptionDto {
-  @IsOptional()
+  @IsNotEmpty()
   category_id: number;
 
   @IsOptional()
