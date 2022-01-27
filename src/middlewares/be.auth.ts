@@ -27,7 +27,6 @@ export class AuthGuard implements CanActivate {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    console.log(authoriazationToken);
     const token = authoriazationToken.split(' ').slice(-1)[0];
     const decoded = jwt.verify(
       token,
@@ -46,7 +45,6 @@ export class AuthGuard implements CanActivate {
     req.user = user;
 
     const roles = this.reflector.get<string>('roles', context.getHandler());
-    console.log(roles);
 
     // const roles = this.reflector.getAllAndMerge<string[]>('roles', [
     //   context.getHandler(),

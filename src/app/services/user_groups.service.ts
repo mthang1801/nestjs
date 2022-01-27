@@ -23,6 +23,8 @@ import { UserEntity } from '../entities/user.entity';
 import { AuthProviderEnum } from '../helpers/enums/auth_provider.enum';
 import { convertToMySQLDateTime, formatDate } from '../../utils/helper';
 import { IUserGroupLink } from '../interfaces/user_groups.interface';
+import { UpdateUserGroupsDto } from '../dto/usergroups/update-usergroups.dto';
+import { JoinTable } from '../../database/enums/joinTable.enum';
 import {
   StatusEnum,
   UserGroupTypeEnum,
@@ -84,6 +86,67 @@ export class UserGroupsService {
       return { userGroup: newUserGroup, description: newUserGroupDescription };
     }
     return { userGroup: newUserGroup };
+  }
+
+  async getUserGroup(usergroup_id: number): Promise<UserGroupEntity> {
+    const userGroup = await this.userGroupRepo.findOne({
+      select: ['*', `${this.userGroupTable}.*`],
+      join: {
+        [JoinTable.leftJoin]: {
+          [Table.USER_GROUP_DESCRIPTIONS]: {
+            fieldJoin: 'usergroup_id',
+            rootJoin: 'usergroup_id',
+          },
+          [Table.USER_GROUP_PRIVILEGES]: {
+            fieldJoin: 'usergroup_id',
+            rootJoin: 'usergroup_id',
+          },
+        },
+      },
+      where: { [`${Table.USER_GROUPS}.usergroup_id`]: usergroup_id },
+    });
+    return userGroup;
+  }
+
+  async fetchUserGroups(
+    skip: number,
+    limit: number,
+  ): Promise<UserGroupEntity[]> {
+    const userGroups = await this.userGroupRepo.find({
+      select: ['*', `${this.userGroupTable}.*`],
+      join: {
+        [JoinTable.leftJoin]: {
+          [Table.USER_GROUP_DESCRIPTIONS]: {
+            fieldJoin: 'usergroup_id',
+            rootJoin: 'usergroup_id',
+          },
+          [Table.USER_GROUP_PRIVILEGES]: {
+            fieldJoin: 'usergroup_id',
+            rootJoin: 'usergroup_id',
+          },
+        },
+      },
+      skip,
+      limit,
+    });
+    return userGroups;
+  }
+
+  async updateUserGroup(data: UpdateUserGroupsDto): Promise<UserGroupEntity> {
+    const updatedUserGroup = await this.userGroupRepo.update(
+      data.usergroup_id,
+      data,
+    );
+    return updatedUserGroup;
+  }
+
+  async deleteUserGroup(usergroup_id: number): Promise<boolean> {
+    const res = await this.userGroupRepo.delete(usergroup_id);
+    // if delete usergroup success, then we will delete usergroup_description
+    if (res) {
+      await this.userGroupDescriptionRepo.delete(usergroup_id);
+    }
+    return res;
   }
 
   async createUserGroupDescription(

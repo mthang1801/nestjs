@@ -1,36 +1,15 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateUserGroupsDto {
-  @IsString()
-  @IsOptional()
-  firstname: string;
+  @IsNotEmpty()
+  usergroup_id: number;
 
-  @IsString()
   @IsOptional()
-  lastname: string;
+  status: string;
 
-  @IsString()
   @IsOptional()
-  company: string;
+  type: string;
 
-  @IsString()
   @IsOptional()
-  birthday: string;
-
-  @IsString()
-  @IsOptional()
-  fax: string;
-
-  @IsString()
-  @IsOptional()
-  url: string;
-
-  @IsString()
-  @IsOptional()
-  tax_exempt: string;
-
-  @IsString()
-  @IsOptional()
-  @IsEmail()
-  responsible_email: string;
+  company_id: number;
 }

@@ -20,10 +20,12 @@ export class BaseController {
    */
   private responseWithError(): IResponse {
     const data = {
+      statusCode: this.statusCode,
       message: this.message,
       data: this.data,
+      timestamp: new Date().toLocaleString(),
     };
-    return this.res.send(data);
+    return this.res.status(this.statusCode).send(data);
   }
 
   /**

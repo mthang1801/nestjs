@@ -216,7 +216,6 @@ export class BaseRepositorty<T> {
         { [PrimaryKeys[this.table]]: option },
       ]);
     }
-    console.log(res[0].affectedRows);
 
     if (res[0].affectedRows === 0) {
       return false;
