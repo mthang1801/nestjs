@@ -33,3 +33,14 @@ export class CreateUserGroupDescriptionDto {
   @IsNotEmpty({ message: 'lang_code là bắt buộc' })
   lang_code: string;
 }
+
+export class CreateUserGroupLinkDto {
+  @IsNotEmpty({ message : "user_id là bắt buộc."})
+  user_id : number; 
+
+  @IsNotEmpty({ message : "usergroup_id là bắt buộc."})
+  usergroup_id : number; 
+
+  @IsOptional()
+  status : string; 
+}

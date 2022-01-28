@@ -11,6 +11,7 @@ import { Table } from '../../database/enums/tables.enum';
 import {
   CreateUserGroupsDto,
   CreateUserGroupDescriptionDto,
+  CreateUserGroupLinkDto,
 } from '../dto/usergroups/create-usergroups.dto';
 import { UserRepository } from '../repositories/user.repository';
 import {
@@ -23,7 +24,10 @@ import { UserEntity } from '../entities/user.entity';
 import { AuthProviderEnum } from '../helpers/enums/auth_provider.enum';
 import { convertToMySQLDateTime, formatDate } from '../../utils/helper';
 import { IUserGroupLink } from '../interfaces/user_groups.interface';
-import { UpdateUserGroupsDto } from '../dto/usergroups/update-usergroups.dto';
+import {
+  UpdateUserGroupsDto,
+  UpdateUserGroupDescriptionDto,
+} from '../dto/usergroups/update-usergroups.dto';
 import { JoinTable } from '../../database/enums/joinTable.enum';
 import {
   StatusEnum,
@@ -176,5 +180,82 @@ export class UserGroupsService {
     const newUserGroupDescription =
       await this.userGroupDescriptionRepo.findById(data.usergroup_id);
     return { description: newUserGroupDescription };
+  }
+
+  async getUserGroupDesciption(
+    usergroup_id: number,
+  ): Promise<UserGroupDescriptionEntity> {
+    return this.userGroupDescriptionRepo.findById(usergroup_id);
+  }
+
+  async updateUserGroupDescription(
+    data: UpdateUserGroupDescriptionDto,
+  ): Promise<UserGroupDescriptionEntity> {
+    return this.userGroupDescriptionRepo.update(data.usergroup_id, data);
+  }
+
+  async deleteUserGroupDescription(usergroup_id: number): Promise<boolean> {
+    return this.userGroupDescriptionRepo.delete(usergroup_id);
+  }
+
+  async createUserGroupLink(
+    data: CreateUserGroupLinkDto,
+  ): Promise<UserGroupLinkEntity> {
+    const checkUserIdExists: UserGroupLinkEntity =
+      await this.userGroupLinksRepo.findOne({
+        where: { user_id: data.user_id },
+      });
+    //If user_id has been existing in ddv_usergroup_links, we need update with new data
+    if (checkUserIdExists) {
+      return this.userGroupLinksRepo.update(checkUserIdExists.link_id, data);
+    }
+    const newUserGroupId = await this.userGroupLinksRepo.create(data);
+    return newUserGroupId;
+  }
+
+  async getUserInUserGroupLink(user_id: number): Promise<any> {
+    const user = await this.userGroupLinksRepo.findOne({
+      select: ['*', `${Table.USER_GROUP_LINKS}.*`],
+      join: {
+        [JoinTable.leftJoin]: {
+          [Table.USERS]: {
+            fieldJoin: `${Table.USERS}.user_id`,
+            rootJoin: `user_id`,
+          },
+          [Table.USER_GROUP_PRIVILEGES]: {
+            fieldJoin: `${Table.USER_GROUP_PRIVILEGES}.usergroup_id`,
+            rootJoin: `usergroup_id`,
+          },
+        },
+      },
+      where: { [`${this.userGroupLinksTable}.user_id`]: user_id },
+    });
+    return user;
+  }
+
+  async getUsersByUserGroupInUserGroupLink(
+    usergroup_id: number,
+    skip: number = 0,
+    limit: number = 5,
+  ): Promise<any[]> {
+    const users = await this.userGroupLinksRepo.find({
+      select: ['*', `${Table.USER_GROUP_LINKS}.*`],
+      join: {
+        [JoinTable.leftJoin]: {
+          [Table.USERS]: {
+            fieldJoin: `${Table.USERS}.user_id`,
+            rootJoin: `user_id`,
+          },
+          [Table.USER_GROUP_PRIVILEGES]: {
+            fieldJoin: `${Table.USER_GROUP_PRIVILEGES}.usergroup_id`,
+            rootJoin: `usergroup_id`,
+          },
+        },
+      },
+      where: { [`${this.userGroupLinksTable}.usergroup_id`]: usergroup_id },
+      skip,
+      limit,
+    });
+    return users;
   }
 }

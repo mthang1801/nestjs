@@ -14,6 +14,7 @@ import {
 import {
   CreateUserGroupsDto,
   CreateUserGroupDescriptionDto,
+  CreateUserGroupLinkDto,
 } from '../../dto/usergroups/create-usergroups.dto';
 import { UserGroupsService } from '../../services/user_groups.service';
 import { BaseController } from '../../../base/base.controllers';
@@ -22,7 +23,11 @@ import { IResponse } from '../../interfaces/response.interface';
 import { AuthGuard } from '../../../middlewares/be.auth';
 import { Roles } from 'src/app/helpers/decorators/roles.decorator';
 import { Response } from 'express';
-import { UpdateUserGroupsDto } from '../../dto/usergroups/update-usergroups.dto';
+import {
+  UpdateUserGroupsDto,
+  UpdateUserGroupDescriptionDto,
+} from '../../dto/usergroups/update-usergroups.dto';
+import { get } from 'http';
 
 /**
  * User groups controllers
@@ -156,5 +161,115 @@ export class UsergroupsController extends BaseController {
     const newUserGroupDesc =
       await this.usersGroupService.createUserGroupDescription(data);
     return this.respondCreated(res, newUserGroupDesc);
+  }
+
+  /**
+   * Get usergroup description item by usergroup_id in ddv_usergroup_descriptions
+   * @param usergroup_id
+   * @param res
+   * @returns
+   */
+  @Get('/description/search/:usergroup_id')
+  async getUserGroupDesciption(
+    @Param('usergroup_id') usergroup_id: number,
+    @Res() res,
+  ): Promise<IResponse> {
+    const userGroupDesc = await this.usersGroupService.getUserGroupDesciption(
+      usergroup_id,
+    );
+    return this.responseSuccess(res, userGroupDesc);
+  }
+
+  /**
+   * Update user group description in ddv_usergroup_descriptions
+   * @param data
+   * @param res
+   * @returns
+   */
+  @Put('/description')
+  @UseGuards(AuthGuard)
+  async updateUserGroupDescription(
+    @Body() data: UpdateUserGroupDescriptionDto,
+    @Res() res,
+  ): Promise<IResponse> {
+    const updatedUsertGroupDesc =
+      await this.usersGroupService.updateUserGroupDescription(data);
+    return this.responseSuccess(
+      res,
+      updatedUsertGroupDesc,
+      'Cập nhật thành công.',
+    );
+  }
+
+  /**
+   * Delete usergroup description in ddv_usergroup_descriptions
+   * @param usergroup_id
+   * @param res
+   * @returns
+   */
+  @Delete('description/delete/:usergroup_id')
+  @UseGuards(AuthGuard)
+  async deleteUserGroupDescription(
+    @Param('usergroup_id') usergroup_id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const boolRes = await this.usersGroupService.deleteUserGroupDescription(
+      usergroup_id,
+    );
+    return boolRes
+      ? this.responseSuccessNoContent(res)
+      : this.respondNotFound(
+          res,
+          `Xoá user group description với usergroup_id ${usergroup_id} không thành công.`,
+        );
+  }
+
+  /**
+   *  Create new link for user_id into usergroup in ddv_usergroup_links
+   * @param data
+   * @param res
+   * @returns
+   */
+  @Post('link')
+  @UseGuards(AuthGuard)
+  async createUserGroupLink(
+    @Body() data: CreateUserGroupLinkDto,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const newUserGroupLink = await this.usersGroupService.createUserGroupLink(
+      data,
+    );
+    return this.respondCreated(res, newUserGroupLink);
+  }
+
+  /**
+   * Get user info including : user_info, usergroup_links, usergroup_privilege
+   * @param user_id
+   * @param res
+   * @returns
+   */
+  @Get('link/user/:user_id')
+  async getUserInUserGroupLink(
+    @Param('user_id') user_id: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const user = await this.usersGroupService.getUserInUserGroupLink(user_id);
+    return this.responseSuccess(res, user);
+  }
+
+  @Get('/link/usergroup/:usergroup_id')
+  async getUsersByUserGroupInUserGroupLink(
+    @Param('usergroup_id') usergroup_id: number,
+    @Query('skip') skip: number,
+    @Query('limit') limit: number,
+    @Res() res: Response,
+  ): Promise<IResponse> {
+    const users =
+      await this.usersGroupService.getUsersByUserGroupInUserGroupLink(
+        usergroup_id,
+        skip,
+        limit,
+      );
+    return this.responseSuccess(res, users);
   }
 }
