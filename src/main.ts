@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import {
   ExpressAdapter,
   NestExpressApplication,
@@ -9,6 +9,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/modules/app.module';
 import { join } from 'path';
 import * as hbs from 'hbs';
+import * as cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
 import { ValidationConfig } from './config/validation.config';
 
@@ -18,10 +19,13 @@ async function bootstrap() {
     new ExpressAdapter(),
   );
   const configService = app.get(ConfigService);
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
 
   app.useGlobalPipes(new ValidationPipe(ValidationConfig));
   app.setGlobalPrefix(configService.get<string>('apiPrefix'));
-
+  app.use(cookieParser());
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('hbs');

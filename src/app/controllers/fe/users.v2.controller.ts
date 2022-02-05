@@ -6,11 +6,11 @@ import {
   UseGuards,
   Req,
   Res,
+  Response,
   UseInterceptors,
   ClassSerializerInterceptor,
-  UploadedFiles,
   Post,
-  UploadedFile,
+  UploadedFiles,
 } from '@nestjs/common';
 import { UserUpdateDto } from '../../dto/user/update-user.dto';
 import { UserProfileDto } from '../../dto/user/update-user-profile.dto';
@@ -20,16 +20,9 @@ import { BaseController } from '../../../base/base.controllers';
 import { IUser } from '../../interfaces/users.interface';
 import { IResponse } from '../../interfaces/response.interface';
 import { AuthGuard } from '../../../middlewares/fe.auth';
-import { Request, Response } from 'express';
-import {
-  AnyFilesInterceptor,
-  FileFieldsInterceptor,
-  FileInterceptor,
-  FilesInterceptor,
-} from '@nestjs/platform-express';
-import * as multer from 'multer';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 
-@Controller({ version: '1', path: '/fe/users' })
+@Controller({ version: '2', path: '/fe/users' })
 export class UsersController extends BaseController {
   constructor(private readonly usersService: UsersService) {
     super();
@@ -52,14 +45,9 @@ export class UsersController extends BaseController {
 
   @Get()
   @UseGuards(AuthGuard)
-  async getMyInfo(
-    @Req() req,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<IResponse> {
-    console.log('v1');
-    // console.log(req.cookies);
+  async getMyInfo(@Req() req, @Res() res): Promise<IResponse> {
+    console.log('v2');
     const user = await this.usersService.getMyInfo(req.user.user_id);
-    // res.setCookie('secret', 'mysecret');
     return this.responseSuccess(res, user);
   }
   @Get('/otp')
@@ -86,38 +74,11 @@ export class UsersController extends BaseController {
     return this.responseSuccess(res, { userProfile: updatedUserProfile });
   }
 
-  @Post('single-upload')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      dest: './uploads',
-    }),
-  )
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
-    console.log(86, file);
-  }
-
-  @Post('multi-uploads')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'avatar', maxCount: 2 },
-        { name: 'background', maxCount: 2 },
-      ],
-      {
-        preservePath: true,
-        storage: multer.diskStorage({
-          destination: (req, file, cb) => cb(null, './uploads'),
-          filename: (req, file, cb) => {
-            const filename = `${Date.now()}-${Math.round(
-              Math.random() * 1e9,
-            )}-${file.originalname}`;
-            return cb(null, filename);
-          },
-        }),
-      },
-    ),
-  )
-  uploadFiles(@UploadedFiles() files: Express.Multer.File[]) {
-    console.log(files);
+  @Post('upload')
+  @UseInterceptors(AnyFilesInterceptor())
+  async uploadFiles(
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<any> {
+    return;
   }
 }

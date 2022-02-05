@@ -24,7 +24,7 @@ import { RestorePasswordOTPDto } from '../../dto/auth/auth-restore-pwd-otp.dto';
  * @Describe Using 3 authenticate types : Local, Google, Facebook
  * @Author MvThang
  */
-@Controller('/fe/v1/auth')
+@Controller('/v1/fe/auth')
 export class AuthController extends BaseController {
   constructor(private authService: AuthService) {
     super();

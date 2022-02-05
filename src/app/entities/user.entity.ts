@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 export class UserEntity {
   user_id: number;
   status: string;
@@ -8,8 +9,13 @@ export class UserEntity {
   company_id: number;
   last_login: number;
   created_at: Date;
+
+  @Exclude()
   password: string;
+
+  @Exclude()
   salt: string;
+
   firstname: string;
   lastname: string;
   company: string;
@@ -31,6 +37,10 @@ export class UserEntity {
   verify_token_exp: Date;
   otp: number;
   otp_incorrect_times: number;
+
+  constructor(partial: Partial<UserEntity>) {
+    Object.assign(this, partial);
+  }
 }
 
 export class UserProfileEntity {

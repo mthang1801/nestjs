@@ -4,8 +4,10 @@ import {
   InternalServerErrorException,
   NotFoundException,
   RequestTimeoutException,
+  Inject,
 } from '@nestjs/common';
 import { UserEntity } from '../entities/user.entity';
+import { Cache } from 'cache-manager';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from './mail.service';
 import {
@@ -33,6 +35,9 @@ import {
 import { ImagesLinksEntity, ImagesEntity } from '../entities/image.entity';
 import { ImageObjectType } from '../helpers/enums/image_types.enum';
 import { AuthProviderEntity } from '../entities/auth-provider.entity';
+import { CacheService } from './cache.service';
+import { TasksService } from './tasks.service';
+
 @Injectable()
 export class UsersService {
   private table: Table = Table.USERS;
@@ -43,6 +48,8 @@ export class UsersService {
     private userProfileRepository: UserProfileRepository<UserProfileEntity>,
     private imageLinksRepository: ImagesLinksRepository<ImagesLinksEntity>,
     private imagesRepository: ImagesRepository<ImagesEntity>,
+    private readonly redisCacheService: CacheService,
+    private readonly cronJob: TasksService,
   ) {}
 
   async createUser(registerData): Promise<UserEntity> {
@@ -142,6 +149,8 @@ export class UsersService {
   }
 
   async getMyInfo(id: string): Promise<UserEntity> {
+    // this.cronJob.addCronJob('get-info', '10');
+
     const user = await this.userRepository.findOne({
       select: ['*'],
       join: {
@@ -155,6 +164,7 @@ export class UsersService {
       where: { [`${this.table}.${PrimaryKeys[this.table]}`]: id },
     });
     user['image'] = await this.getUserImage(user.user_id);
+
     return preprocessUserResult(user);
   }
 
